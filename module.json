@@ -1,0 +1,31 @@
+{
+  "id": "region-spell-automation",
+  "title": "Region Spell Automation",
+  "description": "Automates D&D5e spell Regions using configurable trigger events and targeting rules.",
+  "version": "0.5.5",
+  "authors": [
+    {
+      "name": "Tony"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "6.0.5"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/region-spell-automation.js",
+    "scripts/concentration-cleanup.js",
+    "scripts/spell-manager.js"
+  ]
+}
