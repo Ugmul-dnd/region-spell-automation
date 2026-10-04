@@ -144,3 +144,7 @@ Open the browser console with **F12** and look for `Region Spell Automation |` m
 The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The manager's v0.5.4 header reflects its component revision; the module version is defined in `module.json`.
 
 See [RELEASING.md](RELEASING.md) for packaging and the public-release checklist.
+
+## License
+
+Copyright (c) 2026 Ugmul. Released under the [MIT License](LICENSE).

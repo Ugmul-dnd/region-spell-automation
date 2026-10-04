@@ -2,7 +2,7 @@
 
 ## Current status
 
-The local module is version 0.5.5. Its public repository is `https://github.com/Ugmul-dnd/region-spell-automation`, as confirmed by the author. The manifest includes repository, issue, manifest, and version-specific download URLs. Release assets have not been verified; these installation URLs require the planned release assets to be published. There is no release workflow or license file.
+The local module is version 0.5.5. Its public repository is `https://github.com/Ugmul-dnd/region-spell-automation`. The v0.5.5 release assets and manifest URLs were verified, and the author confirmed installation and functional testing in a separate Foundry data directory. The module is licensed under MIT, copyright (c) 2026 Ugmul. The local release assets now include the author and license updates; upload those updated assets to GitHub to distribute them. There is no release workflow.
 
 ## Enable Foundry manifest installation
 
@@ -16,7 +16,7 @@ The local module is version 0.5.5. Its public repository is `https://github.com/
 "bugs": "https://github.com/Ugmul-dnd/region-spell-automation/issues"
 ```
 
-These are planned URLs; their assets have not been verified. Keep `manifest` stable for update checks and pin `download` to the specific version.
+These URLs were verified for v0.5.5. Keep `manifest` stable for update checks and pin `download` to the specific version.
 
 3. Create a ZIP with `module.json` and `scripts/` at its root. Include README and the chosen license. Exclude `.git`, local configuration, and development-only files. The archived manifest must match the separately uploaded manifest.
 4. Publish a regular GitHub release tagged `v0.5.5` with assets named exactly `module.json` and `region-spell-automation.zip`.
@@ -31,7 +31,7 @@ Manifest installation can work before a listing exists. To appear in Foundry's s
 
 ## Before public release
 
-- Choose a license and add `LICENSE`. This is a distribution decision, not an installer requirement.
+- Include the MIT `LICENSE` file in each release ZIP.
 - Add a changelog beginning with documented changes, including the 0.5.5 end-turn skip. Avoid inventing prior release history.
 - Record the actual Foundry and D&D5e builds tested.
 - Test GM/player casting, two connected clients, simultaneous triggers, and concentration ending. The scripts do not explicitly select an authoritative client for cleanup or behavior attachment; confirm whether Foundry/system hook routing already guarantees one execution.
