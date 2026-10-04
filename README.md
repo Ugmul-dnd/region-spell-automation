@@ -38,7 +38,13 @@ Restart Foundry if necessary, open your D&D5e world, and enable **Region Spell A
 
 ### Install through Foundry
 
-Manifest installation is not configured in the current manifest. Once public release assets are available, paste the release manifest URL into **Install Module → Manifest URL** on Foundry's setup screen. See [RELEASING.md](RELEASING.md) for the remaining setup.
+The manifest is configured for GitHub releases. Once the public release assets are published, paste this URL into **Install Module → Manifest URL** on Foundry's setup screen:
+
+```text
+https://github.com/Ugmul-dnd/region-spell-automation/releases/latest/download/module.json
+```
+
+The URL requires a published release containing `module.json` and `region-spell-automation.zip`. See [RELEASING.md](RELEASING.md) for the remaining setup.
 
 ## Quick start
 

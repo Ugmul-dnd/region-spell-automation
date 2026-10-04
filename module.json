@@ -3,6 +3,10 @@
   "title": "Region Spell Automation",
   "description": "Automates D&D5e spell Regions using configurable trigger events and targeting rules.",
   "version": "0.5.5",
+  "url": "https://github.com/Ugmul-dnd/region-spell-automation",
+  "manifest": "https://github.com/Ugmul-dnd/region-spell-automation/releases/latest/download/module.json",
+  "download": "https://github.com/Ugmul-dnd/region-spell-automation/releases/download/v0.5.5/region-spell-automation.zip",
+  "bugs": "https://github.com/Ugmul-dnd/region-spell-automation/issues",
   "authors": [
     {
       "name": "Tony"

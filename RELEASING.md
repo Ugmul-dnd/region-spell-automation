@@ -2,12 +2,12 @@
 
 ## Current status
 
-The local module is version 0.5.5. Its Git remote is `https://github.com/Ugmul-dnd/region-spell-automation.git`. Public repository access and release assets have not been verified. The manifest has no distribution URLs. There is no release workflow or license file.
+The local module is version 0.5.5. Its public repository is `https://github.com/Ugmul-dnd/region-spell-automation`, as confirmed by the author. The manifest includes repository, issue, manifest, and version-specific download URLs. Release assets have not been verified; these installation URLs require the planned release assets to be published. There is no release workflow or license file.
 
 ## Enable Foundry manifest installation
 
 1. Make the repository and release assets publicly accessible.
-2. Add distribution fields to `module.json` when preparing the first release:
+2. Confirm the distribution fields already configured in `module.json` match the first release:
 
 ```json
 "url": "https://github.com/Ugmul-dnd/region-spell-automation",
