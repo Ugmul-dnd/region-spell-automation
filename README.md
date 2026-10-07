@@ -145,6 +145,11 @@ This simplified model can
 count repeated small unsnapped moves more than their combined physical distance.
 Duplicate reports of the same move are ignored.
 
+Use **+** and **−** on the pending card to add or remove one pending damage
+increment manually. The count stops at zero; adjustments do not change previous
+rolls or movement history. Corrections are saved on the card and included in the
+next pending damage roll.
+
 This mode automatically uses movement-in/within/out events and overrides event
 selections, Once Per Turn, and shared-card options for that trigger. It requires
 a Damage activity without saves or attacks. Each increment repeats the activity's

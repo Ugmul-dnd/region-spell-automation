@@ -41,6 +41,12 @@ function cardContent(data) {
         <p>${escape(data.target.name)}: ${Math.round(data.distance / data.increment)} counted movement step(s).</p>
         <p><strong>${steps}</strong> pending ${data.increment}-${escape(data.units)} increment(s).
         ${data.rolledSteps} increment(s) already rolled.</p>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+            <button type="button" data-rsa-adjust-movement="-1" aria-label="Remove one pending damage increment"
+                title="Remove one pending damage increment" ${steps ? "" : "disabled"}>−</button>
+            <button type="button" data-rsa-adjust-movement="1" aria-label="Add one pending damage increment"
+                title="Add one pending damage increment">+</button>
+        </div>
         <button type="button" data-rsa-roll-movement ${steps ? "" : "disabled"}>Roll Pending Damage</button>
         <p>Independent damage dice for each increment. Apply damage using the resulting damage card.</p></div>`;
 }
@@ -98,6 +104,16 @@ export async function recordMovementDamage({ trigger, spell, region, event, acti
     });
 }
 
+export async function adjustPendingMovementDamage(card, change) {
+    if (!card.isOwner) return;
+    if (change !== 1 && change !== -1) throw new Error("Adjustment must be +1 or -1.");
+    const data = foundry.utils.deepClone(card.getFlag(MODULE_ID, "movementDamage"));
+    if (!data || (change < 0 && !pendingSteps(data))) return;
+    // Adjust the pending counter without rewriting movement history or rolls.
+    data.distance = Math.max(data.rolledSteps * data.increment, data.distance + change * data.increment);
+    await card.update({ content: cardContent(data), [`flags.${MODULE_ID}.movementDamage`]: data });
+}
+
 export async function rollPendingMovementDamage(card) {
     if (!card.isOwner) return;
     const data = foundry.utils.deepClone(card.getFlag(MODULE_ID, "movementDamage"));
@@ -139,6 +155,21 @@ export function registerMovementDamageHooks(enqueue) {
     });
     Hooks.on("renderChatMessageHTML", (message, html) => {
         if (!message.getFlag(MODULE_ID, "movementDamage")) return;
+        const adjustments = html.querySelectorAll("[data-rsa-adjust-movement]");
+        for (const adjustment of adjustments) {
+            if (!message.isOwner) { adjustment.hidden = true; continue; }
+            adjustment.addEventListener("click", () => {
+                adjustment.disabled = true;
+                enqueue(() => adjustPendingMovementDamage(message, Number(adjustment.dataset.rsaAdjustMovement)))
+                    .catch(err => {
+                        console.error("Region Spell Automation | Movement damage adjustment failed:", err);
+                        ui.notifications.error("Could not adjust movement damage. Check F12 console.");
+                    }).finally(() => {
+                        adjustment.disabled = adjustment.dataset.rsaAdjustMovement === "-1" &&
+                            pendingSteps(message.getFlag(MODULE_ID, "movementDamage")) === 0;
+                    });
+            });
+        }
         const button = html.querySelector("[data-rsa-roll-movement]");
         if (!button) return;
         if (!message.isOwner) { button.hidden = true; return; }

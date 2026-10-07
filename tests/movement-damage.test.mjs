@@ -215,3 +215,26 @@ await helpers.recordMovementDamage({ trigger, spell, region, event: entryContext
 assert.equal(helpers.pendingSteps(splitCard.getFlag("region-spell-automation", "movementDamage")), 4);
 console.log("Exit checks passed: final step exempt through both event types; earlier internal steps retained.");
 
+const manualData = () => splitCard.getFlag("region-spell-automation", "movementDamage");
+const movementHistory = JSON.stringify(manualData().movementTotals);
+await helpers.adjustPendingMovementDamage(splitCard, 1);
+assert.equal(helpers.pendingSteps(manualData()), 5);
+await helpers.adjustPendingMovementDamage(splitCard, -1);
+assert.equal(helpers.pendingSteps(manualData()), 4);
+await helpers.rollPendingMovementDamage(splitCard);
+assert.equal(rolledFormula, "8d4");
+await helpers.adjustPendingMovementDamage(splitCard, -1);
+assert.equal(helpers.pendingSteps(manualData()), 0);
+assert.equal(manualData().rolledSteps, 4);
+await helpers.adjustPendingMovementDamage(splitCard, 1);
+assert.equal(helpers.pendingSteps(manualData()), 1);
+await helpers.adjustPendingMovementDamage(splitCard, -1);
+await helpers.adjustPendingMovementDamage(splitCard, -1);
+assert.equal(helpers.pendingSteps(manualData()), 0);
+assert.equal(manualData().rolledSteps, 4);
+assert.equal(JSON.stringify(manualData().movementTotals), movementHistory);
+splitCard.isOwner = false;
+await helpers.adjustPendingMovementDamage(splitCard, 1);
+assert.equal(helpers.pendingSteps(manualData()), 0);
+console.log("Manual-adjustment checks passed: plus/minus, zero floor, adjusted dice, rolled history and ownership.");
+
