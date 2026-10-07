@@ -16,6 +16,12 @@
 const MODULE_ID = "region-spell-automation";
 const SETTING_KEY = "spellTable";
 
+import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets }
+    from "./shared-activity-card.js";
+
+const sharedCardHistory = new Map();
+const enqueueRegionEvent = createEventQueue();
+
 
 // ============================================================
 // ONCE-PER-TURN HISTORY
@@ -286,7 +292,24 @@ function passesTargeting(
 // REGION ACTIVITY EVENT HANDLER
 // ============================================================
 
-async function handleRegionEvent({
+function handleRegionEvent(context) {
+    // Activity use temporarily changes user targets. Serialize events so those
+    // changes and shared-card creation cannot race on this client.
+    const combat = context.event?.data?.combat ?? game.combat;
+    const event = {
+        ...context.event,
+        name: context.event?.name,
+        data: {
+            ...context.event?.data,
+            combat,
+            round: context.event?.data?.round ?? combat?.round,
+            turn: context.event?.data?.turn ?? combat?.turn
+        }
+    };
+    return enqueueRegionEvent(() => executeRegionEvent({ ...context, event }));
+}
+
+async function executeRegionEvent({
     event,
     region,
     scene,
@@ -588,6 +611,27 @@ async function handleRegionEvent({
 
 
     // --------------------------------------------------------
+    // REUSE THIS TURN'S ACTIVITY CARD
+    // --------------------------------------------------------
+
+    const sharedKey = getSharedCardKey(trigger, spell, region, event, game.combat);
+    const sharedMessage = sharedKey
+        ? game.messages.get(sharedCardHistory.get(sharedKey))
+        : null;
+
+    if (sharedMessage) {
+        try {
+            await appendSharedTarget(sharedMessage, describeTarget(targetDoc));
+            if (turnKey) oncePerTurnHistory.add(turnKey);
+            console.log(`Region Spell Automation | Added "${targetToken.name}" to this turn's shared card for "${spell.name}".`);
+        } catch (err) {
+            console.error("Region Spell Automation | Could not add shared-card target:", err);
+            ui.notifications.error(`${spell.name}: could not add target to shared card. Check F12 console.`);
+        }
+        return;
+    }
+
+    // --------------------------------------------------------
     // PRESERVE TARGETS
     // --------------------------------------------------------
 
@@ -659,7 +703,7 @@ async function handleRegionEvent({
         // EXECUTE ORIGINAL ACTIVITY
         // ----------------------------------------------------
 
-        await activity.use(
+        const results = await activity.use(
             {
                 consume:
                     false,
@@ -686,8 +730,24 @@ async function handleRegionEvent({
             {
                 configure:
                     false
-            }
+            },
+            sharedKey ? {
+                data: {
+                    system: { targets: [describeTarget(targetDoc)] },
+                    flags: { [MODULE_ID]: { sharedCardPerTurn: true } }
+                }
+            } : {}
         );
+
+        if (sharedKey) {
+            if (results?.message?.id) {
+                sharedCardHistory.set(sharedKey, results.message.id);
+            } else {
+                // Canceled or prevented usage must be allowed to retry.
+                if (turnKey) oncePerTurnHistory.delete(turnKey);
+                console.warn("Region Spell Automation | Shared activity use produced no chat card; no allowance recorded.");
+            }
+        }
 
     }
 
@@ -782,6 +842,7 @@ Hooks.once("ready", () => {
         () => {
 
             oncePerTurnHistory.clear();
+            sharedCardHistory.clear();
 
 
             console.log(
@@ -789,6 +850,20 @@ Hooks.once("ready", () => {
             );
         }
     );
+
+    // Damage may be rolled after later targets have entered, or a damage
+    // dialog may still be open when they enter. Capture the current card list
+    // when that damage message is created, without rerolling anything.
+    Hooks.on("preCreateChatMessage", message => {
+        if (message.type !== "damage") return;
+        const origin = message.system?.origin;
+        if (!origin?.getFlag?.(MODULE_ID, "sharedCardPerTurn")) return;
+        let targets = Array.from(message.system.targets ?? []);
+        for (const descriptor of origin.system.targets ?? []) {
+            targets = mergeTargets(targets, descriptor);
+        }
+        message.updateSource({ "system.targets": targets });
+    });
 
 
     // ========================================================

@@ -262,7 +262,9 @@ class RegionSpellManager
 
 
                         const limitText =
-                            trigger.oncePerTurn
+                            trigger.shareCardPerTurn
+                                ? "Shared Card Per Turn"
+                                : trigger.oncePerTurn
                                 ? "Once Per Turn"
                                 : "Unlimited";
 
@@ -1724,6 +1726,8 @@ class RegionSpellManager
             existingTrigger?.oncePerTurn ===
             true;
 
+        const shareCardPerTurn = existingTrigger?.shareCardPerTurn === true;
+
 
         // ====================================================
         // DIALOG
@@ -1970,6 +1974,24 @@ class RegionSpellManager
                                 </fieldset>
 
 
+                                <fieldset>
+                                    <legend>Shared Activity Card</legend>
+                                    <div class="form-group">
+                                        <label>Share Activity Card Per Turn</label>
+                                        <div class="form-fields">
+                                            <input type="checkbox" name="shareCardPerTurn"
+                                                ${shareCardPerTurn ? "checked" : ""}>
+                                        </div>
+                                    </div>
+                                    <p style="opacity:0.7;font-size:0.88em;">
+                                        Add new targets to the same activity and damage cards during
+                                        one combat turn instead of using the activity again.
+                                        Saves and damage application remain manual. Enable Once Per
+                                        Turn above to also limit each creature to one trigger.
+                                        Outside combat, activities run normally.
+                                    </p>
+                                </fieldset>
+
                                 <!-- TARGETING -->
 
                                 <div class="form-group">
@@ -2198,7 +2220,9 @@ class RegionSpellManager
 
             oncePerTurn:
                 result.oncePerTurn ===
-                true
+                true,
+
+            shareCardPerTurn: result.shareCardPerTurn === true
         };
 
 

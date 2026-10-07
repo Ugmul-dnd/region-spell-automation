@@ -29,6 +29,7 @@
     ]
   },
   "esmodules": [
+    "scripts/shared-activity-card.js",
     "scripts/region-spell-automation.js",
     "scripts/concentration-cleanup.js",
     "scripts/spell-manager.js"

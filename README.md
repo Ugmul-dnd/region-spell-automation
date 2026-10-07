@@ -30,6 +30,7 @@ Place the module folder at `Data/modules/region-spell-automation` in your Foundr
 
 ```text
 scripts/region-spell-automation.js
+scripts/shared-activity-card.js
 scripts/concentration-cleanup.js
 scripts/spell-manager.js
 ```
@@ -94,6 +95,31 @@ This option limits a trigger to one use per target during the current **combat t
 The allowance is keyed by combat ID, round, turn, token ID, and trigger ID. Events sharing a trigger share the allowance. Multiple Regions with the same trigger ID also share it; the key does not distinguish Regions or casters.
 
 Without combat turn information, events can repeat. History is client-local, resets on reload or combat deletion, and is not a cross-client lock. Rewinding combat can encounter a previously recorded allowance. An activity error releases the allowance; a canceled activity that returns normally may still consume it.
+
+## Shared Activity Card Per Turn (development)
+
+Enable **Share Activity Card Per Turn** when editing a trigger to add newly affected
+tokens to one activity card during the current combat turn. For Spirit Guardians,
+enable this alongside **Once Per Turn**: each creature still triggers at most once,
+but new creatures encountered as the caster moves are added to the existing card.
+
+If damage has already been rolled from that card, new targets are also added to
+its associated damage cards without another roll. Saves and damage application
+remain native D&D5e actions; select the appropriate creatures when resolving them
+and avoid applying damage twice to earlier targets. Target lists accumulate for
+the turn, even if a creature later leaves the area.
+
+A new combat turn creates a fresh card. Different Regions, originating spell
+items, and triggers have separate cards. Outside combat this option falls back
+to the usual per-event activity use. Shared-card history is client-local and
+resets on reload or combat deletion; it is not a cross-client lock. Deleting a
+shared card allows a fresh card for a newly qualifying target.
+
+This option changes no existing configurations until enabled. It is intended for
+save/damage activities; activities with other on-use actions run those actions
+only for the first target. Verify with your module stack before using it at the
+table. The current implementation was checked against installed D&D5e 6.0.6;
+in-world verification is still required.
 
 ## Region Effects and concentration
 
