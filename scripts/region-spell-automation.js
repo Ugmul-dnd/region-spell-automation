@@ -1,6 +1,6 @@
 // ============================================================
 // Region Spell Automation
-// v0.5.5
+// v0.5.6
 // Foundry VTT v14 / D&D5e 6.0.5
 //
 // Features:
@@ -34,7 +34,7 @@ const oncePerTurnHistory =
 
 
 console.log(
-    "Region Spell Automation | v0.5.5 JS loaded"
+    "Region Spell Automation | v0.5.6 JS loaded"
 );
 
 
@@ -895,7 +895,7 @@ Hooks.once("ready", () => {
     });
 
     console.log(
-        "Region Spell Automation | Installing v0.5.5 Region hook"
+        "Region Spell Automation | Installing v0.5.6 Region hook"
     );
 
 
@@ -1469,6 +1469,6 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         }
     });
     console.log(
-        "Region Spell Automation | v0.5.5 Ready"
+        "Region Spell Automation | v0.5.6 Ready"
     );
 });

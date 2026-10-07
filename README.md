@@ -6,7 +6,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 ## Compatibility
 
-- Module version: **0.5.5**.
+- Module version: **0.5.6**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
@@ -134,7 +134,7 @@ The allowance is keyed by combat ID, round, turn, token ID, and trigger ID. Even
 
 Without combat turn information, events can repeat. History is client-local, resets on reload or combat deletion, and is not a cross-client lock. Rewinding combat can encounter a previously recorded allowance. An activity error releases the allowance; a canceled activity that returns normally may still consume it.
 
-## Shared Activity Card Per Turn (development)
+## Shared Activity Card Per Turn
 
 Enable **Share Activity Card Per Turn** when editing a trigger to add newly affected
 tokens to one activity card during the current combat turn. For Spirit Guardians,
@@ -170,7 +170,7 @@ only for the first target. Verify with your module stack before using it at the
 table. The shared-card workflow was confirmed working in-world by the author
 with D&D5e 6.0.6 on October 7, 2026. Other module combinations still need testing.
 
-## Movement Damage (development)
+## Movement Damage
 
 For Spike Growth, prepare a **Damage** activity with **2d4 piercing** damage on
 the originating spell. In its trigger, enable **Accumulate Movement Damage** and
@@ -218,7 +218,7 @@ A new combat turn starts a new pending card; older cards remain usable. Outside
 combat, movement accumulates on the same card. Pending totals are stored on chat
 messages and survive reload; deleting a pending card deletes its record. This
 feature does not provide a cross-client lock. Damage application remains manual.
-Automated checks pass; in-world verification is still needed.
+Automated regression checks and GM/player in-world testing passed on Foundry v14 with D&D5e 6.0.6.
 
 ## Region Effects and concentration
 
@@ -277,7 +277,7 @@ Open the browser console with **F12** and look for `Region Spell Automation |` m
 
 ## Development and releases
 
-The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The manager's v0.5.4 header reflects its component revision; the module version is defined in `module.json`.
+The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The module version is defined in `module.json`.
 
 See [RELEASING.md](RELEASING.md) for packaging and the public-release checklist.
 
