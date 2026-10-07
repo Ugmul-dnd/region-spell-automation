@@ -104,6 +104,13 @@ tokens to one activity card during the current combat turn. For Spirit Guardians
 enable this alongside **Once Per Turn**: each creature still triggers at most once,
 but new creatures encountered as the caster moves are added to the existing card.
 
+When the initial cast uses the same activity configured in the shared trigger,
+its activity card is registered for the newly created Regions. New creatures
+encountered later during that cast's combat turn join the initial card and its
+existing damage cards. Its initial targets also receive the per-turn allowance
+when Once Per Turn is enabled. Different casting and trigger activities are not
+automatically combined.
+
 If damage has already been rolled from that card, new targets are also added to
 its associated damage cards without another roll. Saves and damage application
 remain native D&D5e actions; select the appropriate creatures when resolving them

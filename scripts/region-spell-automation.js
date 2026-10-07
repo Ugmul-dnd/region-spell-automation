@@ -835,6 +835,46 @@ globalThis.RegionSpellAutomation = {
 Hooks.once("ready", () => {
     registerMovementDamageHooks(enqueueRegionEvent);
 
+    // A normal cast creates its usage card before placing the Region. Unlike
+    // activity uses initiated by our event handler, that card wasn't previously
+    // registered in sharedCardHistory. Seed it once the cast exposes its Regions.
+    Hooks.on("dnd5e.postUseActivity", (activity, usage, results) => {
+        const spell = activity?.item;
+        const message = results?.message;
+        if (!spell || !message?.id || !results?.templates?.length) return;
+        const config = game.settings.get(MODULE_ID, SETTING_KEY)?.[spell.name];
+        if (!config || config.enabled === false) return;
+        const event = { data: { combat: game.combat, round: game.combat?.round, turn: game.combat?.turn } };
+        const registrations = [];
+        for (const trigger of config.triggers ?? []) {
+            if (!trigger.shareCardPerTurn || trigger.movementDamage || trigger.activity !== activity.name) continue;
+            for (const region of results.templates) {
+                const key = getSharedCardKey(trigger, spell, region, event, game.combat);
+                if (!key) continue;
+                sharedCardHistory.set(key, message.id);
+                registrations.push(trigger);
+            }
+        }
+        if (!registrations.length) return;
+        // The hook does not await us, so register the card synchronously above;
+        // serialize its metadata and limiter updates with later Region events.
+        enqueueRegionEvent(async () => {
+            await message.update({ [`flags.${MODULE_ID}.sharedCardPerTurn`]: true });
+            for (const trigger of registrations) {
+                if (!trigger.oncePerTurn) continue;
+                for (const descriptor of message.system.targets ?? []) {
+                    const token = descriptor.token ? await fromUuid(descriptor.token) : null;
+                    if (!token?.id) continue;
+                    const key = getOncePerTurnKey(trigger, token, event);
+                    if (key) oncePerTurnHistory.add(key);
+                }
+            }
+        }).catch(err => {
+            console.error("Region Spell Automation | Initial shared-card registration failed:", err);
+            ui.notifications.error("Could not register the initial spell card for sharing. Check F12 console.");
+        });
+    });
+
     console.log(
         "Region Spell Automation | Installing v0.5.5 Region hook"
     );

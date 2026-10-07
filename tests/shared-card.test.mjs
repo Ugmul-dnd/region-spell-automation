@@ -168,4 +168,38 @@ assert.notEqual(helpers.getSharedCardKey(trigger, spell, region, {}, combat),
     helpers.getSharedCardKey(trigger, { ...spell, uuid: "Actor.other.Item.spell" }, region, {}, combat));
 assert.equal(helpers.getSharedCardKey(trigger, spell, region, {}, null), null);
 assert.equal(reportedErrors.length, 2, "Only the two deliberately simulated failures should be reported.");
+
+// A normal cast's card is reused for newly encountered creatures on its first
+// turn, even though its activity.use was not invoked by the Region handler.
+combat.turn++;
+const initialCard = makeMessage("initial-cast", [helpers.describeTarget(a)]);
+initialCard.flags = {};
+const updateInitial = initialCard.update;
+initialCard.update = async data => {
+    if (data["system.targets"]) await updateInitial.call(initialCard, data);
+    if (data["flags.region-spell-automation.sharedCardPerTurn"]) {
+        initialCard.flags["region-spell-automation"] = { sharedCardPerTurn: true };
+    }
+};
+const initialDamage = makeMessage("initial-damage", [helpers.describeTarget(a)]);
+initialDamage.rolls = [{ total: 19 }];
+initialCard.damage = [initialDamage];
+messages.set(initialCard.id, initialCard);
+activity.item = spell;
+const defaultFromUuid = globalThis.fromUuid;
+globalThis.fromUuid = async uuid => uuid === a.uuid ? a : defaultFromUuid(uuid);
+hooks.get("dnd5e.postUseActivity")(activity, {}, { message: initialCard, templates: [region] });
+const usesBeforeEntry = uses;
+await enter(b);
+assert.equal(uses, usesBeforeEntry, "First-turn movement must reuse the initial cast card");
+assert.equal(initialCard.system.targets.length, 2);
+assert.equal(initialDamage.system.targets.length, 2);
+assert.equal(initialDamage.rolls[0].total, 19);
+await enter(a);
+assert.equal(uses, usesBeforeEntry, "An initial target must not trigger another activity");
+combat.turn++;
+await enter(c);
+assert.equal(uses, usesBeforeEntry + 1, "The next turn still creates a new card");
+assert.equal(reportedErrors.length, 2);
+testLog("Initial-cast checks passed: existing card/damage reuse, initial targets limited, fresh card next turn.");
 testLog("Shared-card checks passed: concurrency, targets, damage preservation, turns, isolation, fallback, cancellation, failed-update retry, target restoration, queue recovery.");
