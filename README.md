@@ -33,6 +33,7 @@ scripts/region-spell-automation.js
 scripts/shared-activity-card.js
 scripts/movement-damage.js
 scripts/concentration-cleanup.js
+scripts/concentration-hud.js
 scripts/spell-manager.js
 ```
 
@@ -204,6 +205,17 @@ Match timing to the spell version used in your world. End-turn activity handling
 - Player casting, multiple connected clients, concurrent triggers, and other automation modules need testing with your module stack.
 
 ## Troubleshooting and support
+
+### End concentration from the token HUD
+
+Right-click a concentrating token to show its HUD. A concentration icon with a
+red **×** appears for the GM or an actor owner. Hover to see the concentrating
+spell names; click to end concentration immediately through D&D5e's normal
+workflow, including linked Region cleanup. If the actor is allowed to maintain
+multiple concentration effects, this control ends all of them.
+
+The control appears only while concentration is active. Repeated clicks during
+the same operation are ignored.
 
 | Symptom | Check |
 | --- | --- |
