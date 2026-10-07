@@ -8,6 +8,7 @@
   "download": "https://github.com/Ugmul-dnd/region-spell-automation/releases/download/v0.5.5/region-spell-automation.zip",
   "bugs": "https://github.com/Ugmul-dnd/region-spell-automation/issues",
   "license": "LICENSE",
+  "socket": true,
   "authors": [
     {
       "name": "Ugmul"

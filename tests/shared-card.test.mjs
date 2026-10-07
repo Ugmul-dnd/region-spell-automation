@@ -22,7 +22,7 @@ const trigger = {
 const combat = { id: "combat", round: 1, turn: 0 };
 const messages = new Map();
 globalThis.game = {
-    combat, messages, user: { targets },
+    combat, messages, user: { id: "gm", isGM: true, targets },
     settings: { get: () => ({ "Spirit Guardians": { triggers: [trigger] } }) }
 };
 globalThis.ui = { notifications: { warn() {}, error() {} } };
@@ -180,6 +180,7 @@ initialCard.update = async data => {
     if (data["system.targets"]) await updateInitial.call(initialCard, data);
     if (data["flags.region-spell-automation.sharedCardPerTurn"]) {
         initialCard.flags["region-spell-automation"] = { sharedCardPerTurn: true };
+        initialCard.flags["region-spell-automation"].sharedCardKeys = data["flags.region-spell-automation.sharedCardKeys"];
     }
 };
 const initialDamage = makeMessage("initial-damage", [helpers.describeTarget(a)]);
@@ -203,4 +204,74 @@ await enter(c);
 assert.equal(uses, usesBeforeEntry + 1, "The next turn still creates a new card");
 assert.equal(reportedErrors.length, 2);
 testLog("Initial-cast checks passed: existing card/damage reuse, initial targets limited, fresh card next turn.");
+
+// Player-created Regions are configured through the GM's core document hook,
+// never through a player-side attempt to write GM-only RegionBehavior data.
+let attachments = 0;
+const playerRegion = { ...region, behaviors: [], async createEmbeddedDocuments(type, data) {
+    attachments++;
+    assert.equal(type, "RegionBehavior");
+    return data.map((entry, index) => ({ ...entry, id: `behavior${index}` }));
+}, async updateEmbeddedDocuments() {}, async update(data) {
+    this.flags["region-spell-automation"] = { casterUserId: data["flags.region-spell-automation.casterUserId"] };
+} };
+game.users = { activeGM: { id: "gm" } };
+game.user.id = "player"; game.user.isGM = false;
+await hooks.get("createRegion")(playerRegion);
+assert.equal(attachments, 0);
+game.user.id = "secondary-gm"; game.user.isGM = true;
+await hooks.get("createRegion")(playerRegion);
+assert.equal(attachments, 0);
+game.user.id = "gm";
+await hooks.get("createRegion")(playerRegion);
+assert.equal(attachments, 1);
+assert.equal(reportedErrors.length, 2);
+testLog("Player-casting checks passed: player and secondary GM skip writes; active GM attaches behaviors.");
+
+// The GM reuses a player-authored initial card via persisted message metadata,
+// without ever receiving that player's local postUseActivity hook.
+combat.turn++;
+const remoteCard = makeMessage("player-initial", [helpers.describeTarget(a)]);
+remoteCard.flags = { "region-spell-automation": { sharedCardPerTurn: true,
+    sharedCardKeys: [helpers.getSharedCardKey(trigger, spell, region, {}, combat)] } };
+messages.set(remoteCard.id, remoteCard);
+const beforeRemote = uses;
+await enter(b);
+assert.equal(uses, beforeRemote);
+assert.equal(remoteCard.system.targets.length, 2);
+combat.turn++;
+game.user.isGM = false; game.user.id = "player";
+await enter(c);
+assert.equal(uses, beforeRemote, "Player client must not execute a second activity");
+game.user.isGM = true; game.user.id = "secondary-gm";
+await enter(c);
+assert.equal(uses, beforeRemote);
+game.user.id = "gm";
+await enter(c);
+assert.equal(uses, beforeRemote + 1);
+testLog("Cross-client sharing checks passed: player cast card reused by GM; one activity executor.");
+
+const casterPlayer = { id: "player", active: true };
+game.users.get = id => id === "player" ? casterPlayer : null;
+spell.actor = { testUserPermission: user => user.id === "player" };
+region.flags["region-spell-automation"] = { casterUserId: "player" };
+combat.turn++;
+const beforeCaster = uses;
+await enter(a); // Current client is GM, but player caster is online.
+assert.equal(uses, beforeCaster);
+game.user.id = "player"; game.user.isGM = false;
+await enter(a);
+assert.equal(uses, beforeCaster + 1, "Connected caster must run their activity");
+game.user.id = "gm"; game.user.isGM = true;
+await enter(b);
+assert.equal(uses, beforeCaster + 1, "GM must not also run the caster's activity");
+game.user.id = "player"; game.user.isGM = false;
+await enter(b);
+assert.equal(uses, beforeCaster + 1, "Additional targets share the caster's card");
+casterPlayer.active = false;
+combat.turn++;
+game.user.id = "gm"; game.user.isGM = true;
+await enter(a);
+assert.equal(uses, beforeCaster + 2, "Offline caster falls back to active GM");
+testLog("Caster routing checks passed: player rolls, GM skips duplicates, shared targets, offline fallback.");
 testLog("Shared-card checks passed: concurrency, targets, damage preservation, turns, isolation, fallback, cancellation, failed-update retry, target restoration, queue recovery.");

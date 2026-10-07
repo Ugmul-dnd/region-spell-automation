@@ -10,7 +10,7 @@ globalThis.foundry = { utils: { escapeHTML: value => String(value).replaceAll("<
 globalThis.CONFIG = { Token: { movement: { actions: { walk: {}, teleport: { teleport: true } } } } };
 globalThis.CONST = { REGION_MOVEMENT_SEGMENTS: { MOVE: 0 } };
 const messages = [];
-globalThis.game = { messages };
+globalThis.game = { messages, user: {id:"gm",isGM:true} };
 globalThis.ChatMessage = { getSpeaker: () => ({}), async create(data) {
     const card = { ...data, isOwner: true,
         getFlag: (namespace, key) => card.flags[namespace]?.[key],
@@ -105,7 +105,8 @@ game.combat = { id: "combat", round: 2, turn: 0 };
 game.settings = { get: () => ({ "Spike Growth": { triggers: [{ ...trigger, movementDamage: true,
     name: "Movement", activity: "Damage", events: ["tokenEnter"], targeting: "everyone",
     oncePerTurn: true, shareCardPerTurn: true }] } }) };
-game.user = { targets: new Set() };
+game.user = { id: "gm", isGM: true, targets: new Set() };
+game.users = { activeGM: { id: "gm" } };
 activity.name = "Damage";
 spell.system.activities.find = fn => [...spell.system.activities.values()].find(fn);
 token.object = { name: token.name, id: "a", document: token };
@@ -124,6 +125,20 @@ for (let i = 0; i < 3; i++) {
 }
 assert.equal(messages.length, 3);
 assert.equal(helpers.pendingSteps(messages[2].getFlag("region-spell-automation", "movementDamage")), 3);
+const repeatedEvent = { region, triggerId: trigger.id, event: { name: "tokenMoveWithin", data: {
+    token, movement: { id: "multi-client", origin: {x:0}, passed: {waypoints:[{x:5,action:"walk"}]} }
+} } };
+game.user.id = "player"; game.user.isGM = false;
+await globalThis.RegionSpellAutomation.handleRegionEvent(repeatedEvent);
+assert.equal(messages.length, 3);
+assert.equal(helpers.pendingSteps(messages[2].getFlag("region-spell-automation", "movementDamage")), 3);
+game.user.id = "secondary-gm"; game.user.isGM = true;
+await globalThis.RegionSpellAutomation.handleRegionEvent(repeatedEvent);
+assert.equal(helpers.pendingSteps(messages[2].getFlag("region-spell-automation", "movementDamage")), 3);
+game.user.id = "gm";
+await globalThis.RegionSpellAutomation.handleRegionEvent(repeatedEvent);
+assert.equal(messages.length, 3);
+assert.equal(helpers.pendingSteps(messages[2].getFlag("region-spell-automation", "movementDamage")), 4);
 console.log = runtimeLog;
 
 // Boundary-clipped entry counts as one full increment; later internal and exit
@@ -238,4 +253,50 @@ splitCard.isOwner = false;
 await helpers.adjustPendingMovementDamage(splitCard, 1);
 assert.equal(helpers.pendingSteps(manualData()), 0);
 console.log("Manual-adjustment checks passed: plus/minus, zero floor, adjusted dice, rolled history and ownership.");
+
+// Simulate the player/GM round trip while keeping the GM as the sole card writer.
+const player = {id:"caster",isGM:false,active:true};
+const gm = {id:"gm",isGM:true,active:true};
+spell.actor = {testUserPermission: user => user.id === player.id};
+splitCard.isOwner = true; splitCard.id = "remote-pending";
+manualData().casterUserId = player.id;
+game.user = gm;
+await helpers.adjustPendingMovementDamage(splitCard, 1);
+await helpers.adjustPendingMovementDamage(splitCard, 1);
+const getMessage = id => id === splitCard.id ? splitCard : undefined;
+game.messages.get = getMessage;
+game.users = {activeGM:gm,get:id=>id===player.id?player:id===gm.id?gm:null};
+let socketHandler, socketRequests=0, requestCounter=0;
+foundry.utils.randomID = () => `request${++requestCounter}`;
+game.socket = { on(channel, handler) { socketHandler=handler; }, emit(channel, packet) {
+    socketRequests++;
+    Promise.resolve().then(async () => {
+        game.user = gm;
+        let result, error;
+        try { result = await helpers.processMovementRollRequest(packet); }
+        catch(err) { error=err.message; }
+        game.user = player;
+        socketHandler({action:"movementRollReply",requestId:packet.requestId,userId:player.id,gmId:gm.id,result,error});
+    });
+} };
+helpers.registerMovementDamageHooks(fn=>fn());
+game.user = player;
+const beforeAdjustment = helpers.pendingSteps(manualData());
+await helpers.adjustPendingMovementDamage(splitCard, 1);
+assert.equal(helpers.pendingSteps(manualData()),beforeAdjustment,"Player cannot manually adjust counter");
+assert.equal(helpers.canRollMovementDamage(manualData(),player,spell.actor),true);
+assert.equal(helpers.canRollMovementDamage(manualData(),{id:"other",isGM:false},spell.actor),false);
+await helpers.rollPendingMovementDamage(splitCard);
+assert.equal(rolledFormula,"4d4");
+assert.equal(helpers.pendingSteps(manualData()),0);
+assert.equal(socketRequests,2,"Reservation and completion both go through GM");
+game.user = gm;
+await helpers.adjustPendingMovementDamage(splitCard,1);
+game.user = player;
+canceled=true;
+await helpers.rollPendingMovementDamage(splitCard);
+assert.equal(helpers.pendingSteps(manualData()),1,"Canceled player roll restores pending increment");
+canceled=false;
+assert.equal(Object.keys(manualData().rollReservations).length,0);
+console.log("Player movement-roll checks passed: GM-only adjustments, caster authorization, reservation/completion, cancellation refund.");
 

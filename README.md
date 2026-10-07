@@ -11,6 +11,12 @@ Configure a spell once, then cast it normally. The module attaches configured be
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
 
+An active GM must be connected when spells create Regions. The module uses the
+active GM's client to attach Region behaviors and track movement damage,
+including for player casts. Normal activity triggers run on the connected
+caster's client if they own the originating actor, falling back to the active GM;
+players do not need GM permissions for this setup.
+
 ## Features
 
 - Multiple activity triggers per spell and multiple events per trigger.
@@ -135,7 +141,10 @@ its activity card is registered for the newly created Regions. New creatures
 encountered later during that cast's combat turn join the initial card and its
 existing damage cards. Its initial targets also receive the per-turn allowance
 when Once Per Turn is enabled. Different casting and trigger activities are not
-automatically combined.
+automatically combined. Shared-card keys are stored on the chat message so the
+designated executor can reuse a player's initial cast card across clients.
+Normal activities execute on the connected caster's client; only the active GM
+tracks movement damage. Other modules may still alter native roll prompts.
 
 If damage has already been rolled from that card, new targets are also added to
 its associated damage cards without another roll. Saves and damage application
@@ -145,8 +154,9 @@ the turn, even if a creature later leaves the area.
 
 A new combat turn creates a fresh card. Different Regions, originating spell
 items, and triggers have separate cards. Outside combat this option falls back
-to the usual per-event activity use. Shared-card history is client-local and
-resets on reload or combat deletion; it is not a cross-client lock. Deleting a
+to the usual per-event activity use. The local shared-card cache resets on reload
+or combat deletion; message metadata allows an existing card to be found again.
+Each activity has one designated caster-or-GM executor. Deleting a
 shared card allows a fresh card for a newly qualifying target.
 
 This option changes no existing configurations until enabled. It is intended for
@@ -179,7 +189,11 @@ count repeated small unsnapped moves more than their combined physical distance.
 Duplicate reports of the same move are ignored.
 
 Use **+** and **−** on the pending card to add or remove one pending damage
-increment manually. The count stops at zero; adjustments do not change previous
+increment manually. These controls are GM-only. The casting player can use
+**Roll Pending Damage** while connected and owning the originating actor; the
+GM reserves the count and the player's client performs the native damage roll.
+An active GM must remain connected. GMs can also roll as a fallback.
+The count stops at zero; adjustments do not change previous
 rolls or movement history. Corrections are saved on the card and included in the
 next pending damage roll.
 

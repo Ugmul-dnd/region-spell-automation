@@ -471,6 +471,14 @@ async function executeRegionEvent({
     // VERIFY EVENT
     // --------------------------------------------------------
 
+    // The caster runs normal activities on their own actor. GM-only document
+    // setup and movement accounting remain separate from activity execution.
+    const casterUserId = region.flags?.[MODULE_ID]?.casterUserId;
+    const casterUser = casterUserId ? game.users?.get?.(casterUserId) : null;
+    const casterCanUse = casterUser?.active && spell.actor?.testUserPermission?.(casterUser, "OWNER");
+    const executor = !trigger.movementDamage && casterCanUse ? casterUser : game.users?.activeGM;
+    if (executor ? executor.id !== game.user.id : !game.user.isGM) return;
+
     if (
         trigger.movementDamage
             ? !MOVEMENT_EVENTS.includes(event.name)
@@ -614,6 +622,8 @@ async function executeRegionEvent({
 
     if (trigger.movementDamage) {
         try {
+            const activeGM = game.users?.activeGM;
+            if (!game.user.isGM || (activeGM && activeGM.id !== game.user.id)) return;
             await recordMovementDamage({ trigger, spell, region, event, activity });
         } catch (err) {
             console.error("Region Spell Automation | Movement damage tracking failed:", err);
@@ -622,9 +632,12 @@ async function executeRegionEvent({
         return;
     }
 
+
     const sharedKey = getSharedCardKey(trigger, spell, region, event, game.combat);
     const sharedMessage = sharedKey
-        ? game.messages.get(sharedCardHistory.get(sharedKey))
+        ? game.messages.get(sharedCardHistory.get(sharedKey)) ??
+            Array.from(game.messages.values()).reverse().find(message =>
+                message.getFlag?.(MODULE_ID, "sharedCardKeys")?.includes(sharedKey))
         : null;
 
     if (sharedMessage) {
@@ -742,7 +755,7 @@ async function executeRegionEvent({
             sharedKey ? {
                 data: {
                     system: { targets: [describeTarget(targetDoc)] },
-                    flags: { [MODULE_ID]: { sharedCardPerTurn: true } }
+                    flags: { [MODULE_ID]: { sharedCardPerTurn: true, sharedCardKeys: [sharedKey] } }
                 }
             } : {}
         );
@@ -847,12 +860,14 @@ Hooks.once("ready", () => {
         if (!config || config.enabled === false) return;
         const event = { data: { combat: game.combat, round: game.combat?.round, turn: game.combat?.turn } };
         const registrations = [];
+        const sharedCardKeys = [];
         for (const trigger of config.triggers ?? []) {
             if (!trigger.shareCardPerTurn || trigger.movementDamage || trigger.activity !== activity.name) continue;
             for (const region of results.templates) {
                 const key = getSharedCardKey(trigger, spell, region, event, game.combat);
                 if (!key) continue;
                 sharedCardHistory.set(key, message.id);
+                sharedCardKeys.push(key);
                 registrations.push(trigger);
             }
         }
@@ -860,7 +875,10 @@ Hooks.once("ready", () => {
         // The hook does not await us, so register the card synchronously above;
         // serialize its metadata and limiter updates with later Region events.
         enqueueRegionEvent(async () => {
-            await message.update({ [`flags.${MODULE_ID}.sharedCardPerTurn`]: true });
+            await message.update({
+                [`flags.${MODULE_ID}.sharedCardPerTurn`]: true,
+                [`flags.${MODULE_ID}.sharedCardKeys`]: sharedCardKeys
+            });
             for (const trigger of registrations) {
                 if (!trigger.oncePerTurn) continue;
                 for (const descriptor of message.system.targets ?? []) {
@@ -919,10 +937,7 @@ Hooks.once("ready", () => {
     // SPELL TEMPLATE / REGION CREATED
     // ========================================================
 
-    Hooks.on(
-        "dnd5e.postCreateMeasuredTemplate",
-
-        async (
+    const attachSpellRegions = async (
             activity,
             regions
         ) => {
@@ -1430,10 +1445,29 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     }
                 }
             }
+        };
+
+
+
+    // Core document creation hooks reach GM clients for player-created Regions.
+    // D&D5e's local post-template hook ran on the caster and cannot write
+    // GM-only RegionBehavior documents when that caster is a player.
+    Hooks.on("createRegion", async (region, options, userId) => {
+        const activeGM = game.users?.activeGM;
+        if (!game.user.isGM || (activeGM && activeGM.id !== game.user.id)) return;
+        const itemUUID = region.flags?.dnd5e?.item;
+        if (!itemUUID) return;
+        try {
+            const item = await fromUuid(itemUUID);
+            if (item) {
+                await region.update({ [`flags.${MODULE_ID}.casterUserId`]: userId ?? game.user.id });
+                await attachSpellRegions({ item }, [region]);
+            }
+        } catch (err) {
+            console.error("Region Spell Automation | GM Region setup failed:", err);
+            ui.notifications.error("Could not configure spell Region automation. Check F12 console.");
         }
-    );
-
-
+    });
     console.log(
         "Region Spell Automation | v0.5.5 Ready"
     );
