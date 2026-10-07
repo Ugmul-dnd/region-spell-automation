@@ -63,6 +63,9 @@ class RegionSpellManager
     extends foundry.applications.api.ApplicationV2 {
 
     selectedSpells = new Set();
+    spellStateFilter = "all";
+    searchQuery = "";
+    managerScrollTop = 0;
 
     static DEFAULT_OPTIONS = {
 
@@ -481,6 +484,7 @@ class RegionSpellManager
                 spellRows += `
                     <div
                         class="rsa-spell-card"
+                        data-enabled="${config.enabled !== false}"
 
                         data-search-name="${searchName}"
 
@@ -653,6 +657,7 @@ class RegionSpellManager
 
         return `
             <div
+                data-rsa-manager-scroll
                 style="
                     padding:12px;
                     height:100%;
@@ -729,6 +734,10 @@ class RegionSpellManager
 
 
                 <!-- ======================================== -->
+                <div style="display:flex;gap:6px;margin-bottom:12px;">
+                    <button type="button" id="rsa-show-disabled" aria-pressed="false">Show Disabled</button>
+                    <button type="button" id="rsa-show-enabled" aria-pressed="false">Show Enabled</button>
+                </div>
                 <!-- HEADER                                   -->
                 <!-- ======================================== -->
 
@@ -814,6 +823,8 @@ class RegionSpellManager
         options
     ) {
 
+        const previousScroll = content.querySelector?.("[data-rsa-manager-scroll]");
+        if (previousScroll) this.managerScrollTop = previousScroll.scrollTop;
         content.innerHTML =
             result;
     }
@@ -932,124 +943,51 @@ class RegionSpellManager
         // LIVE SEARCH
         // ====================================================
 
-        const searchInput =
-            root.querySelector(
-                "#rsa-search"
-            );
-
-
-        const spellCards =
-            Array.from(
-                root.querySelectorAll(
-                    ".rsa-spell-card"
-                )
-            );
-
-
-        const countDisplay =
-            root.querySelector(
-                "#rsa-spell-count"
-            );
-
-
-        const noResults =
-            root.querySelector(
-                "#rsa-no-results"
-            );
-
-
-        if (
-            searchInput
-        ) {
-
-            searchInput.addEventListener(
-                "input",
-
-                () => {
-
-                    const query =
-                        searchInput
-                            .value
-                            .trim()
-                            .toLowerCase();
-
-
-                    let visibleCount =
-                        0;
-
-
-                    for (
-                        const card
-                        of spellCards
-                    ) {
-
-                        const spellName =
-                            card.dataset.searchName ??
-                            "";
-
-
-                        const matches =
-                            !query ||
-                            spellName.includes(
-                                query
-                            );
-
-
-                        card.style.display =
-                            matches
-                                ? ""
-                                : "none";
-
-
-                        if (
-                            matches
-                        ) {
-
-                            visibleCount++;
-                        }
-                    }
-
-
-                    if (
-                        countDisplay
-                    ) {
-
-                        if (
-                            query
-                        ) {
-
-                            countDisplay.textContent =
-                                `${visibleCount} / ${spellCards.length}`;
-                        }
-
-                        else {
-
-                            countDisplay.textContent =
-                                String(
-                                    spellCards.length
-                                );
-                        }
-                    }
-
-
-                    if (
-                        noResults
-                    ) {
-
-                        noResults.style.display =
-                            (
-                                query &&
-                                visibleCount === 0
-                            )
-                                ? ""
-                                : "none";
-                    }
-                }
-            );
+        const searchInput = root.querySelector("#rsa-search");
+        const spellCards = Array.from(root.querySelectorAll(".rsa-spell-card"));
+        const countDisplay = root.querySelector("#rsa-spell-count");
+        const noResults = root.querySelector("#rsa-no-results");
+        const scroller = root.querySelector("[data-rsa-manager-scroll]");
+        const applyFilters = () => {
+            const query = this.searchQuery.trim().toLowerCase();
+            let count = 0;
+            for (const card of spellCards) {
+                const matchesName = !query || (card.dataset.searchName ?? "").includes(query);
+                const enabled = card.dataset.enabled !== "false";
+                const matchesState = this.spellStateFilter === "all" ||
+                    (this.spellStateFilter === "enabled" ? enabled : !enabled);
+                card.style.display = matchesName && matchesState ? "" : "none";
+                if (matchesName && matchesState) count++;
+            }
+            if (countDisplay) countDisplay.textContent = query || this.spellStateFilter !== "all"
+                ? `${count} / ${spellCards.length}` : String(spellCards.length);
+            if (noResults) noResults.style.display = count === 0 && spellCards.length ? "" : "none";
+            for (const [id, state] of [["#rsa-show-disabled", "disabled"], ["#rsa-show-enabled", "enabled"]]) {
+                const button = root.querySelector(id);
+                button?.setAttribute("aria-pressed", String(this.spellStateFilter === state));
+                button?.classList.toggle("active", this.spellStateFilter === state);
+            }
+        };
+        if (searchInput) {
+            searchInput.value = this.searchQuery;
+            searchInput.addEventListener("input", () => {
+                this.searchQuery = searchInput.value;
+                applyFilters();
+            });
         }
-
-
-        // ====================================================
+        for (const [id, state] of [["#rsa-show-disabled", "disabled"], ["#rsa-show-enabled", "enabled"]]) {
+            root.querySelector(id)?.addEventListener("click", () => {
+                this.spellStateFilter = this.spellStateFilter === state ? "all" : state;
+                applyFilters();
+                this.managerScrollTop = 0;
+                if (scroller) scroller.scrollTop = 0;
+            });
+        }
+        applyFilters();
+        if (scroller) {
+            scroller.scrollTop = this.managerScrollTop;
+            scroller.addEventListener("scroll", () => { this.managerScrollTop = scroller.scrollTop; });
+        }
         // DROP SPELL
         // ====================================================
 

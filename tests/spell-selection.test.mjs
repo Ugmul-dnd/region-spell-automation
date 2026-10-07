@@ -63,3 +63,41 @@ const html = await manager._renderHTML({},{});
 assert.match(html,/rsa-toggle-enabled/);
 assert.match(html,/Select all/);
 console.log("Spell selection checks passed: independent selection/state, select/deselect all, cancel/confirm deletion, unselected preservation.");
+
+// State filters combine with search and survive rendering; scroll is restored
+// after the HTML replacement used by individual and bulk state changes.
+for (const id of ["rsa-show-disabled","rsa-show-enabled","rsa-search","rsa-spell-count","rsa-no-results"]) {
+    const node = makeNode("");
+    node.style = {};
+    node.attributes = {};
+    node.setAttribute = (key,value) => { node.attributes[key]=value; };
+    node.classList = {toggle(){}};
+    nodes.set(`#${id}`,node);
+}
+const scroller = makeNode(""); scroller.scrollTop=0;
+nodes.set("[data-rsa-manager-scroll]",scroller);
+const cards = [
+    {dataset:{searchName:"spirit guardians",enabled:"true"},style:{}},
+    {dataset:{searchName:"spike growth",enabled:"false"},style:{}}
+];
+const originalQueryAll = root.querySelectorAll;
+root.querySelectorAll = selector => selector === ".rsa-spell-card" ? cards : originalQueryAll(selector);
+manager._onRender({},{});
+await click("#rsa-show-disabled");
+assert.equal(cards[0].style.display,"none");assert.equal(cards[1].style.display,"");
+nodes.get("#rsa-search").value="guardians";
+nodes.get("#rsa-search").events.input();
+assert.equal(cards[1].style.display,"none");
+await click("#rsa-show-enabled");
+assert.equal(cards[0].style.display,"");
+assert.equal(nodes.get("#rsa-show-enabled").attributes["aria-pressed"],"true");
+scroller.scrollTop=850; scroller.events.scroll();
+manager._replaceHTML("new content",{querySelector:()=>scroller},{});
+scroller.scrollTop=0;
+manager._onRender({},{});
+assert.equal(scroller.scrollTop,850);
+assert.equal(nodes.get("#rsa-search").value,"guardians");
+assert.equal(manager.spellStateFilter,"enabled");
+await click("#rsa-show-enabled");
+assert.equal(manager.spellStateFilter,"all");
+console.log("Filter/scroll checks passed: enabled/disabled filters, combined search, toggle to all, persistent search/filter and restored scroll.");

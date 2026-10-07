@@ -92,6 +92,11 @@ It removes saved module configurations, not the actors' spell items.
 change automation for selected spells only. Disabled spells show **(Disabled)**
 after their names; enabled spells display their names without a suffix.
 
+**Show Disabled** and **Show Enabled**, below search, filter the list by state
+and combine with the search text. Click the active filter again to show both
+states. Search, filter, selection, and scroll position are preserved when
+enabling or disabling spells.
+
 ## Trigger events
 
 | Manager label | Event | When it runs |
