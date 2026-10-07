@@ -66,6 +66,9 @@ function makeMessage(id, descriptors) {
 }
 let runtimeSource = Buffer.from(process.env.RSA_RUNTIME_SOURCE, "base64").toString();
 runtimeSource = runtimeSource.replace('"./shared-activity-card.js"', JSON.stringify(sourceURL(sharedSource)));
+const movementSource = Buffer.from(process.env.RSA_MOVEMENT_SOURCE, "base64").toString()
+    .replace('"./shared-activity-card.js"', JSON.stringify(sourceURL(sharedSource)));
+runtimeSource = runtimeSource.replace('"./movement-damage.js"', JSON.stringify(sourceURL(movementSource)));
 await import(sourceURL(runtimeSource));
 hooks.get("ready")();
 const handle = globalThis.RegionSpellAutomation.handleRegionEvent;

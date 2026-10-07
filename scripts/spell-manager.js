@@ -262,7 +262,7 @@ class RegionSpellManager
 
 
                         const limitText =
-                            trigger.shareCardPerTurn
+                            trigger.movementDamage ? "Movement Damage" : trigger.shareCardPerTurn
                                 ? "Shared Card Per Turn"
                                 : trigger.oncePerTurn
                                 ? "Once Per Turn"
@@ -1727,6 +1727,15 @@ class RegionSpellManager
             true;
 
         const shareCardPerTurn = existingTrigger?.shareCardPerTurn === true;
+        const movementDamage = existingTrigger?.movementDamage === true;
+        const movementIncrement = Number(existingTrigger?.movementIncrement ?? 5);
+
+        const help = text => {
+            const safe = foundry.utils.escapeHTML(text);
+            return `<span tabindex="0" role="img" aria-label="${safe}" title="${safe}"
+                data-tooltip="${safe}" style="cursor:help;margin-left:4px;">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>`;
+        };
 
 
         // ====================================================
@@ -1747,6 +1756,8 @@ class RegionSpellManager
                                     : `Add ${item.name} Trigger`
                         },
 
+                        position: { width: 560 },
+
 
                         content: `
                             <div
@@ -1754,6 +1765,9 @@ class RegionSpellManager
                                     display:flex;
                                     flex-direction:column;
                                     gap:12px;
+                                    max-height:65vh;
+                                    overflow-y:auto;
+                                    padding-right:8px;
                                 "
                             >
 
@@ -1937,6 +1951,7 @@ class RegionSpellManager
 
                                         <label>
                                             Once Per Turn
+                                            ${help("Each token can trigger this activity only once during the current combat turn. Different tokens have separate allowances.")}
                                         </label>
 
                                         <div class="form-fields">
@@ -1958,38 +1973,35 @@ class RegionSpellManager
                                     </div>
 
 
-                                    <div
-                                        style="
-                                            opacity:0.7;
-                                            font-size:0.88em;
-                                            margin-top:4px;
-                                        "
-                                    >
-                                        When enabled, this trigger
-                                        can affect each token only
-                                        once during the current
-                                        combat turn.
-                                    </div>
-
                                 </fieldset>
 
 
                                 <fieldset>
                                     <legend>Shared Activity Card</legend>
                                     <div class="form-group">
-                                        <label>Share Activity Card Per Turn</label>
+                                        <label>Share Activity Card Per Turn ${help("Add new targets to the same activity and damage cards during one combat turn instead of using the activity again. Saves and damage application remain manual. Enable Once Per Turn to also limit each creature. Outside combat, activities run normally.")}</label>
                                         <div class="form-fields">
                                             <input type="checkbox" name="shareCardPerTurn"
                                                 ${shareCardPerTurn ? "checked" : ""}>
                                         </div>
                                     </div>
-                                    <p style="opacity:0.7;font-size:0.88em;">
-                                        Add new targets to the same activity and damage cards during
-                                        one combat turn instead of using the activity again.
-                                        Saves and damage application remain manual. Enable Once Per
-                                        Turn above to also limit each creature to one trigger.
-                                        Outside combat, activities run normally.
-                                    </p>
+                                </fieldset>
+
+                                <fieldset>
+                                    <legend>Movement Damage</legend>
+                                    <div class="form-group">
+                                        <label>Accumulate Movement Damage ${help("Requires a Damage activity. Tracks distance inside the Region on a per-creature pending damage card. Three increments of 2d4 roll 6d4. Uses movement-in/within/out events, skips teleportation, and overrides selected events, Once Per Turn, and Shared Activity Card. Recast after changing this mode. Damage application remains manual.")}</label>
+                                        <div class="form-fields">
+                                            <input type="checkbox" name="movementDamage" ${movementDamage ? "checked" : ""}>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Distance Per Damage Increment ${help("Distance in scene units for each damage increment. Use 5 on a feet-based scene for Spike Growth; convert appropriately on metric scenes. Each movement counts whole increments. Partial boundary steps round up to one increment; a 15-foot move counts as three 5-foot steps.")}</label>
+                                        <div class="form-fields">
+                                            <input type="number" name="movementIncrement" min="0.01" step="any"
+                                                value="${Number.isFinite(movementIncrement) ? movementIncrement : 5}">
+                                        </div>
+                                    </div>
                                 </fieldset>
 
                                 <!-- TARGETING -->
@@ -2115,6 +2127,12 @@ class RegionSpellManager
         const events =
             [];
 
+        if (result.movementDamage) events.push("tokenMoveIn", "tokenMoveWithin", "tokenMoveOut");
+        if (result.movementDamage && (!Number.isFinite(Number(result.movementIncrement)) || Number(result.movementIncrement) <= 0)) {
+            ui.notifications.warn("Enter a positive movement damage distance increment.");
+            return;
+        }
+
 
         const supportedEvents = [
 
@@ -2222,7 +2240,9 @@ class RegionSpellManager
                 result.oncePerTurn ===
                 true,
 
-            shareCardPerTurn: result.shareCardPerTurn === true
+            shareCardPerTurn: result.shareCardPerTurn === true,
+            movementDamage: result.movementDamage === true,
+            movementIncrement: Number(result.movementIncrement ?? 5)
         };
 
 

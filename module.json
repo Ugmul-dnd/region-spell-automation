@@ -23,13 +23,15 @@
         "id": "dnd5e",
         "type": "system",
         "compatibility": {
-          "minimum": "6.0.5"
+          "minimum": "6.0.5",
+          "verified": "6.0.6"
         }
       }
     ]
   },
   "esmodules": [
     "scripts/shared-activity-card.js",
+    "scripts/movement-damage.js",
     "scripts/region-spell-automation.js",
     "scripts/concentration-cleanup.js",
     "scripts/spell-manager.js"

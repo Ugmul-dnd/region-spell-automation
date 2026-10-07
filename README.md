@@ -8,7 +8,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 - Module version: **0.5.5**.
 - Foundry VTT: **v14**.
-- D&D5e system: **6.0.5+**; the current working setup uses 6.0.5. Later versions need testing.
+- D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
 
 ## Features
@@ -31,6 +31,7 @@ Place the module folder at `Data/modules/region-spell-automation` in your Foundr
 ```text
 scripts/region-spell-automation.js
 scripts/shared-activity-card.js
+scripts/movement-damage.js
 scripts/concentration-cleanup.js
 scripts/spell-manager.js
 ```
@@ -71,7 +72,7 @@ Use a fresh cast after changing events or Region Effects. Existing Regions retai
 
 Events on one trigger invoke the same activity and share its Once Per Turn allowance. Use separate triggers for different activities or timing rules.
 
-Foundry's Region events determine placement and movement behavior. Test casting over stationary tokens and moving areas separately from token entry. Movement events do not implement automatic damage for each distance increment traveled.
+Foundry's Region events determine placement and movement behavior. Test casting over stationary tokens and moving areas separately from token entry. Ordinary activity triggers do not measure distance; use the optional Movement Damage mode below for distance-based damage.
 
 ## Targeting
 
@@ -118,8 +119,49 @@ shared card allows a fresh card for a newly qualifying target.
 This option changes no existing configurations until enabled. It is intended for
 save/damage activities; activities with other on-use actions run those actions
 only for the first target. Verify with your module stack before using it at the
-table. The current implementation was checked against installed D&D5e 6.0.6;
-in-world verification is still required.
+table. The shared-card workflow was confirmed working in-world by the author
+with D&D5e 6.0.6 on October 7, 2026. Other module combinations still need testing.
+
+## Movement Damage (development)
+
+For Spike Growth, prepare a **Damage** activity with **2d4 piercing** damage on
+the originating spell. In its trigger, enable **Accumulate Movement Damage** and
+set **Distance Per Damage Increment** to **5** on a scene measured in feet.
+Save and recast the spell so the new movement behaviors are attached.
+
+The module measures movement inside the Region and maintains a pending damage
+chat card for each creature, Region, trigger, and combat turn. Three 5-foot moves,
+or one 15-foot move, accumulate three increments. Click **Roll Pending Damage**
+to roll **6d4**, then apply it with the native damage card. Further movement adds
+new pending damage; previously rolled increments are not rolled again. Each
+movement counts whole increments: partial boundary steps round up instead of
+carrying fractional feet forward.
+
+A newly created pending card starts with at least one full damage increment,
+including a non-teleport boundary-only entry. A 2.5-foot entry counts as
+one 5-foot step; a 15-foot move inside counts as three. The final outward step
+adds no damage; earlier internal steps during a longer exit move still count.
+This simplified model can
+count repeated small unsnapped moves more than their combined physical distance.
+Duplicate reports of the same move are ignored.
+
+This mode automatically uses movement-in/within/out events and overrides event
+selections, Once Per Turn, and shared-card options for that trigger. It requires
+a Damage activity without saves or attacks. Each increment repeats the activity's
+damage dice and bonuses independently. Rolling does not consume resources,
+begin concentration, or create another area.
+
+Distances use Foundry's Region-clipped token path and scene measurement rules,
+not movement cost; difficult terrain does not double damage. Teleport segments
+are excluded. Set the increment in scene units, converting 5 feet if using a
+metric scene. Forced movement counts when it has a measurable non-teleport path;
+the module does not decide spell-rule exemptions.
+
+A new combat turn starts a new pending card; older cards remain usable. Outside
+combat, movement accumulates on the same card. Pending totals are stored on chat
+messages and survive reload; deleting a pending card deletes its record. This
+feature does not provide a cross-client lock. Damage application remains manual.
+Automated checks pass; in-world verification is still needed.
 
 ## Region Effects and concentration
 

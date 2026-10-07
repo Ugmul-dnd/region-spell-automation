@@ -18,6 +18,7 @@ const SETTING_KEY = "spellTable";
 
 import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets }
     from "./shared-activity-card.js";
+import { MOVEMENT_EVENTS, recordMovementDamage, registerMovementDamageHooks } from "./movement-damage.js";
 
 const sharedCardHistory = new Map();
 const enqueueRegionEvent = createEventQueue();
@@ -470,12 +471,9 @@ async function executeRegionEvent({
     // --------------------------------------------------------
 
     if (
-        !Array.isArray(
-            trigger.events
-        ) ||
-        !trigger.events.includes(
-            event.name
-        )
+        trigger.movementDamage
+            ? !MOVEMENT_EVENTS.includes(event.name)
+            : !Array.isArray(trigger.events) || !trigger.events.includes(event.name)
     ) {
 
         return;
@@ -548,8 +546,7 @@ async function executeRegionEvent({
 
 
     if (
-        trigger.oncePerTurn ===
-        true
+        !trigger.movementDamage && trigger.oncePerTurn === true
     ) {
 
         turnKey =
@@ -613,6 +610,16 @@ async function executeRegionEvent({
     // --------------------------------------------------------
     // REUSE THIS TURN'S ACTIVITY CARD
     // --------------------------------------------------------
+
+    if (trigger.movementDamage) {
+        try {
+            await recordMovementDamage({ trigger, spell, region, event, activity });
+        } catch (err) {
+            console.error("Region Spell Automation | Movement damage tracking failed:", err);
+            ui.notifications.error(`${spell.name}: ${err.message}`);
+        }
+        return;
+    }
 
     const sharedKey = getSharedCardKey(trigger, spell, region, event, game.combat);
     const sharedMessage = sharedKey
@@ -826,6 +833,7 @@ globalThis.RegionSpellAutomation = {
 // ============================================================
 
 Hooks.once("ready", () => {
+    registerMovementDamageHooks(enqueueRegionEvent);
 
     console.log(
         "Region Spell Automation | Installing v0.5.5 Region hook"
@@ -1021,7 +1029,7 @@ Hooks.once("ready", () => {
                     }
 
 
-                    const configuredEvents =
+                    const configuredEvents = trigger.movementDamage ? [...MOVEMENT_EVENTS] :
                         Array.isArray(
                             trigger.events
                         )
