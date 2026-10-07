@@ -30,6 +30,7 @@
     ]
   },
   "esmodules": [
+    "scripts/starter-spells.js",
     "scripts/shared-activity-card.js",
     "scripts/movement-damage.js",
     "scripts/region-spell-automation.js",

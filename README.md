@@ -35,6 +35,7 @@ scripts/movement-damage.js
 scripts/concentration-cleanup.js
 scripts/concentration-hud.js
 scripts/spell-manager.js
+scripts/starter-spells.js
 ```
 
 Restart Foundry if necessary, open your D&D5e world, and enable **Region Spell Automation** under **Manage Modules**.
@@ -51,6 +52,19 @@ The URL requires a published release containing `module.json` and `region-spell-
 
 ## Quick start
 
+GMs can open the manager directly from **Compendiums → Open Region Spell
+Manager**, beneath D&D5e's **Open Compendium Browser** button. The settings-menu
+entry remains available.
+
+Click **Add New Spell Region**, beside **Add Starting Spell List**, to open the
+spell drop popup. Drop a spell there to open its activity-trigger configuration.
+
+For a starting configuration, click **Add Starting Spell List** in the manager.
+It adds six missing recipes, disabled for review, without replacing your saved
+settings. They are based on Ugmul's Foundry Player's Handbook setup; matching
+activities/effects must exist on your own spell items. See
+[Starting Spell List](STARTER-SPELLS.md) for the spells and required setup.
+
 1. Prepare a spell whose casting activity creates a D&D5e Region.
 2. Add follow-up activities to that same spell item, such as recurring save/damage activities.
 3. As GM, open **Configure Settings**, locate Region Spell Automation, and select **Manage Region Spells**.
@@ -60,6 +74,17 @@ The URL requires a published release containing `module.json` and `region-spell-
 7. Test the selected events, effect entry/exit, and concentration cleanup.
 
 Use a fresh cast after changing events or Region Effects. Existing Regions retain the behaviors attached when they were created.
+
+The checkbox beside each spell selects it for bulk actions. Use the separate
+**Enable** or **Disable** button beside **Delete Spell** to toggle automation.
+**Select all** includes all configured spells, even those hidden by search;
+**Deselect all** clears selection. **Delete Selected** lists the selected spell
+configurations and requires a Yes/No confirmation that deletion cannot be undone.
+It removes saved module configurations, not the actors' spell items.
+
+**Enable Selected** and **Disable Selected**, below the selection controls,
+change automation for selected spells only. Disabled spells show **(Disabled)**
+after their names; enabled spells display their names without a suffix.
 
 ## Trigger events
 

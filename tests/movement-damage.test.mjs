@@ -114,6 +114,7 @@ token.segmentizeRegionMovementPath = (area, points) => [{ type: 0, from: points[
 let runtimeSource = Buffer.from(process.env.RSA_RUNTIME_SOURCE, "base64").toString()
     .replace('"./shared-activity-card.js"', JSON.stringify(sourceURL(shared)))
     .replace('"./movement-damage.js"', JSON.stringify(sourceURL(source)));
+runtimeSource = runtimeSource.replace('"./starter-spells.js"', JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`));
 await import(sourceURL(runtimeSource));
 hooks.get("ready")();
 for (let i = 0; i < 3; i++) {

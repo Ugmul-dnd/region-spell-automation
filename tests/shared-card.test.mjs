@@ -69,6 +69,7 @@ runtimeSource = runtimeSource.replace('"./shared-activity-card.js"', JSON.string
 const movementSource = Buffer.from(process.env.RSA_MOVEMENT_SOURCE, "base64").toString()
     .replace('"./shared-activity-card.js"', JSON.stringify(sourceURL(sharedSource)));
 runtimeSource = runtimeSource.replace('"./movement-damage.js"', JSON.stringify(sourceURL(movementSource)));
+runtimeSource = runtimeSource.replace('"./starter-spells.js"', JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`));
 await import(sourceURL(runtimeSource));
 hooks.get("ready")();
 const handle = globalThis.RegionSpellAutomation.handleRegionEvent;

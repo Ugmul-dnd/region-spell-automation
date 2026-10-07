@@ -19,6 +19,7 @@ const SETTING_KEY = "spellTable";
 import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets }
     from "./shared-activity-card.js";
 import { MOVEMENT_EVENTS, recordMovementDamage, registerMovementDamageHooks } from "./movement-damage.js";
+import { resolveRegionEffect } from "./starter-spells.js";
 
 const sharedCardHistory = new Map();
 const enqueueRegionEvent = createEventQueue();
@@ -1302,7 +1303,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
 
                     if (
                         !regionEffect?.id ||
-                        !regionEffect?.effectUuid
+                        (!regionEffect?.effectUuid && !regionEffect?.effectName)
                     ) {
                         continue;
                     }
@@ -1319,9 +1320,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     try {
 
                         effect =
-                            await fromUuid(
-                                regionEffect.effectUuid
-                            );
+                            await resolveRegionEffect(regionEffect, item, fromUuid);
 
                     }
 
@@ -1394,7 +1393,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
 
                                     system: {
                                         effects: [
-                                            regionEffect.effectUuid
+                                            effect.uuid
                                         ],
 
                                         dispositions:

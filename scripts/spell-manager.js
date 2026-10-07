@@ -13,6 +13,7 @@
 
 const MODULE_ID = "region-spell-automation";
 const SETTING_KEY = "spellTable";
+import { addStartingSpells } from "./starter-spells.js";
 
 
 // ============================================================
@@ -60,6 +61,8 @@ const TARGET_LABELS = {
 
 class RegionSpellManager
     extends foundry.applications.api.ApplicationV2 {
+
+    selectedSpells = new Set();
 
     static DEFAULT_OPTIONS = {
 
@@ -109,6 +112,10 @@ class RegionSpellManager
 
         let spellRows =
             "";
+
+        for (const name of this.selectedSpells) {
+            if (!Object.hasOwn(spellTable, name)) this.selectedSpells.delete(name);
+        }
 
 
         // ====================================================
@@ -507,12 +514,13 @@ class RegionSpellManager
                                 <input
                                     type="checkbox"
 
-                                    class="rsa-enabled"
+                                    class="rsa-select-spell"
+                                    aria-label="Select ${safeName}"
 
                                     data-spell="${encodedName}"
 
                                     ${
-                                        config.enabled !== false
+                                        this.selectedSpells.has(spellName)
                                             ? "checked"
                                             : ""
                                     }
@@ -524,12 +532,17 @@ class RegionSpellManager
                                         font-size:1.08em;
                                     "
                                 >
-                                    ${safeName}
+                                    ${safeName}${config.enabled === false ? " (Disabled)" : ""}
                                 </strong>
 
                             </div>
 
 
+                            <div style="display:flex;align-items:center;gap:6px;">
+                            <button type="button" class="rsa-toggle-enabled" data-spell="${encodedName}"
+                                title="${config.enabled !== false ? "Disable" : "Enable"} automation for ${safeName}">
+                                ${config.enabled !== false ? "Disable" : "Enable"}
+                            </button>
                             <button
                                 type="button"
 
@@ -540,6 +553,7 @@ class RegionSpellManager
                                 <i class="fa-solid fa-trash"></i>
                                 Delete Spell
                             </button>
+                            </div>
 
                         </div>
 
@@ -650,43 +664,33 @@ class RegionSpellManager
                 <!-- DROP ZONE                                -->
                 <!-- ======================================== -->
 
-                <div
-                    id="rsa-drop-zone"
-
-                    style="
-                        border:
-                            2px dashed
-                            var(--color-border-light-2);
-
-                        border-radius:6px;
-
-                        padding:28px;
-
-                        text-align:center;
-
-                        margin-bottom:16px;
-                    "
-                >
-
-                    <strong>
-                        Drag / Drop Spell Here
-                    </strong>
-
-
-                    <div
-                        style="
-                            margin-top:6px;
-                            opacity:0.7;
-                        "
-                    >
-                        Drop a spell to add an
-                        Activity Trigger.
+                <div style="margin-bottom:12px;">
+                    <div style="display:flex;gap:6px;">
+                    <button type="button" id="rsa-add-starters">
+                        <i class="fa-solid fa-book-open"></i> Add Starting Spell List
+                    </button>
+                    <button type="button" id="rsa-add-new-spell">
+                        <i class="fa-solid fa-plus"></i> Add New Spell Region
+                    </button>
                     </div>
-
+                    <p style="font-size:0.88em;opacity:0.8;">
+                        Six recipes based on Ugmul's Foundry Player's Handbook setup.
+                        Adds missing spells only, disabled for review. Requires matching activities
+                        and effects on your own spell items; no spell content is included.
+                    </p>
                 </div>
 
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                    <button type="button" id="rsa-select-all" title="Select all configured spells, including filtered spells">Select all</button>
+                    <button type="button" id="rsa-deselect-all">Deselect all</button>
+                    <button type="button" id="rsa-delete-selected" ${this.selectedSpells.size ? "" : "disabled"}>Delete Selected</button>
+                    <span id="rsa-selected-count">${this.selectedSpells.size} selected</span>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:12px;">
+                    <button type="button" id="rsa-enable-selected" ${this.selectedSpells.size ? "" : "disabled"}>Enable Selected</button>
+                    <button type="button" id="rsa-disable-selected" ${this.selectedSpells.size ? "" : "disabled"}>Disable Selected</button>
+                </div>
 
-                <!-- ======================================== -->
                 <!-- SEARCH                                   -->
                 <!-- ======================================== -->
 
@@ -833,6 +837,96 @@ class RegionSpellManager
         const root =
             this.element;
 
+        root.querySelector("#rsa-add-new-spell")?.addEventListener("click", () => {
+            if (!game.user.isGM) return;
+            this.spellDropDialog ??= new RegionSpellDropDialog(this);
+            this.spellDropDialog.render({ force: true });
+        });
+
+        const selectionBoxes = Array.from(root.querySelectorAll(".rsa-select-spell"));
+        const refreshSelection = () => {
+            for (const checkbox of selectionBoxes) {
+                checkbox.checked = this.selectedSpells.has(decodeURIComponent(checkbox.dataset.spell));
+            }
+            root.querySelector("#rsa-selected-count").textContent = `${this.selectedSpells.size} selected`;
+            for (const id of ["#rsa-delete-selected", "#rsa-enable-selected", "#rsa-disable-selected"]) {
+                root.querySelector(id).disabled = this.selectedSpells.size === 0;
+            }
+        };
+        for (const [selector, enabled] of [["#rsa-enable-selected", true], ["#rsa-disable-selected", false]]) {
+            root.querySelector(selector)?.addEventListener("click", async event => {
+                if (!this.selectedSpells.size || !game.user.isGM) return;
+                event.currentTarget.disabled = true;
+                try {
+                    const table = foundry.utils.deepClone(game.settings.get(MODULE_ID, SETTING_KEY) ?? {});
+                    for (const name of this.selectedSpells) {
+                        if (Object.hasOwn(table, name)) table[name].enabled = enabled;
+                    }
+                    await game.settings.set(MODULE_ID, SETTING_KEY, table);
+                    this.render({ force: true });
+                } catch (err) {
+                    console.error("Region Spell Automation | Bulk enable/disable failed:", err);
+                    ui.notifications.error("Could not update selected spells. Check F12 console.");
+                } finally { refreshSelection(); }
+            });
+        }
+        for (const checkbox of selectionBoxes) {
+            checkbox.addEventListener("change", () => {
+                const name = decodeURIComponent(checkbox.dataset.spell);
+                if (checkbox.checked) this.selectedSpells.add(name);
+                else this.selectedSpells.delete(name);
+                refreshSelection();
+            });
+        }
+        root.querySelector("#rsa-select-all")?.addEventListener("click", () => {
+            for (const checkbox of selectionBoxes) this.selectedSpells.add(decodeURIComponent(checkbox.dataset.spell));
+            refreshSelection();
+        });
+        root.querySelector("#rsa-deselect-all")?.addEventListener("click", () => {
+            this.selectedSpells.clear();
+            refreshSelection();
+        });
+        root.querySelector("#rsa-delete-selected")?.addEventListener("click", async event => {
+            const button = event.currentTarget;
+            const names = [...this.selectedSpells];
+            if (!names.length || !game.user.isGM) return;
+            button.disabled = true;
+            try {
+                const confirmed = await foundry.applications.api.DialogV2.confirm({
+                    window: { title: "Delete Selected Spells" },
+                    content: `<p>Delete these ${names.length} saved spell configuration(s) and all their triggers and Region Effect settings?</p>
+                        <p>${names.map(name => foundry.utils.escapeHTML(name)).join(", ")}</p>
+                        <p><strong>This cannot be undone. Are you sure?</strong></p>`,
+                    yes: { label: "Yes" }, no: { label: "No" }, rejectClose: false
+                });
+                if (!confirmed) return;
+                const table = foundry.utils.deepClone(game.settings.get(MODULE_ID, SETTING_KEY) ?? {});
+                for (const name of names) delete table[name];
+                await game.settings.set(MODULE_ID, SETTING_KEY, table);
+                for (const name of names) this.selectedSpells.delete(name);
+                this.render({ force: true });
+            } catch (err) {
+                console.error("Region Spell Automation | Could not delete selected spells:", err);
+                ui.notifications.error("Could not delete selected spells. Check F12 console.");
+            } finally { refreshSelection(); }
+        });
+
+        root.querySelector("#rsa-add-starters")?.addEventListener("click", async event => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            try {
+                if (!game.user.isGM) return;
+                const { table, added } = addStartingSpells(game.settings.get(MODULE_ID, SETTING_KEY), foundry.utils.randomID);
+                if (!added.length) { ui.notifications.info("All starting spells are already configured. Existing settings were preserved."); return; }
+                await game.settings.set(MODULE_ID, SETTING_KEY, table);
+                ui.notifications.info(`Added ${added.length} starting spell(s), disabled for review. Match activities/effects, then enable them.`);
+                this.render({ force: true });
+            } catch (err) {
+                console.error("Region Spell Automation | Could not add starting spells:", err);
+                ui.notifications.error("Could not add starting spells. Check F12 console.");
+            } finally { button.disabled = false; }
+        });
+
 
         // ====================================================
         // LIVE SEARCH
@@ -959,97 +1053,26 @@ class RegionSpellManager
         // DROP SPELL
         // ====================================================
 
-        const dropZone =
-            root.querySelector(
-                "#rsa-drop-zone"
-            );
-
-
-        if (dropZone) {
-
-            dropZone.addEventListener(
-                "dragover",
-
-                event => {
-
-                    event.preventDefault();
-                }
-            );
-
-
-            dropZone.addEventListener(
-                "drop",
-
-                async event => {
-
-                    event.preventDefault();
-
-
-                    const dragData =
-                        foundry
-                            .applications
-                            .ux
-                            .TextEditor
-                            .getDragEventData(
-                                event
-                            );
-
-
-                    if (!dragData?.uuid) {
-                        return;
-                    }
-
-
-                    const item =
-                        await fromUuid(
-                            dragData.uuid
-                        );
-
-
-                    if (
-                        !item ||
-                        item.documentName !==
-                            "Item" ||
-                        item.type !==
-                            "spell"
-                    ) {
-
-                        ui.notifications.warn(
-                            "Please drop a spell Item."
-                        );
-
-                        return;
-                    }
-
-
-                    await this._configureTrigger(
-                        item,
-                        null
-                    );
-                }
-            );
-        }
-
-
-        // ====================================================
         // ENABLE / DISABLE
         // ====================================================
 
         for (
-            const checkbox
+            const button
             of root.querySelectorAll(
-                ".rsa-enabled"
+                ".rsa-toggle-enabled"
             )
         ) {
 
-            checkbox.addEventListener(
-                "change",
+            button.addEventListener(
+                "click",
 
                 async () => {
+                    button.disabled = true;
+                    try {
 
                     const spellName =
                         decodeURIComponent(
-                            checkbox.dataset.spell
+                            button.dataset.spell
                         );
 
 
@@ -1068,7 +1091,7 @@ class RegionSpellManager
 
 
                     table[spellName].enabled =
-                        checkbox.checked;
+                        table[spellName].enabled === false;
 
 
                     await game.settings.set(
@@ -1076,6 +1099,11 @@ class RegionSpellManager
                         SETTING_KEY,
                         table
                     );
+                    this.render({ force: true });
+                    } catch (err) {
+                        console.error('Region Spell Automation | Enable/disable failed:', err);
+                        ui.notifications.error('Could not update spell state. Check F12 console.');
+                    } finally { button.disabled = false; }
                 }
             );
         }
@@ -1732,7 +1760,7 @@ class RegionSpellManager
 
         const help = text => {
             const safe = foundry.utils.escapeHTML(text);
-            return `<span tabindex="0" role="img" aria-label="${safe}" title="${safe}"
+            return `<span tabindex="0" role="img" aria-label="${safe}"
                 data-tooltip="${safe}" style="cursor:help;margin-left:4px;">
                 <i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>`;
         };
@@ -2571,6 +2599,79 @@ class RegionSpellManager
 // ============================================================
 // REGISTER SETTINGS MENU
 // ============================================================
+
+class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
+    static DEFAULT_OPTIONS = {
+        id: "rsa-add-spell-region",
+        window: { title: "Add New Spell Region" },
+        position: { width: 440 }
+    };
+
+    constructor(manager) {
+        super();
+        this.manager = manager;
+        this.busy = false;
+    }
+
+    async _renderHTML() {
+        return `<div id="rsa-drop-zone" style="border:2px dashed var(--color-border-light-2);border-radius:6px;padding:28px;text-align:center;">
+            <strong>Drag / Drop Spell Here</strong>
+            <p>Drop a spell from an actor sheet, Items, or a compendium to configure its Region activity trigger.</p>
+        </div>`;
+    }
+
+    _replaceHTML(result, content) { content.innerHTML = result; }
+
+    _onRender(context, options) {
+        super._onRender(context, options);
+        const dropZone = this.element.querySelector("#rsa-drop-zone");
+        dropZone.addEventListener("dragover", event => event.preventDefault());
+        dropZone.addEventListener("drop", async event => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (this.busy || !game.user.isGM) return;
+            this.busy = true;
+            try {
+                const data = foundry.applications.ux.TextEditor.getDragEventData(event);
+                const item = data?.uuid ? await fromUuid(data.uuid) : null;
+                if (item?.documentName !== "Item" || item.type !== "spell") {
+                    ui.notifications.warn("Please drop a spell Item.");
+                    return;
+                }
+                await this.close();
+                await this.manager._configureTrigger(item, null);
+            } catch (err) {
+                console.error("Region Spell Automation | Could not add dropped spell:", err);
+                ui.notifications.error("Could not add the spell. Check F12 console.");
+            } finally { this.busy = false; }
+        });
+    }
+}
+
+let shortcutManager;
+
+Hooks.on("renderCompendiumDirectory", (app, html) => {
+    if (!game.user.isGM) return;
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    if (!root || root.querySelector(".rsa-open-spell-manager")) return;
+    const browser = root.querySelector(".open-compendium-browser");
+    const actions = root.querySelector(".header-actions");
+    if (!browser && !actions) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "rsa-open-spell-manager";
+    button.style.cssText = "flex:0 0 100%;width:100%;";
+    button.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Open Region Spell Manager';
+    button.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!game.user.isGM) return;
+        shortcutManager ??= new RegionSpellManager();
+        shortcutManager.render({ force: true });
+    });
+    if (browser) browser.insertAdjacentElement("afterend", button);
+    else actions.append(button);
+});
 
 Hooks.once("init", () => {
 
