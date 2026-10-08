@@ -13,6 +13,7 @@ function isActiveGM() {
 }
 
 export async function trackInstantRegion(region) {
+    if (!game.settings.get(MODULE_ID, "cleanupTargetingRegions")) return;
     if (!isActiveGM()) return;
     const itemUUID = region.flags?.dnd5e?.item;
     const casterTokenUuid = region.flags?.dnd5e?.origin;
@@ -32,6 +33,7 @@ export async function trackInstantRegion(region) {
 }
 
 export async function cleanupInstantRegions(combat, changes, options = {}) {
+    if (!game.settings.get(MODULE_ID, "cleanupTargetingRegions")) return;
     if (!isActiveGM() || options.turnEvents === false || (!Object.hasOwn(changes, "turn") && !Object.hasOwn(changes, "round"))) return;
     const previous = combat.previous, current = combat.current;
     if (!previous?.combatantId || !Number.isFinite(previous.round) || !Number.isFinite(previous.turn)) return;
@@ -63,6 +65,12 @@ function reportError(err) {
     console.error("Region Spell Automation | Instantaneous Region cleanup failed:", err);
     ui.notifications.error("Could not clean up an instantaneous spell Region. Check F12 console.");
 }
+
+Hooks.once("init", () => game.settings.register(MODULE_ID, "cleanupTargetingRegions", {
+    name: "Remove Instantaneous Areas at Turn End",
+    hint: "Remove new instantaneous spell/Feature targeting Regions when their user's turn ends. Manager-configured ongoing areas are preserved. Turning this off stops automatic deletion.",
+    scope: "world", config: true, type: Boolean, default: true
+}));
 
 Hooks.once("ready", () => {
     Hooks.on("createRegion", region => { trackInstantRegion(region).catch(reportError); });

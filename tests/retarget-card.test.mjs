@@ -5,7 +5,8 @@ const source=Buffer.from(process.env.RSA_RETARGET_SOURCE,"base64").toString()
     .replace('"./shared-activity-card.js"',JSON.stringify(`data:text/javascript;base64,${process.env.RSA_SHARED_SOURCE}`));
 const {retargetSpellCard,addRetargetButton,hideRemovedTargetSummaries}=await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 let warned=0;
-globalThis.game={user:{isGM:false,targets:new Set()}};
+let retargetEnabled=true;
+globalThis.game={user:{isGM:false,targets:new Set()},settings:{get:()=>retargetEnabled}};
 globalThis.ui={notifications:{warn(){warned++;}}};
 const token={uuid:"Scene.scene.Token.new",name:"New target",actor:{uuid:"Actor.new",statuses:new Set(),system:{}},texture:{src:"token.webp"}};
 const damage={isOwner:true,system:{targets:[{token:"old"}]},rolls:[{total:23}],_targetState:{mode:"selected",checked:new Map([[token.uuid,false]])},
@@ -83,3 +84,9 @@ assert.equal(featureHTML.controls.children.length,1);
 assert.match(featureHTML.controls.children[0].children[0].innerHTML,/Retarget/);
 assert.equal(damage.rolls[0].total,23);
 console.log("Feature Retarget checks passed: button shown and target replacement preserves existing damage.");
+retargetEnabled=false;
+const beforeDisabled=[...card.system.targets];
+await retargetSpellCard(card,[]);assert.deepEqual(card.system.targets,beforeDisabled);
+const disabledHTML=new Element();disabledHTML.controls=new Element("UL");disabledHTML.querySelectorAll=()=>[];
+addRetargetButton(card,disabledHTML);assert.equal(disabledHTML.controls.children.length,0);
+console.log("Retarget toggle checks passed: no button or card edits while disabled.");

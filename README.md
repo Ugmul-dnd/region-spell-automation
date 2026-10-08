@@ -58,6 +58,24 @@ The URL requires a published release containing `module.json` and `region-spell-
 
 ## Quick start
 
+### Module settings
+
+These world-wide toggles are available under **Configure Settings → Region Spell
+Automation**, enabled by default:
+
+- Prompt for Save on Region Triggers
+- Prompt for Save on Spells and Features
+- Auto Target and Confirm Spell/Feature Regions
+- Adjust Saving Throw Advantage
+- Show Retarget on Spell/Feature Cards
+- Remove Instantaneous Areas at Turn End
+- Show End Concentration on Token HUD
+
+Retarget, save-roll controls, and the concentration HUD refresh when toggled.
+Disabling area cleanup stops automatic tracking/deletion; it does not remove
+areas itself. Per-spell visibility and per-trigger shared-card/movement options
+remain in the manager.
+
 ### Area targeting and confirmation
 
 With **Auto Target and Confirm Spell/Feature Regions** enabled (default on),

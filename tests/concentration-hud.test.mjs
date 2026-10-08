@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 const hooks = new Map();
 globalThis.Hooks = { once: (name, fn) => hooks.set(name, fn), on: (name, fn) => hooks.set(name, fn) };
-globalThis.game = { system: { id: "dnd5e" } };
+let hudEnabled=true;
+globalThis.game = { system: { id: "dnd5e" },settings:{get:()=>hudEnabled} };
 globalThis.canvas = { hud: {} };
 class Element {
     constructor() { this.dataset = {}; this.style = {}; this.events = {}; this.children = []; }
@@ -53,3 +54,7 @@ const beforeUnrelated = renders;
 hooks.get("deleteActiveEffect")({ parent: {} });
 assert.equal(renders, beforeUnrelated);
 console.log("Concentration HUD checks passed: visibility, ownership, duplicate controls/clicks, system API, effect refresh.");
+hudEnabled=false;
+await helpers.endTokenConcentration(actor);assert.equal(calls,1);
+helpers.addConcentrationControl(hud,emptyHUD);assert.equal(emptyHUD.column.children.length,0);
+console.log("Concentration HUD toggle checks passed: no button or end-concentration action while disabled.");

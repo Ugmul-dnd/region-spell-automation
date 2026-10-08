@@ -2,6 +2,7 @@ import { describeTarget, isEligibleTarget } from "./shared-activity-card.js";
 const pendingCards = new WeakSet();
 
 export async function retargetSpellCard(message, targets = game.user.targets) {
+    if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
     if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
     if (!["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
     const descriptors = [...new Map(Array.from(targets).filter(isEligibleTarget).map(target => {
@@ -29,6 +30,7 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
 
 export function addRetargetButton(message, html) {
     hideRemovedTargetSummaries(message, html);
+    if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
     if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) ||
         !["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
@@ -72,4 +74,10 @@ export function hideRemovedTargetSummaries(message, html) {
 
 // Core renderChatMessageHTML fires before D&D5e injects its usage-card template.
 // Use the system's completed-card hook so the action row exists.
+Hooks.once("init", () => game.settings.register("region-spell-automation", "retargetActivityCards", {
+    name: "Show Retarget on Spell/Feature Cards",
+    hint: "Allow GMs and card owners to replace an activity card's targets with their current map targets. Previous rolls remain unchanged.",
+    scope: "world", config: true, type: Boolean, default: true,
+    onChange: () => ui.chat?.render({ force: true })
+}));
 Hooks.once("ready", () => Hooks.on("dnd5e.renderChatMessage", addRetargetButton));

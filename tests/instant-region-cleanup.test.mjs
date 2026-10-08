@@ -4,6 +4,7 @@ const {shouldCleanInstantRegion,trackInstantRegion,cleanupInstantRegions}=
     await import(`data:text/javascript;base64,${process.env.RSA_INSTANT_CLEANUP_SOURCE}`);
 const item={uuid:"Actor.caster.Item.fireball",type:"spell",name:"Fireball",system:{duration:{units:"inst"},properties:new Set()}};
 let config;
+let cleanupEnabled=true;
 const caster={uuid:"Scene.scene.Token.caster"},other={uuid:"Scene.scene.Token.other"};
 const combatants=new Map([["caster",{token:caster}],["other",{token:other}]]);
 combatants.some=fn=>[...combatants.values()].some(fn);
@@ -16,7 +17,7 @@ const unmarked={id:"old",flags:{dnd5e:{item:item.uuid,origin:caster.uuid}}};
 const removed=[];
 const scene={regions:[region,unmarked],async deleteEmbeddedDocuments(type,ids){assert.equal(type,"Region");removed.push(...ids);}};
 globalThis.game={user:{id:"gm",isGM:true},users:{activeGM:{id:"gm"}},combat,combats:[combat],scenes:[scene],
-    settings:{get:()=>config?{Fireball:config}:{}}};
+    settings:{get:(module,key)=>key==="cleanupTargetingRegions"?cleanupEnabled:config?{Fireball:config}:{}}};
 globalThis.fromUuid=async uuid=>uuid===item.uuid?item:null;
 assert.equal(shouldCleanInstantRegion(item),true);
 assert.equal(shouldCleanInstantRegion({...item,type:"feat",name:"Fire Breath"}),true);
@@ -61,3 +62,9 @@ assert.equal(shouldCleanInstantRegion(item,null,{duration:{units:"minute"}}),fal
 assert.equal(shouldCleanInstantRegion(item,null,{duration:{units:"inst",concentration:true}}),false);
 assert.equal(shouldCleanInstantRegion({...item,type:"spell",system:{duration:{units:"minute"}}},null,breath),false);
 console.log("Feature duration checks passed: activity-based cleanup, lasting/concentration exclusions, inherited spell duration preserved.");
+cleanupEnabled=false;
+removed.length=0;
+await cleanupInstantRegions(combat,{turn:1});assert.equal(removed.length,0);
+const disabledRegion={...region,flags:{dnd5e:{item:item.uuid,origin:caster.uuid}}};
+await trackInstantRegion(disabledRegion);assert.equal(disabledRegion.flags["region-spell-automation"],undefined);
+console.log("Cleanup toggle checks passed: no tracking or deletion while disabled.");
