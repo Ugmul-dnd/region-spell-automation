@@ -6,8 +6,9 @@ const makeNode = spell => ({ dataset: {spell:encodeURIComponent(spell)}, checked
 for (const id of ["rsa-select-all","rsa-deselect-all","rsa-delete-selected","rsa-selected-count","rsa-enable-selected","rsa-disable-selected"]) nodes.set(`#${id}`,makeNode(""));
 const boxes = [makeNode("Spirit Guardians"),makeNode("Spike Growth")];
 const toggles = boxes.map(box=>makeNode(decodeURIComponent(box.dataset.spell)));
+const hideBoxes = boxes.map(box=>makeNode(decodeURIComponent(box.dataset.spell)));
 const root = { querySelector: selector=>nodes.get(selector) ?? null,
-    querySelectorAll: selector=>selector===".rsa-select-spell"?boxes:selector===".rsa-toggle-enabled"?toggles:[] };
+    querySelectorAll: selector=>selector===".rsa-select-spell"?boxes:selector===".rsa-toggle-enabled"?toggles:selector===".rsa-hide-region"?hideBoxes:[] };
 let table = {"Spirit Guardians":{enabled:true,triggers:[],regionEffects:[]},"Spike Growth":{enabled:false,triggers:[],regionEffects:[]}};
 let writes=0, confirm=false, prompt;
 globalThis.foundry = { applications:{api:{ApplicationV2:BaseApplication,DialogV2:{async confirm(options){prompt=options;return confirm;}}}},
@@ -22,6 +23,22 @@ await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64
 const manager = new globalThis.RSA_TEST_MANAGER();
 manager.element=root;
 manager._onRender({},{});
+hideBoxes[0].checked=true;
+await hideBoxes[0].events.change();
+assert.equal(table["Spirit Guardians"].hideRegionFromPlayers,true);
+assert.equal(table["Spirit Guardians"].enabled,true);
+assert.equal(table["Spike Growth"].hideRegionFromPlayers,undefined);
+assert.match(await manager._renderHTML({},{}),/class="rsa-hide-region" data-spell="Spirit%20Guardians"\s+checked/);
+foundry.applications.api.DialogV2.input = async () => ({triggerName:"Entry",activity:"Damage",tokenEnter:true,targeting:"everyone"});
+const configuredItem = {name:"Spirit Guardians",uuid:"Actor.caster.Item.spell",
+    system:{activities:[{id:"damage",name:"Damage",type:"damage"}]}};
+await manager._configureTrigger(configuredItem,null);
+assert.equal(table["Spirit Guardians"].hideRegionFromPlayers,true,"Saving a trigger preserves spell visibility setting");
+assert.match(await manager._renderHTML({},{}),/class="rsa-hide-region" data-spell="Spirit%20Guardians"\s+checked/);
+hideBoxes[0].checked=false;
+await hideBoxes[0].events.change();
+assert.equal(table["Spirit Guardians"].hideRegionFromPlayers,false);
+writes=0;
 const click = id=>nodes.get(id).events.click({currentTarget:nodes.get(id)});
 await click("#rsa-select-all");
 assert.equal(manager.selectedSpells.size,2);

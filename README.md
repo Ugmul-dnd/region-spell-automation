@@ -6,7 +6,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 ## Compatibility
 
-- Module version: **0.5.5**.
+- Module version: **0.5.7**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
@@ -97,6 +97,24 @@ and combine with the search text. Click the active filter again to show both
 states. Search, filter, selection, and scroll position are preserved when
 enabling or disabling spells.
 
+## Hide Region from Players
+
+Each spell card has a **Hide Region from Players** checkbox, unchecked by default.
+It is saved with that configuration and applies only to newly created Regions
+linked to its originating spell or Feature item. When checked, the Region uses
+Foundry's native **Gamemaster** visibility. Its `hidden` flag is not changed, so
+configured behaviors stay active. GM controls, animations, concentration, and
+cleanup keep their existing behavior. Unchecking leaves new Region visibility
+at the value supplied by the system or creating module; existing Regions are
+never changed by this option.
+
+Use this when an animation or map artwork represents the area. Manually drawn
+trap/hazard Regions without an originating-item link are not matched to a module
+configuration; set their native visibility in Foundry's Region configuration.
+Foundry may show Regions to observers while their Region layer is active,
+regardless of the Gamemaster visibility mode. Test player-owned Regions and
+any modules that expose Region-layer controls to players.
+
 ## Trigger events
 
 | Manager label | Event | When it runs |
@@ -125,6 +143,22 @@ Targeting compares token dispositions relative to the caster.
 Different dispositions can include neutral creatures. Exclude Friendlies and Hostiles Only currently produce the same result when the caster resolves. If the caster cannot be resolved, Everyone and Exclude Friendlies allow the event; the other modes reject it.
 
 These filters apply to activity triggers. Native Region Effects are attached with empty disposition, size, and creature-type filters and do not inherit trigger targeting.
+
+## Prompt Saving Throw on Trigger
+
+Enable **Prompt Saving Throw on Trigger** when editing a Save activity trigger.
+The affected token's connected player gets the native saving-throw dialog;
+NPCs and targets with no connected player owner fall back to the active GM.
+When several players own the actor, the assigned character's player is preferred,
+then one active owner is chosen. The casting player is not the recipient unless
+they also control the affected creature.
+
+The prompt uses the activity's save ability, DC, bonus, and originating chat card.
+Shared cards prompt only newly added targets, and Once Per Turn still applies.
+The option defaults off and does not apply to movement damage or non-Save
+activities. Canceling a prompt leaves the card's Save button available for a
+manual retry. Other modules or native fast-roll preferences may alter dialogs;
+test with both GM and player clients after reloading.
 
 ## Once Per Turn
 

@@ -1,7 +1,7 @@
 // ============================================================
 // Region Spell Automation
 // Spell Manager
-// v0.5.4
+// v0.5.7
 //
 // Supports:
 // - Multiple activity triggers
@@ -563,6 +563,11 @@ class RegionSpellManager
 
 
                         <!-- ACTIVITY TRIGGERS -->
+                        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;margin-left:26px;">
+                            <input type="checkbox" class="rsa-hide-region" data-spell="${encodedName}"
+                                ${config.hideRegionFromPlayers === true ? "checked" : ""}>
+                            Hide Region from Players
+                        </label>
 
                         <div
                             style="
@@ -847,6 +852,24 @@ class RegionSpellManager
 
         const root =
             this.element;
+
+        for (const checkbox of root.querySelectorAll(".rsa-hide-region")) {
+            checkbox.addEventListener("change", async () => {
+                if (!game.user.isGM) return;
+                checkbox.disabled = true;
+                const name = decodeURIComponent(checkbox.dataset.spell);
+                try {
+                    const table = foundry.utils.deepClone(game.settings.get(MODULE_ID, SETTING_KEY) ?? {});
+                    if (!Object.hasOwn(table, name)) return;
+                    table[name].hideRegionFromPlayers = checkbox.checked;
+                    await game.settings.set(MODULE_ID, SETTING_KEY, table);
+                } catch (err) {
+                    checkbox.checked = game.settings.get(MODULE_ID, SETTING_KEY)?.[name]?.hideRegionFromPlayers === true;
+                    console.error("Region Spell Automation | Could not save Region visibility:", err);
+                    ui.notifications.error("Could not save Region visibility. Check F12 console.");
+                } finally { checkbox.disabled = false; }
+            });
+        }
 
         root.querySelector("#rsa-add-new-spell")?.addEventListener("click", () => {
             if (!game.user.isGM) return;
@@ -1693,6 +1716,7 @@ class RegionSpellManager
             true;
 
         const shareCardPerTurn = existingTrigger?.shareCardPerTurn === true;
+        const promptSavingThrow = existingTrigger?.promptSavingThrow === true;
         const movementDamage = existingTrigger?.movementDamage === true;
         const movementIncrement = Number(existingTrigger?.movementIncrement ?? 5);
 
@@ -1954,6 +1978,15 @@ class RegionSpellManager
                                 </fieldset>
 
                                 <fieldset>
+                                    <legend>Saving Throw Prompt</legend>
+                                    <div class="form-group">
+                                        <label>Prompt Saving Throw on Trigger ${help("For Save activities, open the affected creature's saving throw dialog on one connected owner's client. NPCs use the active GM. Shared cards prompt only new targets. Canceling leaves the chat-card Save button available.")}</label>
+                                        <div class="form-fields">
+                                            <input type="checkbox" name="promptSavingThrow" ${promptSavingThrow ? "checked" : ""}>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                <fieldset>
                                     <legend>Movement Damage</legend>
                                     <div class="form-group">
                                         <label>Accumulate Movement Damage ${help("Requires a Damage activity. Tracks distance inside the Region on a per-creature pending damage card. Three increments of 2d4 roll 6d4. Uses movement-in/within/out events, skips teleportation, and overrides selected events, Once Per Turn, and Shared Activity Card. Recast after changing this mode. Damage application remains manual.")}</label>
@@ -2161,6 +2194,7 @@ class RegionSpellManager
 
                 enabled:
                     true,
+                hideRegionFromPlayers: false,
 
                 sourceUuid:
                     item.uuid,
@@ -2207,6 +2241,7 @@ class RegionSpellManager
                 true,
 
             shareCardPerTurn: result.shareCardPerTurn === true,
+            promptSavingThrow: result.promptSavingThrow === true,
             movementDamage: result.movementDamage === true,
             movementIncrement: Number(result.movementIncrement ?? 5)
         };
@@ -2442,6 +2477,7 @@ class RegionSpellManager
 
                 enabled:
                     true,
+                hideRegionFromPlayers: false,
 
                 sourceUuid:
                     item.uuid,
@@ -2639,6 +2675,6 @@ Hooks.once("init", () => {
 
 
     console.log(
-        "Region Spell Automation | v0.5.4 Spell Manager registered"
+        "Region Spell Automation | v0.5.7 Spell Manager registered"
     );
 });

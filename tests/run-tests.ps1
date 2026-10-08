@@ -6,11 +6,13 @@ $rsaOldMovementSource = $env:RSA_MOVEMENT_SOURCE
 $rsaOldHudSource = $env:RSA_HUD_SOURCE
 $rsaOldStarterSource = $env:RSA_STARTER_SOURCE
 $rsaOldManagerSource = $env:RSA_MANAGER_SOURCE
+$rsaOldSavePromptSource = $env:RSA_SAVE_PROMPT_SOURCE
 try {
     $env:RSA_SHARED_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/shared-activity-card.js')))
     $env:RSA_RUNTIME_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/region-spell-automation.js')))
     $env:RSA_MOVEMENT_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/movement-damage.js')))
     $env:RSA_STARTER_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/starter-spells.js')))
+    $env:RSA_SAVE_PROMPT_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/save-prompts.js')))
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'shared-card.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Shared-card tests failed.' }
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'movement-damage.test.mjs') -Raw | node --input-type=module
@@ -23,6 +25,8 @@ try {
     $env:RSA_MANAGER_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/spell-manager.js')))
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'spell-selection.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Spell selection tests failed.' }
+    Get-Content -LiteralPath (Join-Path $PSScriptRoot 'save-prompts.test.mjs') -Raw | node --input-type=module
+    if ($LASTEXITCODE -ne 0) { throw 'Save prompt tests failed.' }
 } finally {
     $env:RSA_SHARED_SOURCE = $rsaOldSharedSource
     $env:RSA_RUNTIME_SOURCE = $rsaOldRuntimeSource
@@ -30,4 +34,5 @@ try {
     $env:RSA_HUD_SOURCE = $rsaOldHudSource
     $env:RSA_STARTER_SOURCE = $rsaOldStarterSource
     $env:RSA_MANAGER_SOURCE = $rsaOldManagerSource
+    $env:RSA_SAVE_PROMPT_SOURCE = $rsaOldSavePromptSource
 }

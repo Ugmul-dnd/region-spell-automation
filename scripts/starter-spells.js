@@ -35,7 +35,7 @@ export function addStartingSpells(table, randomID) {
     for (const [name, recipe] of Object.entries(STARTER_SPELLS)) {
         if (Object.hasOwn(result, name)) continue;
         result[name] = {
-            enabled: false, starterSource: STARTER_SOURCE,
+            enabled: false, hideRegionFromPlayers: false, starterSource: STARTER_SOURCE,
             triggers: recipe.triggers.map(trigger => ({ ...structuredClone(trigger), id: randomID(),
                 oncePerTurn: trigger.oncePerTurn ?? false, shareCardPerTurn: trigger.shareCardPerTurn ?? false })),
             regionEffects: recipe.regionEffects.map(effect => ({ ...effect, id: randomID() }))
