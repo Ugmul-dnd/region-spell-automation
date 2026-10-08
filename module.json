@@ -36,6 +36,7 @@
     "scripts/save-prompts.js",
     "scripts/movement-damage.js",
     "scripts/region-spell-automation.js",
+    "scripts/spell-save-prompts.js",
     "scripts/concentration-cleanup.js",
     "scripts/concentration-hud.js",
     "scripts/spell-manager.js"

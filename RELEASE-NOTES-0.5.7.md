@@ -1,7 +1,8 @@
 # Region Spell Automation v0.5.7
 
 - Added **Hide Region from Players** to each spell configuration in the manager.
-- Added optional **Prompt Saving Throw on Trigger** to Save activity triggers. Prompts the affected token's player (or GM for NPCs); shared cards prompt newly added targets only.
+- Added the world setting **Prompt for Save on Region Triggers**, enabled by default. Prompts the affected token's player (or GM for NPCs); shared cards prompt newly added targets only. Ordinary spell casts use a separate setting.
+- Added the independent world setting **Prompt for Save on Spell Casts**, enabled by default. A Save spell prompts each token recorded on its cast card, using player-owner/GM routing. Region-generated activity uses are excluded to prevent duplicate prompts.
 - Defaults to unchecked for existing, new, and starter configurations.
 - Checked configurations give newly created, item-linked Regions native Gamemaster visibility. The `hidden` flag and automation behavior are unchanged.
 - Applies before creation when the item can be resolved synchronously, with a GM-side fallback after creation.

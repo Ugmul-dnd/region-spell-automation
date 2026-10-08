@@ -144,9 +144,11 @@ Different dispositions can include neutral creatures. Exclude Friendlies and Hos
 
 These filters apply to activity triggers. Native Region Effects are attached with empty disposition, size, and creature-type filters and do not inherit trigger targeting.
 
-## Prompt Saving Throw on Trigger
+## Prompt for Save on Region Triggers
 
-Enable **Prompt Saving Throw on Trigger** when editing a Save activity trigger.
+In **Configure Settings → Region Spell Automation**, use **Prompt for Save on
+Region Triggers** to control save prompts for the whole world. It defaults on
+and is no longer configured separately on each trigger.
 The affected token's connected player gets the native saving-throw dialog;
 NPCs and targets with no connected player owner fall back to the active GM.
 When several players own the actor, the assigned character's player is preferred,
@@ -155,10 +157,33 @@ they also control the affected creature.
 
 The prompt uses the activity's save ability, DC, bonus, and originating chat card.
 Shared cards prompt only newly added targets, and Once Per Turn still applies.
-The option defaults off and does not apply to movement damage or non-Save
+The option does not apply to ordinary spell casts, movement damage, or non-Save
 activities. Canceling a prompt leaves the card's Save button available for a
 manual retry. Other modules or native fast-roll preferences may alter dialogs;
 test with both GM and player clients after reloading.
+
+## Prompt for Save on Spell Casts
+
+The separate world setting **Prompt for Save on Spell Casts** defaults on. When
+a spell's Save activity is cast, each token listed on the cast card receives
+its native saving-throw prompt on one connected owner's client. NPCs use the
+active GM. For example, Fireball with four targeted tokens sends four prompts,
+with the spell's save ability, DC, bonuses, and original card association.
+
+Select the targets before casting, or ensure the system/module records them on
+the cast card. NPC saves from a GM cast stay on that GM's client, even when
+another GM is designated active. Actor-only target records are resolved to their
+synthetic token or a unique active token; ambiguous actor-only targets are logged
+and skipped rather than guessing.
+
+This feature does not scan template geometry to choose targets. It waits briefly
+for asynchronous AOE targeting updates and watches recorded-target changes on
+casts made during the current session, prompting only newly recorded tokens.
+Token names and added name labels do not affect routing. It applies to Save
+spell activities, not attack/damage-only activities or Features. Region-generated
+activity uses are excluded and continue to use **Prompt for Save on Region
+Triggers**. The two settings can be toggled independently. Canceled prompts
+leave the card's Save button available.
 
 ## Once Per Turn
 

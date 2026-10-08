@@ -1716,7 +1716,6 @@ class RegionSpellManager
             true;
 
         const shareCardPerTurn = existingTrigger?.shareCardPerTurn === true;
-        const promptSavingThrow = existingTrigger?.promptSavingThrow === true;
         const movementDamage = existingTrigger?.movementDamage === true;
         const movementIncrement = Number(existingTrigger?.movementIncrement ?? 5);
 
@@ -1977,15 +1976,7 @@ class RegionSpellManager
                                     </div>
                                 </fieldset>
 
-                                <fieldset>
-                                    <legend>Saving Throw Prompt</legend>
-                                    <div class="form-group">
-                                        <label>Prompt Saving Throw on Trigger ${help("For Save activities, open the affected creature's saving throw dialog on one connected owner's client. NPCs use the active GM. Shared cards prompt only new targets. Canceling leaves the chat-card Save button available.")}</label>
-                                        <div class="form-fields">
-                                            <input type="checkbox" name="promptSavingThrow" ${promptSavingThrow ? "checked" : ""}>
-                                        </div>
-                                    </div>
-                                </fieldset>
+
                                 <fieldset>
                                     <legend>Movement Damage</legend>
                                     <div class="form-group">
@@ -2241,7 +2232,6 @@ class RegionSpellManager
                 true,
 
             shareCardPerTurn: result.shareCardPerTurn === true,
-            promptSavingThrow: result.promptSavingThrow === true,
             movementDamage: result.movementDamage === true,
             movementIncrement: Number(result.movementIncrement ?? 5)
         };

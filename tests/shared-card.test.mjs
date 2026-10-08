@@ -22,9 +22,10 @@ const trigger = {
 const combat = { id: "combat", round: 1, turn: 0 };
 const messages = new Map();
 const spellConfig = { triggers: [trigger] };
+let worldSavePrompts = false;
 globalThis.game = {
     combat, messages, user: { id: "gm", isGM: true, targets },
-    settings: { get: () => ({ "Spirit Guardians": spellConfig }) }
+    settings: { get: (module, key) => key === "promptForSaveOnRegionTriggers" ? worldSavePrompts : ({ "Spirit Guardians": spellConfig }) }
 };
 globalThis.ui = { notifications: { warn() {}, error() {} } };
 let uses = 0;
@@ -74,6 +75,12 @@ runtimeSource = runtimeSource.replace('"./movement-damage.js"', JSON.stringify(s
 runtimeSource = runtimeSource.replace('"./starter-spells.js"', JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`));
 runtimeSource = runtimeSource.replace('"./save-prompts.js"', JSON.stringify(`data:text/javascript;base64,${process.env.RSA_SAVE_PROMPT_SOURCE}`));
 await import(sourceURL(runtimeSource));
+const registeredSettings=new Map();
+game.settings.register=(module,key,config)=>registeredSettings.set(key,config);
+hooks.get("init")();
+assert.equal(registeredSettings.get("promptForSaveOnRegionTriggers").default,true);
+assert.equal(registeredSettings.get("promptForSaveOnRegionTriggers").scope,"world");
+assert.equal(registeredSettings.get("promptForSaveOnRegionTriggers").config,true);
 hooks.get("ready")();
 const handle = globalThis.RegionSpellAutomation.handleRegionEvent;
 const enter = (target, area = region) => handle({ region: area, triggerId: trigger.id,
@@ -317,7 +324,8 @@ const savePackets=[];
 game.socket={emit:(channel,packet)=>savePackets.push(packet)};
 a.actor.testUserPermission=b.actor.testUserPermission=user=>user.id===affectedPlayer.id;
 activity.type="save";
-trigger.promptSavingThrow=true;
+worldSavePrompts=true;
+trigger.promptSavingThrow=false; // Legacy per-trigger fields no longer control prompting.
 await enter(a);
 assert.equal(savePackets.length,1);
 await enter(b);

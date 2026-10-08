@@ -44,6 +44,14 @@ console.log(
 // ============================================================
 
 Hooks.once("init", () => {
+    game.settings.register(MODULE_ID, "promptForSaveOnRegionTriggers", {
+        name: "Prompt for Save on Region Triggers",
+        hint: "Open saving throw dialogs for affected token owners when Region Save activities trigger. NPCs use the active GM. Applies to Region triggers only.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true
+    });
 
     game.settings.register(
         MODULE_ID,
@@ -755,12 +763,13 @@ async function executeRegionEvent({
                 configure:
                     false
             },
-            sharedKey ? {
+            {
                 data: {
                     system: { targets: [describeTarget(targetDoc)] },
-                    flags: { [MODULE_ID]: { sharedCardPerTurn: true, sharedCardKeys: [sharedKey] } }
+                    flags: { [MODULE_ID]: { regionTriggered: true,
+                        ...(sharedKey ? { sharedCardPerTurn: true, sharedCardKeys: [sharedKey] } : {}) } }
                 }
-            } : {}
+            }
         );
 
         if (results?.message?.id) await promptTargetSave(results.message, targetDoc, trigger);
