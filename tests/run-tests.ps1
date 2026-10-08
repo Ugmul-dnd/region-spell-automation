@@ -10,6 +10,7 @@ $rsaOldSavePromptSource = $env:RSA_SAVE_PROMPT_SOURCE
 $rsaOldCastSaveSource = $env:RSA_CAST_SAVE_SOURCE
 $rsaOldInstantSource = $env:RSA_INSTANT_CLEANUP_SOURCE
 $rsaOldRetargetSource = $env:RSA_RETARGET_SOURCE
+$rsaOldSaveControlsSource = $env:RSA_SAVE_CONTROLS_SOURCE
 try {
     $env:RSA_SHARED_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/shared-activity-card.js')))
     $env:RSA_RUNTIME_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/region-spell-automation.js')))
@@ -39,6 +40,9 @@ try {
     $env:RSA_RETARGET_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/retarget-card.js')))
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'retarget-card.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Retarget tests failed.' }
+    $env:RSA_SAVE_CONTROLS_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/save-roll-controls.js')))
+    Get-Content -LiteralPath (Join-Path $PSScriptRoot 'save-roll-controls.test.mjs') -Raw | node --input-type=module
+    if ($LASTEXITCODE -ne 0) { throw 'Save mode tests failed.' }
 } finally {
     $env:RSA_SHARED_SOURCE = $rsaOldSharedSource
     $env:RSA_RUNTIME_SOURCE = $rsaOldRuntimeSource
@@ -50,4 +54,5 @@ try {
     $env:RSA_CAST_SAVE_SOURCE = $rsaOldCastSaveSource
     $env:RSA_INSTANT_CLEANUP_SOURCE = $rsaOldInstantSource
     $env:RSA_RETARGET_SOURCE = $rsaOldRetargetSource
+    $env:RSA_SAVE_CONTROLS_SOURCE = $rsaOldSaveControlsSource
 }

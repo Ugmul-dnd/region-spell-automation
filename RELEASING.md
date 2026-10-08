@@ -18,7 +18,7 @@ The local module is version 0.5.5. Its public repository is `https://github.com/
 
 These URLs were verified for v0.5.5. Keep `manifest` stable for update checks and pin `download` to the specific version.
 
-3. Create a ZIP with `module.json` and all files in `scripts/` at its root. Include `README.md`, `STARTER-SPELLS.md`, and `LICENSE`. Exclude `.git`, local configuration, and development-only files. The archived manifest must match the separately uploaded manifest.
+3. Create a ZIP with `module.json` and all files in `scripts/` and `styles/` at its root. Include `README.md`, `STARTER-SPELLS.md`, and `LICENSE`. Exclude `.git`, local configuration, and development-only files. The archived manifest must match the separately uploaded manifest.
 4. Publish a regular GitHub release tagged `v0.5.5` with assets named exactly `module.json` and `region-spell-automation.zip`.
 5. Test **Install Module → Manifest URL** using the stable URL. Use a separate Foundry test user-data directory to protect the development copy.
 6. Test a later release through Foundry's update mechanism before claiming automatic updates work.

@@ -38,9 +38,11 @@
     "scripts/region-spell-automation.js",
     "scripts/spell-save-prompts.js",
     "scripts/retarget-card.js",
+    "scripts/save-roll-controls.js",
     "scripts/instant-region-cleanup.js",
     "scripts/concentration-cleanup.js",
     "scripts/concentration-hud.js",
     "scripts/spell-manager.js"
-  ]
+  ],
+  "styles": ["styles/save-roll-controls.css"]
 }

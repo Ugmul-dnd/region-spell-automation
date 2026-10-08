@@ -313,6 +313,24 @@ Match timing to the spell version used in your world. End-turn activity handling
 
 ## Troubleshooting and support
 
+### Adjust saving throw advantage after rolling
+
+Enable **Adjust Saving Throw Advantage** in module settings (default on). Hover
+over a completed saving throw, including an inline save summary on an activity
+card, to show **ADV / NORMAL / DISADV**. The current mode is highlighted.
+Turn the setting off to hide the controls; changing it refreshes the chat cards
+without another world reload.
+
+The original d20 and bonus dice are preserved. A missing extra d20 is rolled
+once and cached; subsequent mode switches reuse the same results. If Dice So
+Nice is installed, newly rolled extra dice animate with the save's original
+whisper/blind visibility; cached mode switches do not animate a new roll. The save's
+total and success/failure update, including its parent card and linked damage
+card's save outcomes. Previously applied damage is not reversed. GMs, the roll
+author, and the affected actor's owners can use the controls; the active GM
+handles remote edits. If Tweaks already provides controls on that standalone
+save, the module skips adding a duplicate set. Attack rolls are unchanged.
+
 ### Retarget a spell or Feature card
 
 Use **Retarget** on a spell or Feature activity card to replace its recorded targets with

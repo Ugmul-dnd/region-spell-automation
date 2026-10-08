@@ -5,7 +5,7 @@ export const STARTER_SPELLS = {
         triggers: [
             { name: "Start-turn damage", activity: "Start of Turn Damage", events: ["tokenTurnStart"], targeting: "everyone" },
             { name: "End-turn save", activity: "End of Turn Save", events: ["tokenTurnEnd"], targeting: "everyone" }
-        ], regionEffects: [{ name: "Hunger of Hadar", effectName: "Hunger of Hadar" }]
+        ], regionEffects: []
     },
     "Spirit Guardians": {
         triggers: [{ name: "Entry and end-turn save", activity: "Cast and Save", events: ["tokenEnter", "tokenTurnEnd"],
@@ -21,7 +21,7 @@ export const STARTER_SPELLS = {
     },
     "Fog Cloud": {
         triggers: [{ name: "Entry activity", activity: "Use", events: ["tokenEnter"], targeting: "everyone", oncePerTurn: false }],
-        regionEffects: [{ name: "Fog Cloud", effectName: "Fog Cloud" }]
+        regionEffects: []
     },
     "Conjure Animals": {
         triggers: [{ name: "Entry and end-turn save", activity: "Save", events: ["tokenEnter", "tokenTurnEnd"],
