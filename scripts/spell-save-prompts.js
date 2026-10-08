@@ -6,7 +6,7 @@ const sentTargets = new Map();
 export async function promptCastSaves(activity, results) {
     if (game.settings.get(MODULE_ID, "promptForSaveOnSpellCasts") !== true) return;
     const message = results?.message;
-    if (activity?.type !== "save" || activity.item?.type !== "spell" || !message?.id) return;
+    if (activity?.type !== "save" || !["spell", "feat"].includes(activity.item?.type) || !message?.id) return;
     if (message.author?.id !== game.user.id || message.getFlag?.(MODULE_ID, "regionTriggered")) return;
     const promptedTokens = sentTargets.get(message.id) ?? new Set();
     sentTargets.set(message.id, promptedTokens);
@@ -32,7 +32,7 @@ export async function promptCastSaves(activity, results) {
 
 export function scheduleCastSaves(activity, results) {
     const message = results?.message;
-    if (activity?.type !== "save" || activity.item?.type !== "spell" || !message?.id ||
+    if (activity?.type !== "save" || !["spell", "feat"].includes(activity.item?.type) || !message?.id ||
         message.author?.id !== game.user.id || message.getFlag?.(MODULE_ID, "regionTriggered")) return;
     const prior = casts.get(message.id);
     if (prior?.timer) clearTimeout(prior.timer);
@@ -54,8 +54,8 @@ function reportError(err) {
 
 Hooks.once("init", () => {
     game.settings.register(MODULE_ID, "promptForSaveOnSpellCasts", {
-        name: "Prompt for Save on Spell Casts",
-        hint: "When a Save spell is cast, prompt each targeted token's connected owner to roll its save. NPCs use the active GM. Uses the cast card's target list; Region triggers use their separate setting.",
+        name: "Prompt for Save on Spells and Features",
+        hint: "When a spell, player feature, or monster ability uses a Save activity, prompt each targeted token's owner to roll its save. NPCs use a GM. Uses the activity card's targets; attacks without a Save activity are excluded. Region triggers use their separate setting.",
         scope: "world", config: true, type: Boolean, default: true
     });
 });

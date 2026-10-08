@@ -72,3 +72,14 @@ assert.equal(summaryB.style.display,"");
 assert.equal(card.outcomes.old,"success");
 assert.equal(damage.rolls[0].total,23);
 console.log("Retarget summary checks passed: removed target hidden, retained target visible, roll history preserved.");
+
+card.getAssociatedItem=()=>({type:"feat"});
+await retargetSpellCard(card,[token]);
+assert.equal(card.system.targets.length,1);
+const featureHTML=new Element();featureHTML.controls=new Element("UL");
+featureHTML.querySelectorAll=()=>[];
+hooks.get("dnd5e.renderChatMessage")(card,featureHTML);
+assert.equal(featureHTML.controls.children.length,1);
+assert.match(featureHTML.controls.children[0].children[0].innerHTML,/Retarget/);
+assert.equal(damage.rolls[0].total,23);
+console.log("Feature Retarget checks passed: button shown and target replacement preserves existing damage.");

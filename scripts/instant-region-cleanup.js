@@ -1,7 +1,9 @@
 const MODULE_ID = "region-spell-automation";
 
-export function shouldCleanInstantRegion(item, config) {
-    return item?.type === "spell" && item.system?.duration?.units === "inst" &&
+export function shouldCleanInstantRegion(item, config, activity = null) {
+    const duration = item?.type === "feat" || activity?.duration?.override
+        ? activity?.duration ?? item?.system?.duration : item?.system?.duration;
+    return ["spell", "feat"].includes(item?.type) && duration?.units === "inst" && !duration.concentration &&
         !item.system?.properties?.has?.("concentration") &&
         !(config?.triggers?.length || config?.regionEffects?.length);
 }
@@ -16,14 +18,16 @@ export async function trackInstantRegion(region) {
     const casterTokenUuid = region.flags?.dnd5e?.origin;
     if (!itemUUID || !casterTokenUuid) return;
     const item = await fromUuid(itemUUID);
+    const activityUUID = region.flags?.dnd5e?.activity;
+    const activity = activityUUID ? await fromUuid(activityUUID) : null;
     const config = item ? game.settings.get(MODULE_ID, "spellTable")?.[item.name] : null;
-    if (!shouldCleanInstantRegion(item, config)) return;
+    if (!shouldCleanInstantRegion(item, config, activity)) return;
     const matchesCaster = combat => combat.started &&
         combat.combatants.some(combatant => combatant.token?.uuid === casterTokenUuid);
     const combat = game.combats?.find(matchesCaster) ?? (game.combat && matchesCaster(game.combat) ? game.combat : null);
     if (!combat) return; // Without a combat turn there is no automatic deadline.
     await region.update({ [`flags.${MODULE_ID}.instantTurnCleanup`]: {
-        combatId: combat.id, casterTokenUuid, itemUUID
+        combatId: combat.id, casterTokenUuid, itemUUID, activityUUID
     } });
 }
 
@@ -44,8 +48,9 @@ export async function cleanupInstantRegions(combat, changes, options = {}) {
             if (region.flags?.dnd5e?.item !== marker.itemUUID || region.flags?.dnd5e?.origin !== marker.casterTokenUuid) continue;
             // A configuration may have been added after casting. Preserve it.
             const item = await fromUuid(marker.itemUUID);
+            const activity = marker.activityUUID ? await fromUuid(marker.activityUUID) : null;
             const config = item ? game.settings.get(MODULE_ID, "spellTable")?.[item.name] : null;
-            if (shouldCleanInstantRegion(item, config)) ids.push(region.id);
+            if (shouldCleanInstantRegion(item, config, activity)) ids.push(region.id);
         }
         if (ids.length) {
             await scene.deleteEmbeddedDocuments("Region", ids);

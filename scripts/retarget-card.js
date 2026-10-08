@@ -3,7 +3,7 @@ const pendingCards = new WeakSet();
 
 export async function retargetSpellCard(message, targets = game.user.targets) {
     if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
-    if (message.getAssociatedItem?.()?.type !== "spell") return;
+    if (!["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
     const descriptors = [...new Map(Array.from(targets, target => {
         const token = target.document ?? target;
         return [token.uuid, describeTarget(token)];
@@ -30,7 +30,7 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
 export function addRetargetButton(message, html) {
     hideRemovedTargetSummaries(message, html);
     if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) ||
-        message.getAssociatedItem?.()?.type !== "spell") return;
+        !["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     if (!root || root.querySelector("[data-rsa-retarget]")) return;
     const controls = root.querySelector(".chat-card > .icon-row:last-child ul") ??

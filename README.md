@@ -162,10 +162,10 @@ activities. Canceling a prompt leaves the card's Save button available for a
 manual retry. Other modules or native fast-roll preferences may alter dialogs;
 test with both GM and player clients after reloading.
 
-## Prompt for Save on Spell Casts
+## Prompt for Save on Spells and Features
 
-The separate world setting **Prompt for Save on Spell Casts** defaults on. When
-a spell's Save activity is cast, each token listed on the cast card receives
+The world setting **Prompt for Save on Spells and Features** defaults on. When
+a spell, player feature, or monster ability uses a Save activity, each token listed on its activity card receives
 its native saving-throw prompt on one connected owner's client. NPCs use the
 active GM. For example, Fireball with four targeted tokens sends four prompts,
 with the spell's save ability, DC, bonuses, and original card association.
@@ -180,10 +180,14 @@ This feature does not scan template geometry to choose targets. It waits briefly
 for asynchronous AOE targeting updates and watches recorded-target changes on
 casts made during the current session, prompting only newly recorded tokens.
 Token names and added name labels do not affect routing. It applies to Save
-spell activities, not attack/damage-only activities or Features. Region-generated
+spell and Feature activities, not attack/damage-only activities or saves mentioned
+only in descriptive text. Region-generated
 activity uses are excluded and continue to use **Prompt for Save on Region
 Triggers**. The two settings can be toggled independently. Canceled prompts
 leave the card's Save button available.
+
+This is the renamed spell-cast setting: its saved on/off preference is preserved.
+It does not add on-hit save mechanics or determine whether an attack hit.
 
 ## Once Per Turn
 
@@ -309,9 +313,9 @@ Match timing to the spell version used in your world. End-turn activity handling
 
 ## Troubleshooting and support
 
-### Retarget a spell card
+### Retarget a spell or Feature card
 
-Use **Retarget** on a spell activity card to replace its recorded targets with
+Use **Retarget** on a spell or Feature activity card to replace its recorded targets with
 your currently targeted tokens (target markers, not merely controlled/selected
 tokens). With no current targets, it clears the list. The GM or card owner can
 use the button. Associated damage cards you can edit receive the same list.
@@ -328,12 +332,16 @@ undone. Adding a target back allows its existing summary to appear again.
 
 ### Instantaneous spell area cleanup
 
-New Regions created by instantaneous spells such as Fireball are removed when
+New Regions created by instantaneous spells and Features, such as Fireball or
+Hell Hound Fire Breath, are removed when
+their activity duration is instantaneous. Feature durations are read from the
+originating activity; spells retain their item duration unless explicitly overridden.
+These areas are removed when
 the caster's combat turn ends. The spell must have its originating item and
 caster token linked to the Region, and an active GM must be connected. Save
 and damage chat cards remain available after the area is removed.
 
-Spells with activity triggers or Region Effects configured in the manager,
+Spells or Features with activity triggers or Region Effects configured in the manager,
 lasting-duration spells, and concentration spells are preserved. A configuration
 added before cleanup is also respected. Existing Regions are not retroactively
 tracked. Outside combat, areas stay for manual removal; combat rewinds do not

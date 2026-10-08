@@ -45,7 +45,7 @@ enabled=false;await promptCastSaves(activity,{message:card});assert.equal(packet
 enabled=true;regionTriggered=true;await promptCastSaves(activity,{message:card});assert.equal(packets.length,4);
 regionTriggered=false;activity.item.type="feat";await promptCastSaves(activity,{message:card});assert.equal(packets.length,4);
 activity.item.type="spell";activity.type="damage";await promptCastSaves(activity,{message:card});assert.equal(packets.length,4);
-console.log("Spell-cast save checks passed: four distinct targets, player/GM routing, native saves, duplicate suppression, independent setting, Region/feature/non-Save exclusion.");
+console.log("Spell-cast save checks passed: four distinct targets, player/GM routing, native saves, duplicate suppression, independent setting, Region/non-Save exclusion.");
 
 // GM casts: NPC saves remain on that GM even if another GM is designated.
 // A synthetic NPC actor-only descriptor must resolve back to its token.
@@ -95,3 +95,29 @@ assert.equal(packets.length,beforeDelayedPackets+1,"Newly recorded PC gets one r
 hooks.get("deleteChatMessage")(card);
 globalThis.setTimeout=originalTimeout;globalThis.clearTimeout=originalClear;
 console.log("AOE timing checks passed: delayed targets, stale PC removal, NPC-only cast, later PC addition without duplicate NPC saves.");
+
+// Player features and GM-run monster features use the same native Save data.
+activity.item.type="feat";activity.type="save";
+card.id="player-feature";card.author=caster;messages.set(card.id,card);
+card.system.targets=[{token:tokens.get("one").uuid},{token:tokens.get("three").uuid}];
+game.user=caster;
+const beforeFeaturePackets=packets.length;
+await promptCastSaves(activity,{message:card});
+assert.equal(packets.length,beforeFeaturePackets+2);
+const beforeFeatureRolls=rolls.length;
+for(const packet of packets.slice(beforeFeaturePackets)){game.user=users.get(packet.userId);await receiveSavePrompt(packet);}
+assert.equal(rolls.length,beforeFeatureRolls+2,"Feature prompts must be accepted by receiver");
+assert.ok(rolls.slice(beforeFeatureRolls).every(roll=>roll.config.ability==="dex"&&roll.config.target===18));
+card.id="monster-feature";card.author=gm;messages.set(card.id,card);game.user=gm;
+const beforeMonsterRolls=rolls.length,beforeMonsterPackets=packets.length;
+await promptCastSaves(activity,{message:card});
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(rolls.length,beforeMonsterRolls+1,"GM receives NPC save for a monster feature");
+assert.equal(packets.length,beforeMonsterPackets+1,"Player receives save from a monster feature");
+activity.type="attack";card.id="attack-feature";
+await promptCastSaves(activity,{message:card});
+assert.equal(packets.length,beforeMonsterPackets+1);
+activity.type="save";enabled=false;
+await promptCastSaves(activity,{message:card});
+assert.equal(packets.length,beforeMonsterPackets+1);
+console.log("Feature save checks passed: player features, monster abilities, native DC/ability, receiver acceptance, setting toggle and attack exclusion.");
