@@ -309,6 +309,19 @@ Match timing to the spell version used in your world. End-turn activity handling
 
 ## Troubleshooting and support
 
+### Instantaneous spell area cleanup
+
+New Regions created by instantaneous spells such as Fireball are removed when
+the caster's combat turn ends. The spell must have its originating item and
+caster token linked to the Region, and an active GM must be connected. Save
+and damage chat cards remain available after the area is removed.
+
+Spells with activity triggers or Region Effects configured in the manager,
+lasting-duration spells, and concentration spells are preserved. A configuration
+added before cleanup is also respected. Existing Regions are not retroactively
+tracked. Outside combat, areas stay for manual removal; combat rewinds do not
+delete them. Finish resolving saves and damage before ending the caster's turn.
+
 ### End concentration from the token HUD
 
 Right-click a concentrating token to show its HUD. A concentration icon with a

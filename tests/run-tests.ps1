@@ -8,6 +8,7 @@ $rsaOldStarterSource = $env:RSA_STARTER_SOURCE
 $rsaOldManagerSource = $env:RSA_MANAGER_SOURCE
 $rsaOldSavePromptSource = $env:RSA_SAVE_PROMPT_SOURCE
 $rsaOldCastSaveSource = $env:RSA_CAST_SAVE_SOURCE
+$rsaOldInstantSource = $env:RSA_INSTANT_CLEANUP_SOURCE
 try {
     $env:RSA_SHARED_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/shared-activity-card.js')))
     $env:RSA_RUNTIME_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/region-spell-automation.js')))
@@ -31,6 +32,9 @@ try {
     $env:RSA_CAST_SAVE_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/spell-save-prompts.js')))
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'spell-save-prompts.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Spell-cast save prompt tests failed.' }
+    $env:RSA_INSTANT_CLEANUP_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/instant-region-cleanup.js')))
+    Get-Content -LiteralPath (Join-Path $PSScriptRoot 'instant-region-cleanup.test.mjs') -Raw | node --input-type=module
+    if ($LASTEXITCODE -ne 0) { throw 'Instant Region cleanup tests failed.' }
 } finally {
     $env:RSA_SHARED_SOURCE = $rsaOldSharedSource
     $env:RSA_RUNTIME_SOURCE = $rsaOldRuntimeSource
@@ -40,4 +44,5 @@ try {
     $env:RSA_MANAGER_SOURCE = $rsaOldManagerSource
     $env:RSA_SAVE_PROMPT_SOURCE = $rsaOldSavePromptSource
     $env:RSA_CAST_SAVE_SOURCE = $rsaOldCastSaveSource
+    $env:RSA_INSTANT_CLEANUP_SOURCE = $rsaOldInstantSource
 }

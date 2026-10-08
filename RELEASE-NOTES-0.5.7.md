@@ -1,5 +1,7 @@
 # Region Spell Automation v0.5.7
 
+- New instantaneous spell Regions, such as Fireball, are cleaned up at the caster's combat turn end. Manager-configured triggers/effects and lingering spells are preserved; chat cards remain available.
+
 - Added **Hide Region from Players** to each spell configuration in the manager.
 - Added the world setting **Prompt for Save on Region Triggers**, enabled by default. Prompts the affected token's player (or GM for NPCs); shared cards prompt newly added targets only. Ordinary spell casts use a separate setting.
 - Added the independent world setting **Prompt for Save on Spell Casts**, enabled by default. A Save spell prompts each token recorded on its cast card, using player-owner/GM routing. Region-generated activity uses are excluded to prevent duplicate prompts.
