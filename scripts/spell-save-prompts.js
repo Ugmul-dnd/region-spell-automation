@@ -64,7 +64,14 @@ Hooks.once("ready", () => {
     Hooks.on("dnd5e.postUseActivity", (activity, usage, results) => {
         scheduleCastSaves(activity, results);
     });
-    Hooks.on("updateChatMessage", (message, changes) => {
+    Hooks.on("updateChatMessage", (message, changes, options) => {
+        if (options?.rsaRetarget) {
+            // Retarget edits the card, rather than requesting another save.
+            const pending = casts.get(message.id);
+            if (pending?.timer) clearTimeout(pending.timer);
+            if (pending) pending.timer = null;
+            return;
+        }
         if (!Object.hasOwn(changes, "system.targets") && !Object.hasOwn(changes.system ?? {}, "targets")) return;
         const state = casts.get(message.id);
         if (state) scheduleCastSaves(state.activity, { message });

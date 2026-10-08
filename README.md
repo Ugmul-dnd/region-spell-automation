@@ -309,6 +309,23 @@ Match timing to the spell version used in your world. End-turn activity handling
 
 ## Troubleshooting and support
 
+### Retarget a spell card
+
+Use **Retarget** on a spell activity card to replace its recorded targets with
+your currently targeted tokens (target markers, not merely controlled/selected
+tokens). With no current targets, it clears the list. The GM or card owner can
+use the button. Associated damage cards you can edit receive the same list.
+
+This switches the card to targeted mode without rerolling saves/damage,
+consuming resources, or undoing previously applied damage. Retarget itself does
+not request new saving throws; use the card's Save button as needed. After placing
+a template, choose the desired targets and click Retarget to correct an overly
+broad initial list. Another module can still change targets afterward.
+
+After retargeting, inline save summaries for removed targets are hidden on the
+card. Their original rolls remain in chat history, and applied damage is not
+undone. Adding a target back allows its existing summary to appear again.
+
 ### Instantaneous spell area cleanup
 
 New Regions created by instantaneous spells such as Fireball are removed when
