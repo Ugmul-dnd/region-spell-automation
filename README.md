@@ -58,6 +58,28 @@ The URL requires a published release containing `module.json` and `region-spell-
 
 ## Quick start
 
+### Area targeting and confirmation
+
+With **Auto Target and Confirm Spell/Feature Regions** enabled (default on),
+placing a spell or Feature area selects visible actor tokens inside it and opens
+**Confirm Targets**. Enemy/ally targeting is relative to the casting token's
+disposition. A matching manager trigger's targeting mode is used when the card
+does not specify enemies/allies; otherwise everyone in the area is selected.
+Neutral creatures are not automatically enemies.
+
+Target tokens normally on the map to add them, including manual choices outside
+the automatic filter. Click a listed name to deselect and remove that token.
+Confirming replaces the activity card's target list, prompts the affected owners
+for saves if enabled, and opens the damage dialog if the activity has damage.
+Region follow-up activities are excluded. No resources are consumed again.
+
+**Close — Resolve Manually** closes the popup without undoing the cast or refunding
+resources; the activity card remains available for manual resolution. Turn-end
+area cleanup still runs normally, so finish confirming/resolving before ending
+the caster's turn. Disable competing live targeting in Tweaks while using this
+feature. Initial automatic selection happens after placement; it does not
+continuously retarget while you move the mouse.
+
 GMs can open the manager directly from **Compendiums → Open Region Spell
 Manager**, beneath D&D5e's **Open Compendium Browser** button. The settings-menu
 entry remains available.
@@ -116,6 +138,14 @@ regardless of the Gamemaster visibility mode. Test player-owned Regions and
 any modules that expose Region-layer controls to players.
 
 ## Trigger events
+
+All Region activity events and automatic spell/Feature targeting exclude tokens
+that are **hidden**, marked **dead/defeated**, or have numeric HP **0 or lower**.
+This also applies to entries, movement, and start-turn triggers, not only end
+turn. The confirmation list rejects excluded manual additions and rechecks
+targets before confirming. Save prompts and Retarget use the same rule; shared
+cards drop newly excluded targets when updated. Existing rolls and applied
+damage are not undone. Native ongoing Region Effects keep their own system behavior.
 
 | Manager label | Event | When it runs |
 | --- | --- | --- |

@@ -1,5 +1,7 @@
 # Region Spell Automation v0.5.7
 
+- Unified target exclusions: hidden, dead, defeated, and zero-HP tokens are skipped for all Region activity events and initial area targeting, including manual confirmation and save prompts.
+
 - Added hover controls to adjust saving throws between ADV, NORMAL, and DISADV, including inline card results. Original dice are retained, extra dice are cached, and native save outcomes refresh. Applied damage is not reversed.
 
 - New instantaneous spell and Feature Regions, such as Fireball or Hell Hound Fire Breath, are cleaned up at their user's combat turn end. Manager-configured triggers/effects and lingering areas are preserved; chat cards remain available.

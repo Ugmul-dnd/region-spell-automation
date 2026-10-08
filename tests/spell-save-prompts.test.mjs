@@ -121,3 +121,16 @@ activity.type="save";enabled=false;
 await promptCastSaves(activity,{message:card});
 assert.equal(packets.length,beforeMonsterPackets+1);
 console.log("Feature save checks passed: player features, monster abilities, native DC/ability, receiver acceptance, setting toggle and attack exclusion.");
+
+enabled=true;activity.type="save";game.user=gm;
+card.id="eligibility-filter";card.author=gm;messages.set(card.id,card);
+card.system.targets=[...tokens.values()].map(token=>({token:token.uuid}));
+card.update=async data=>{card.system.targets=data["system.targets"];};
+tokens.get("two").actor.statuses=new Set(["dead"]);
+tokens.get("three").actor.system={attributes:{hp:{value:0}}};
+tokens.get("four").hidden=true;
+const beforeExcluded=packets.length;
+await promptCastSaves(activity,{message:card});
+assert.equal(packets.length,beforeExcluded+1);
+assert.deepEqual(card.system.targets,[{token:tokens.get("one").uuid}]);
+console.log("Save-card exclusion checks passed: hidden/dead/zero-HP targets removed and not prompted.");

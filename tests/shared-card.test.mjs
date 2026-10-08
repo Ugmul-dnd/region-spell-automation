@@ -336,4 +336,28 @@ trigger.oncePerTurn=false;
 await enter(b);
 assert.equal(savePackets.length,2,"Shared-card existing target must not be prompted again");
 testLog("Shared save-prompt checks passed: first target and new target prompted; existing targets not repeated.");
+
+worldSavePrompts=false;
+trigger.events=["tokenEnter","tokenMoveWithin","tokenTurnStart","tokenTurnEnd"];
+combat.turn++;
+const beforeExclusions=uses;
+for(const excluded of ["hidden","dead","zero","defeated"]){
+    const target=token(`excluded-${excluded}`);
+    if(excluded==="hidden")target.hidden=true;
+    if(excluded==="dead")target.actor.statuses.add("dead");
+    if(excluded==="zero")target.actor.system.attributes.hp.value=0;
+    if(excluded==="defeated")target.combatant={defeated:true};
+    for(const name of trigger.events)await handle({region,triggerId:trigger.id,event:{name,data:{token:target}}});
+}
+assert.equal(uses,beforeExclusions,"Excluded tokens never use activities for any Region event");
+const pruningCard=makeMessage("prune",[helpers.describeTarget(a),helpers.describeTarget(b)]);
+const pruningDamage=makeMessage("prune-damage",[...pruningCard.system.targets]);pruningDamage.rolls=[{total:20}];
+pruningCard.damage=[pruningDamage];
+a.actor.system.attributes.hp.value=0;
+globalThis.fromUuid=async uuid=>uuid===a.uuid?a:uuid===b.uuid?b:spell;
+await helpers.appendSharedTarget(pruningCard,helpers.describeTarget(b));
+assert.deepEqual(pruningCard.system.targets.map(target=>target.token),[b.uuid]);
+assert.deepEqual(pruningDamage.system.targets.map(target=>target.token),[b.uuid]);
+assert.equal(pruningDamage.rolls[0].total,20);
+testLog("Region exclusion checks passed: all event types skipped; newly dead shared-card targets pruned without rerolling damage.");
 testLog("Shared-card checks passed: concurrency, targets, damage preservation, turns, isolation, fallback, cancellation, failed-update retry, target restoration, queue recovery.");

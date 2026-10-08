@@ -1,4 +1,6 @@
 const MODULE_ID = "region-spell-automation";
+import { isEligibleTarget } from "./shared-activity-card.js";
+export { isEligibleTarget };
 const prompted = new Set();
 
 export function selectSaveUser(actor, users, activeGM, castingGM = null) {
@@ -18,6 +20,7 @@ export async function receiveSavePrompt(packet) {
     if (!message || !source?.active || (!source.isGM && message.author?.id !== source.id)) return;
     const token = await fromUuid(packet.tokenUuid);
     const actor = token?.actor;
+    if (!isEligibleTarget(token)) return;
     if (!message.system.targets?.some(target => target.token === packet.tokenUuid ||
         (actor?.uuid && target.actor === actor.uuid))) {
         console.warn("Region Spell Automation | Save prompt skipped: token is not recorded on the cast card.", packet.tokenUuid);
@@ -59,12 +62,14 @@ export async function receiveSavePrompt(packet) {
 }
 
 export async function promptTargetSave(message, token, trigger) {
+    if (message.getFlag?.(MODULE_ID, "targetsConfirmationPending")) return;
     if (game.settings.get(MODULE_ID, "promptForSaveOnRegionTriggers") !== true ||
         trigger.movementDamage || message.getAssociatedActivity?.()?.type !== "save") return;
     await sendSavePrompt(message, token, "region");
 }
 
 export async function sendSavePrompt(message, token, kind) {
+    if (!isEligibleTarget(token)) return;
     const setting = kind === "spell" ? "promptForSaveOnSpellCasts" : "promptForSaveOnRegionTriggers";
     if (game.settings.get(MODULE_ID, setting) !== true) return;
     const user = selectSaveUser(token.actor, game.users, game.users.activeGM, game.user.isGM ? game.user : null);

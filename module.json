@@ -37,6 +37,7 @@
     "scripts/movement-damage.js",
     "scripts/region-spell-automation.js",
     "scripts/spell-save-prompts.js",
+    "scripts/area-target-confirmation.js",
     "scripts/retarget-card.js",
     "scripts/save-roll-controls.js",
     "scripts/instant-region-cleanup.js",

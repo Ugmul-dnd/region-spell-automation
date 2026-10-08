@@ -1,4 +1,4 @@
-import { sendSavePrompt } from "./save-prompts.js";
+import { sendSavePrompt, isEligibleTarget } from "./save-prompts.js";
 const MODULE_ID = "region-spell-automation";
 const casts = new Map();
 const sentTargets = new Map();
@@ -6,10 +6,12 @@ const sentTargets = new Map();
 export async function promptCastSaves(activity, results) {
     if (game.settings.get(MODULE_ID, "promptForSaveOnSpellCasts") !== true) return;
     const message = results?.message;
+    if (message?.getFlag?.(MODULE_ID, "targetsConfirmationPending") || message?.getFlag?.(MODULE_ID, "targetsConfirmationCanceled")) return;
     if (activity?.type !== "save" || !["spell", "feat"].includes(activity.item?.type) || !message?.id) return;
     if (message.author?.id !== game.user.id || message.getFlag?.(MODULE_ID, "regionTriggered")) return;
     const promptedTokens = sentTargets.get(message.id) ?? new Set();
     sentTargets.set(message.id, promptedTokens);
+    const excluded = new Set();
     for (const descriptor of message.system.targets ?? []) {
         let token = descriptor.token ? await fromUuid(descriptor.token) : null;
         if (!token?.actor && descriptor.actor) {
@@ -24,9 +26,17 @@ export async function promptCastSaves(activity, results) {
             console.warn("Region Spell Automation | Could not resolve spell target to a unique token.", descriptor.name ?? descriptor.actor);
             continue;
         }
+        if (!isEligibleTarget(token)) {
+            excluded.add(descriptor.token ?? descriptor.actor);
+            continue;
+        }
         if (promptedTokens.has(token.uuid)) continue;
         promptedTokens.add(token.uuid);
         await sendSavePrompt(message, token, "spell");
+    }
+    if (excluded.size) {
+        await message.update({ "system.targets": (message.system.targets ?? []).filter(target => !excluded.has(target.token ?? target.actor)),
+            [`flags.${MODULE_ID}.retargeted`]: true }, { rsaPruneTargets: true });
     }
 }
 

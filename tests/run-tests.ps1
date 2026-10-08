@@ -11,12 +11,15 @@ $rsaOldCastSaveSource = $env:RSA_CAST_SAVE_SOURCE
 $rsaOldInstantSource = $env:RSA_INSTANT_CLEANUP_SOURCE
 $rsaOldRetargetSource = $env:RSA_RETARGET_SOURCE
 $rsaOldSaveControlsSource = $env:RSA_SAVE_CONTROLS_SOURCE
+$rsaOldAreaConfirmSource = $env:RSA_AREA_CONFIRM_SOURCE
 try {
     $env:RSA_SHARED_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/shared-activity-card.js')))
     $env:RSA_RUNTIME_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/region-spell-automation.js')))
     $env:RSA_MOVEMENT_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/movement-damage.js')))
     $env:RSA_STARTER_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/starter-spells.js')))
-    $env:RSA_SAVE_PROMPT_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/save-prompts.js')))
+    $rsaSaveSource = [System.IO.File]::ReadAllText((Join-Path $rsaProject 'scripts/save-prompts.js'))
+    $rsaSaveSource = $rsaSaveSource.Replace('"./shared-activity-card.js"', '"data:text/javascript;base64,' + $env:RSA_SHARED_SOURCE + '"')
+    $env:RSA_SAVE_PROMPT_SOURCE = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($rsaSaveSource))
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'shared-card.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Shared-card tests failed.' }
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'movement-damage.test.mjs') -Raw | node --input-type=module
@@ -43,6 +46,11 @@ try {
     $env:RSA_SAVE_CONTROLS_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/save-roll-controls.js')))
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'save-roll-controls.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Save mode tests failed.' }
+    $env:RSA_AREA_CONFIRM_SOURCE = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/area-target-confirmation.js')))
+    Get-Content -LiteralPath (Join-Path $PSScriptRoot 'area-target-confirmation.test.mjs') -Raw | node --input-type=module
+    if ($LASTEXITCODE -ne 0) { throw 'Area confirmation tests failed.' }
+    Get-Content -LiteralPath (Join-Path $PSScriptRoot 'target-eligibility.test.mjs') -Raw | node --input-type=module
+    if ($LASTEXITCODE -ne 0) { throw 'Target eligibility tests failed.' }
 } finally {
     $env:RSA_SHARED_SOURCE = $rsaOldSharedSource
     $env:RSA_RUNTIME_SOURCE = $rsaOldRuntimeSource
@@ -55,4 +63,5 @@ try {
     $env:RSA_INSTANT_CLEANUP_SOURCE = $rsaOldInstantSource
     $env:RSA_RETARGET_SOURCE = $rsaOldRetargetSource
     $env:RSA_SAVE_CONTROLS_SOURCE = $rsaOldSaveControlsSource
+    $env:RSA_AREA_CONFIRM_SOURCE = $rsaOldAreaConfirmSource
 }

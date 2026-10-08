@@ -1,10 +1,10 @@
-import { describeTarget } from "./shared-activity-card.js";
+import { describeTarget, isEligibleTarget } from "./shared-activity-card.js";
 const pendingCards = new WeakSet();
 
 export async function retargetSpellCard(message, targets = game.user.targets) {
     if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
     if (!["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
-    const descriptors = [...new Map(Array.from(targets, target => {
+    const descriptors = [...new Map(Array.from(targets).filter(isEligibleTarget).map(target => {
         const token = target.document ?? target;
         return [token.uuid, describeTarget(token)];
     })).values()];
