@@ -1,2 +1,6 @@
 # Generated release assets
 dist/
+
+# Local testing and build tooling
+tests/
+tools/
