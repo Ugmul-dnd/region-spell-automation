@@ -461,3 +461,9 @@ inside them and remove their own effects on exit or Region deletion. Separate
 Regions and unrelated effects retain their own condition sources. Keep an active
 GM connected. Changes apply to newly created Regions; recast to use new settings.
 These conditions apply automatically without a saving throw.
+
+The **Spell and Region Management** window accepts spells and Features, including
+monster abilities such as a Pit Fiend's Fear Aura and player features. Use
+**Add New Spell / Feature Region**, drop the ability Item, and configure its
+triggers, conditions, and effects. The ability's activity must create a D&D5e
+Region; the manager does not create an aura for abilities without a Region.

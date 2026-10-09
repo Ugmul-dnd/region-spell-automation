@@ -76,7 +76,7 @@ class RegionSpellManager
 
         window: {
             title:
-                "Region Spell Automation"
+                "Spell and Region Management"
         },
 
         position: {
@@ -143,7 +143,7 @@ class RegionSpellManager
                         opacity:0.7;
                     "
                 >
-                    No configured spells yet.
+                    No configured spells or features yet.
                 </div>
             `;
         }
@@ -658,13 +658,13 @@ class RegionSpellManager
                         <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
                     </span>
                     <button type="button" id="rsa-add-new-spell">
-                        <i class="fa-solid fa-plus"></i> Add New Spell Region
+                        <i class="fa-solid fa-plus"></i> Add New Spell / Feature Region
                     </button>
                     </div>
                 </div>
 
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-                    <button type="button" id="rsa-select-all" title="Select all configured spells, including filtered spells">Select all</button>
+                    <button type="button" id="rsa-select-all" title="Select all configured spells and features, including filtered entries">Select all</button>
                     <button type="button" id="rsa-deselect-all">Deselect all</button>
                     <button type="button" id="rsa-delete-selected" ${this.selectedSpells.size ? "" : "disabled"}>Delete Selected</button>
                     <span id="rsa-selected-count">${this.selectedSpells.size} selected</span>
@@ -699,7 +699,7 @@ class RegionSpellManager
 
                         type="search"
 
-                        placeholder="Search configured spells..."
+                        placeholder="Search configured spells and features..."
 
                         autocomplete="off"
 
@@ -1505,7 +1505,7 @@ class RegionSpellManager
                                 {
                                     window: {
                                         title:
-                                            "Delete Spell"
+                                            "Delete Region Configuration"
                                     },
 
                                     content: `
@@ -1623,8 +1623,7 @@ class RegionSpellManager
             const item =
                 actor.items.find(
                     entry =>
-                        entry.type ===
-                            "spell" &&
+                        ["spell", "feat"].includes(entry.type) &&
 
                         entry.name ===
                             spellName
@@ -2635,7 +2634,7 @@ class RegionSpellConfigEditor extends RegionSpellManager {
 class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
     static DEFAULT_OPTIONS = {
         id: "rsa-add-spell-region",
-        window: { title: "Add New Spell Region" },
+        window: { title: "Add New Spell / Feature Region" },
         position: { width: 440 }
     };
 
@@ -2647,8 +2646,8 @@ class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
 
     async _renderHTML() {
         return `<div id="rsa-drop-zone" style="border:2px dashed var(--color-border-light-2);border-radius:6px;padding:28px;text-align:center;">
-            <strong>Drag / Drop Spell Here</strong>
-            <p>Drop a spell from an actor sheet, Items, or a compendium to save its Region configuration and open the editor.</p>
+            <strong>Drag / Drop Spell or Feature Here</strong>
+            <p>Drop a spell, player feature, or monster ability from an actor sheet, Items, or a compendium to save its Region configuration and open the editor.</p>
         </div>`;
     }
 
@@ -2666,8 +2665,8 @@ class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
             try {
                 const data = foundry.applications.ux.TextEditor.getDragEventData(event);
                 const item = data?.uuid ? await fromUuid(data.uuid) : null;
-                if (item?.documentName !== "Item" || item.type !== "spell") {
-                    ui.notifications.warn("Please drop a spell Item.");
+                if (item?.documentName !== "Item" || !["spell", "feat"].includes(item.type)) {
+                    ui.notifications.warn("Please drop a spell or feature Item.");
                     return;
                 }
                 const table = foundry.utils.deepClone(game.settings.get(MODULE_ID, SETTING_KEY) ?? {});
@@ -2686,7 +2685,7 @@ class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
                 editor.render({force:true});
             } catch (err) {
                 console.error("Region Spell Automation | Could not add dropped spell:", err);
-                ui.notifications.error("Could not add the spell. Check F12 console.");
+                ui.notifications.error("Could not add the spell or feature. Check F12 console.");
             } finally { this.busy = false; }
         });
     }
@@ -2705,7 +2704,7 @@ Hooks.on("renderCompendiumDirectory", (app, html) => {
     button.type = "button";
     button.className = "rsa-open-spell-manager";
     button.style.cssText = "flex:0 0 100%;width:100%;";
-    button.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Open Region Spell Manager';
+    button.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Open Spell and Region Manager';
     button.addEventListener("click", event => {
         event.preventDefault();
         event.stopPropagation();
@@ -2724,13 +2723,13 @@ Hooks.once("init", () => {
         "spellManager",
         {
             name:
-                "Region Spell Manager",
+                "Spell and Region Management",
 
             label:
-                "Manage Region Spells",
+                "Manage Spells and Regions",
 
             hint:
-                "Configure Region activity triggers and Active Effects.",
+                "Configure spell, player feature, and monster ability Regions, triggers, conditions, and effects.",
 
             icon:
                 "fa-solid fa-wand-magic-sparkles",
