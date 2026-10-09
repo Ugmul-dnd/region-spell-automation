@@ -1,19 +1,46 @@
 # Region Spell Automation v0.5.7
 
-- Unified target exclusions: hidden, dead, defeated, and zero-HP tokens are skipped for all Region activity events and initial area targeting, including manual confirmation and save prompts.
+Adds area target confirmation, automatic saving throw prompts, Region conditions,
+and a simpler spell manager.
 
-- Added hover controls to adjust saving throws between ADV, NORMAL, and DISADV, including inline card results. Original dice are retained, extra dice are cached, and native save outcomes refresh. Applied damage is not reversed.
+## New features
 
-- New instantaneous spell and Feature Regions, such as Fireball or Hell Hound Fire Breath, are cleaned up at their user's combat turn end. Manager-configured triggers/effects and lingering areas are preserved; chat cards remain available.
+- Automatically target eligible creatures after placing spell or feature Regions.
+  Confirm targets in a popup, add targets on the map, or click a name to remove it.
+  Token thumbnails and hover highlights help identify targets.
+- Prompt affected players to roll saves for spells, player features, monster
+  abilities, and Region triggers. NPC saves route to a GM.
+- Retarget spell and feature chat cards using your current map targets; removed
+  targets disappear from the summary while existing rolls are preserved.
+- Adjust saving throws between advantage, normal, and disadvantage using inline
+  hover controls, with dice animation for new dice and a smooth card expansion.
+- Apply standard Region conditions while creatures are inside. Exiting or deleting
+  the Region removes only its own condition effects, preserving other sources.
+- Hide newly created configured Regions from players using native GM visibility.
+- Remove new instantaneous spell and feature targeting Regions at the caster's
+  combat turn end. Configured automation and lingering areas remain.
 
-- Added **Hide Region from Players** to each spell configuration in the manager.
-- Added the world setting **Prompt for Save on Region Triggers**, enabled by default. Prompts the affected token's player (or GM for NPCs); shared cards prompt newly added targets only. Ordinary spell casts use a separate setting.
-- Added the independent world setting **Prompt for Save on Spells and Features**, enabled by default. Save activities on spells, player features, and monster abilities prompt recorded targets using player-owner/GM routing. The earlier spell-cast setting preference is preserved. Region-generated uses and attack-only activities are excluded.
-- Defaults to unchecked for existing, new, and starter configurations.
-- Checked configurations give newly created, item-linked Regions native Gamemaster visibility. The `hidden` flag and automation behavior are unchanged.
-- Applies before creation when the item can be resolved synchronously, with a GM-side fallback after creation.
-- Existing Regions are not changed retroactively. Recast to test the setting.
+## Improvements
 
-Visibility persistence, creation handling, and the existing automation regression suite pass. Verify GM/player overlays, entry/turn triggers, native effects, and cleanup in Foundry v14 with your module stack. Player-owned Regions on an active Region layer may be visible to their observers under Foundry's native visibility rules.
+- Compact spell rows with selection, enabled state, Edit, and Delete.
+- Separate configuration windows for triggers, conditions, visibility, and effects.
+- Dropped spells save and open their full configuration instead of requiring a trigger.
+- Alphabetical condition picker with explicit confirmation.
+- Hidden, dead, defeated, and zero-HP targets are excluded from automatic targeting,
+  Region activity triggers, and saving throw prompts.
+- Optional targeting, save prompts, save adjustment, Retarget, cleanup, and
+  concentration controls can be enabled or disabled in module settings.
+- Starter configurations include no preloaded Region Effects or spell content.
 
-Manually drawn Regions without a configured originating-item link are outside the module's existing matching model. Set their native visibility directly in Foundry; this release introduces no trap mechanics.
+## Updating
+
+Restart the Foundry server after updating, then refresh GM and player browsers.
+If a browser retains old scripts, use a hard refresh or temporarily disable its
+cache in developer tools. Keep an active GM connected for Region setup and conditions.
+
+Recast existing areas to use changed visibility or condition configuration.
+Disable competing live template targeting in D&D5e Tweaks when using this module's
+area confirmation. Save adjustments do not undo damage already applied.
+
+Tested by the author on Foundry VTT v14 Stable, build 369, with D&D5e 6.0.6,
+including GM and player casting, monster abilities, saving throws, and Region conditions.
