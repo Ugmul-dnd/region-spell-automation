@@ -21,9 +21,11 @@ const trigger = {
 };
 const combat = { id: "combat", round: 1, turn: 0 };
 const messages = new Map();
+const spellConfig = { triggers: [trigger] };
+let worldSavePrompts = false;
 globalThis.game = {
     combat, messages, user: { id: "gm", isGM: true, targets },
-    settings: { get: () => ({ "Spirit Guardians": { triggers: [trigger] } }) }
+    settings: { get: (module, key) => key === "promptForSaveOnRegionTriggers" ? worldSavePrompts : ({ "Spirit Guardians": spellConfig }) }
 };
 globalThis.ui = { notifications: { warn() {}, error() {} } };
 let uses = 0;
@@ -59,6 +61,7 @@ function token(id) {
 }
 function makeMessage(id, descriptors) {
     return { id, system: { targets: descriptors }, damage: [],
+        getAssociatedActivity() { return activity; },
         getAssociatedRolls: function() { return this.damage; },
         async update(data) { this.system.targets = data["system.targets"]; },
         getFlag(namespace, key) { return this.flags?.[namespace]?.[key]; }
@@ -70,7 +73,14 @@ const movementSource = Buffer.from(process.env.RSA_MOVEMENT_SOURCE, "base64").to
     .replace('"./shared-activity-card.js"', JSON.stringify(sourceURL(sharedSource)));
 runtimeSource = runtimeSource.replace('"./movement-damage.js"', JSON.stringify(sourceURL(movementSource)));
 runtimeSource = runtimeSource.replace('"./starter-spells.js"', JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`));
+runtimeSource = runtimeSource.replace('"./save-prompts.js"', JSON.stringify(`data:text/javascript;base64,${process.env.RSA_SAVE_PROMPT_SOURCE}`));
 await import(sourceURL(runtimeSource));
+const registeredSettings=new Map();
+game.settings.register=(module,key,config)=>registeredSettings.set(key,config);
+hooks.get("init")();
+assert.equal(registeredSettings.get("promptForSaveOnRegionTriggers").default,true);
+assert.equal(registeredSettings.get("promptForSaveOnRegionTriggers").scope,"world");
+assert.equal(registeredSettings.get("promptForSaveOnRegionTriggers").config,true);
 hooks.get("ready")();
 const handle = globalThis.RegionSpellAutomation.handleRegionEvent;
 const enter = (target, area = region) => handle({ region: area, triggerId: trigger.id,
@@ -208,11 +218,13 @@ testLog("Initial-cast checks passed: existing card/damage reuse, initial targets
 // Player-created Regions are configured through the GM's core document hook,
 // never through a player-side attempt to write GM-only RegionBehavior data.
 let attachments = 0;
+let lastRegionUpdate;
 const playerRegion = { ...region, behaviors: [], async createEmbeddedDocuments(type, data) {
     attachments++;
     assert.equal(type, "RegionBehavior");
     return data.map((entry, index) => ({ ...entry, id: `behavior${index}` }));
 }, async updateEmbeddedDocuments() {}, async update(data) {
+    lastRegionUpdate = data;
     this.flags["region-spell-automation"] = { casterUserId: data["flags.region-spell-automation.casterUserId"] };
 } };
 game.users = { activeGM: { id: "gm" } };
@@ -227,6 +239,32 @@ await hooks.get("createRegion")(playerRegion);
 assert.equal(attachments, 1);
 assert.equal(reportedErrors.length, 2);
 testLog("Player-casting checks passed: player and secondary GM skip writes; active GM attaches behaviors.");
+
+globalThis.CONST = { REGION_VISIBILITY: { GAMEMASTER: 1 } };
+globalThis.fromUuidSync = () => spell;
+const newRegion = { flags: {dnd5e:{item:spell.uuid}}, visibility:2, hidden:false,
+    updateSource(data) { Object.assign(this,data); } };
+hooks.get("preCreateRegion")(newRegion);
+assert.equal(newRegion.visibility,2,"Missing setting preserves visibility");
+spellConfig.hideRegionFromPlayers=false;
+hooks.get("preCreateRegion")(newRegion);
+assert.equal(newRegion.visibility,2);
+spellConfig.hideRegionFromPlayers=true;
+const oldItemType=spell.type;
+spell.type="feat";
+game.user.isGM=false;
+hooks.get("preCreateRegion")(newRegion);
+assert.equal(newRegion.visibility,CONST.REGION_VISIBILITY.GAMEMASTER);
+assert.equal(newRegion.hidden,false,"Visibility must not disable Region behaviors");
+assert.equal(lastRegionUpdate.visibility,undefined,"Existing Regions were not updated by toggling setting");
+game.user.isGM=true;
+const beforeHiddenAttach=attachments;
+await hooks.get("createRegion")(playerRegion);
+assert.equal(lastRegionUpdate.visibility,CONST.REGION_VISIBILITY.GAMEMASTER);
+assert.equal(attachments,beforeHiddenAttach+1,"GM-only visual Regions still receive triggers");
+spell.type=oldItemType;
+delete spellConfig.hideRegionFromPlayers;
+testLog("Region visibility checks passed: default unchanged, player pre-create, features, GM fallback, no hidden flag, trigger attachment.");
 
 // The GM reuses a player-authored initial card via persisted message metadata,
 // without ever receiving that player's local postUseActivity hook.
@@ -274,4 +312,52 @@ game.user.id = "gm"; game.user.isGM = true;
 await enter(a);
 assert.equal(uses, beforeCaster + 2, "Offline caster falls back to active GM");
 testLog("Caster routing checks passed: player rolls, GM skips duplicates, shared targets, offline fallback.");
+
+combat.turn++;
+const affectedPlayer={id:"affected",active:true,isGM:false};
+const activeGM={id:"gm",active:true,isGM:true};
+game.users=new Map([[affectedPlayer.id,affectedPlayer],[activeGM.id,activeGM]]);
+// Match Foundry's Collection iterator, which yields users rather than entries.
+game.users[Symbol.iterator]=game.users.values.bind(game.users);
+game.users.activeGM=activeGM;
+const savePackets=[];
+game.socket={emit:(channel,packet)=>savePackets.push(packet)};
+a.actor.testUserPermission=b.actor.testUserPermission=user=>user.id===affectedPlayer.id;
+activity.type="save";
+worldSavePrompts=true;
+trigger.promptSavingThrow=false; // Legacy per-trigger fields no longer control prompting.
+await enter(a);
+assert.equal(savePackets.length,1);
+await enter(b);
+assert.equal(savePackets.length,2);
+assert.equal(savePackets[1].tokenUuid,b.uuid);
+assert.equal(savePackets[0].messageId,savePackets[1].messageId);
+trigger.oncePerTurn=false;
+await enter(b);
+assert.equal(savePackets.length,2,"Shared-card existing target must not be prompted again");
+testLog("Shared save-prompt checks passed: first target and new target prompted; existing targets not repeated.");
+
+worldSavePrompts=false;
+trigger.events=["tokenEnter","tokenMoveWithin","tokenTurnStart","tokenTurnEnd"];
+combat.turn++;
+const beforeExclusions=uses;
+for(const excluded of ["hidden","dead","zero","defeated"]){
+    const target=token(`excluded-${excluded}`);
+    if(excluded==="hidden")target.hidden=true;
+    if(excluded==="dead")target.actor.statuses.add("dead");
+    if(excluded==="zero")target.actor.system.attributes.hp.value=0;
+    if(excluded==="defeated")target.combatant={defeated:true};
+    for(const name of trigger.events)await handle({region,triggerId:trigger.id,event:{name,data:{token:target}}});
+}
+assert.equal(uses,beforeExclusions,"Excluded tokens never use activities for any Region event");
+const pruningCard=makeMessage("prune",[helpers.describeTarget(a),helpers.describeTarget(b)]);
+const pruningDamage=makeMessage("prune-damage",[...pruningCard.system.targets]);pruningDamage.rolls=[{total:20}];
+pruningCard.damage=[pruningDamage];
+a.actor.system.attributes.hp.value=0;
+globalThis.fromUuid=async uuid=>uuid===a.uuid?a:uuid===b.uuid?b:spell;
+await helpers.appendSharedTarget(pruningCard,helpers.describeTarget(b));
+assert.deepEqual(pruningCard.system.targets.map(target=>target.token),[b.uuid]);
+assert.deepEqual(pruningDamage.system.targets.map(target=>target.token),[b.uuid]);
+assert.equal(pruningDamage.rolls[0].total,20);
+testLog("Region exclusion checks passed: all event types skipped; newly dead shared-card targets pruned without rerolling damage.");
 testLog("Shared-card checks passed: concurrency, targets, damage preservation, turns, isolation, fallback, cancellation, failed-update retry, target restoration, queue recovery.");

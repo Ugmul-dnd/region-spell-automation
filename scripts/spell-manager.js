@@ -1,7 +1,7 @@
 // ============================================================
 // Region Spell Automation
 // Spell Manager
-// v0.5.6
+// v0.5.7
 //
 // Supports:
 // - Multiple activity triggers
@@ -63,6 +63,8 @@ class RegionSpellManager
     extends foundry.applications.api.ApplicationV2 {
 
     selectedSpells = new Set();
+    editingSpell = null;
+    spellEditors = new Map();
     spellStateFilter = "all";
     searchQuery = "";
     managerScrollTop = 0;
@@ -107,6 +109,7 @@ class RegionSpellManager
             Object.entries(
                 spellTable
             )
+                .filter(([name]) => !this.editingSpell || name === this.editingSpell)
                 .sort(
                     ([a], [b]) =>
                         a.localeCompare(b)
@@ -118,6 +121,9 @@ class RegionSpellManager
 
         for (const name of this.selectedSpells) {
             if (!Object.hasOwn(spellTable, name)) this.selectedSpells.delete(name);
+        }
+        for (const [name, editor] of this.spellEditors) {
+            if (!Object.hasOwn(spellTable, name)) { editor.close(); this.spellEditors.delete(name); }
         }
 
 
@@ -175,6 +181,22 @@ class RegionSpellManager
                     );
 
 
+                if (!this.editingSpell) {
+                    spellRows += `<div class="rsa-spell-card" data-search-name="${searchName}" data-enabled="${config.enabled !== false}"
+                        style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--color-border-light-2);">
+                        <input type="checkbox" class="rsa-select-spell" data-spell="${encodedName}" aria-label="Select ${safeName}"
+                            ${this.selectedSpells.has(spellName) ? "checked" : ""}>
+                        <strong style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${safeName}">
+                            ${safeName}${config.enabled === false ? " (Disabled)" : ""}
+                        </strong>
+                        <button type="button" class="rsa-toggle-enabled" data-spell="${encodedName}" style="flex:0 0 auto;width:auto;">
+                            ${config.enabled !== false ? "Disable" : "Enable"}
+                        </button>
+                        <button type="button" class="rsa-edit-spell" data-spell="${encodedName}" style="flex:0 0 auto;width:auto;">Edit</button>
+                        <button type="button" class="rsa-delete-spell" data-spell="${encodedName}" style="flex:0 0 auto;width:auto;">Delete</button>
+                    </div>`;
+                    continue;
+                }
                 const triggers =
                     Array.isArray(
                         config.triggers
@@ -497,72 +519,13 @@ class RegionSpellManager
                         "
                     >
 
-                        <div
-                            style="
-                                display:flex;
-                                align-items:center;
-                                justify-content:
-                                    space-between;
-                                gap:10px;
-                            "
-                        >
-
-                            <div
-                                style="
-                                    display:flex;
-                                    align-items:center;
-                                    gap:10px;
-                                "
-                            >
-
-                                <input
-                                    type="checkbox"
-
-                                    class="rsa-select-spell"
-                                    aria-label="Select ${safeName}"
-
-                                    data-spell="${encodedName}"
-
-                                    ${
-                                        this.selectedSpells.has(spellName)
-                                            ? "checked"
-                                            : ""
-                                    }
-                                >
-
-
-                                <strong
-                                    style="
-                                        font-size:1.08em;
-                                    "
-                                >
-                                    ${safeName}${config.enabled === false ? " (Disabled)" : ""}
-                                </strong>
-
-                            </div>
-
-
-                            <div style="display:flex;align-items:center;gap:6px;">
-                            <button type="button" class="rsa-toggle-enabled" data-spell="${encodedName}"
-                                title="${config.enabled !== false ? "Disable" : "Enable"} automation for ${safeName}">
-                                ${config.enabled !== false ? "Disable" : "Enable"}
-                            </button>
-                            <button
-                                type="button"
-
-                                class="rsa-delete-spell"
-
-                                data-spell="${encodedName}"
-                            >
-                                <i class="fa-solid fa-trash"></i>
-                                Delete Spell
-                            </button>
-                            </div>
-
-                        </div>
-
-
+                        <h3>${safeName}${config.enabled === false ? " (Disabled)" : ""}</h3>
                         <!-- ACTIVITY TRIGGERS -->
+                        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;margin-left:26px;">
+                            <input type="checkbox" class="rsa-hide-region" data-spell="${encodedName}"
+                                ${config.hideRegionFromPlayers === true ? "checked" : ""}>
+                            Hide Region from Players
+                        </label>
 
                         <div
                             style="
@@ -604,6 +567,15 @@ class RegionSpellManager
                         </div>
 
 
+                        <fieldset style="margin-top:16px;">
+                            <legend>Region Conditions</legend>
+                            <ul style="margin:8px 0;">
+                                ${(config.regionConditions ?? []).length ? (config.regionConditions ?? []).map(id =>
+                                    game.i18n.localize(CONFIG.statusEffects[id]?.name ?? id)).sort((a,b)=>a.localeCompare(b))
+                                    .map(name => `<li>${foundry.utils.escapeHTML(name)}</li>`).join("") : "<li>No conditions selected.</li>"}
+                            </ul>
+                            <button type="button" class="rsa-edit-conditions" data-spell="${encodedName}">Add / Edit Conditions</button>
+                        </fieldset>
                         <!-- REGION EFFECTS -->
 
                         <div
@@ -655,6 +627,12 @@ class RegionSpellManager
         // APPLICATION HTML
         // ====================================================
 
+        if (this.editingSpell) {
+            return `<div data-rsa-manager-scroll style="padding:8px;height:100%;overflow:auto;">${spellRows}
+                <button type="button" data-rsa-save-region-config style="margin-top:16px;width:100%;">Confirm / Save</button>
+            </div>`;
+        }
+
         return `
             <div
                 data-rsa-manager-scroll
@@ -674,15 +652,15 @@ class RegionSpellManager
                     <button type="button" id="rsa-add-starters">
                         <i class="fa-solid fa-book-open"></i> Add Starting Spell List
                     </button>
+                    <span tabindex="0" role="img" style="align-self:center;cursor:help;flex:0 0 auto;"
+                        aria-label="These spells are based on the Official Foundry 5.5e Player Handbook. Adds missing configurations only, disabled for review. Matching activities are required. No Region Effects or spell content are included."
+                        data-tooltip="These spells are based on the Official Foundry 5.5e Player Handbook. Adds missing configurations only, disabled for review. Matching activities are required. No Region Effects or spell content are included.">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    </span>
                     <button type="button" id="rsa-add-new-spell">
                         <i class="fa-solid fa-plus"></i> Add New Spell Region
                     </button>
                     </div>
-                    <p style="font-size:0.88em;opacity:0.8;">
-                        Six recipes based on Ugmul's Foundry Player's Handbook setup.
-                        Adds missing spells only, disabled for review. Requires matching activities
-                        and effects on your own spell items; no spell content is included.
-                    </p>
                 </div>
 
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
@@ -848,6 +826,55 @@ class RegionSpellManager
         const root =
             this.element;
 
+        for (const button of root.querySelectorAll(".rsa-edit-conditions")) {
+            button.addEventListener("click", () => {
+                if (!game.user.isGM) return;
+                const name = decodeURIComponent(button.dataset.spell);
+                this.conditionPicker ??= new RegionConditionPicker(this, name);
+                this.conditionPicker.render({force:true});
+            });
+        }
+        for (const checkbox of root.querySelectorAll(".rsa-hide-region")) {
+            checkbox.addEventListener("change", async () => {
+                if (!game.user.isGM) return;
+                checkbox.disabled = true;
+                const name = decodeURIComponent(checkbox.dataset.spell);
+                try {
+                    const table = foundry.utils.deepClone(game.settings.get(MODULE_ID, SETTING_KEY) ?? {});
+                    if (!Object.hasOwn(table, name)) return;
+                    table[name].hideRegionFromPlayers = checkbox.checked;
+                    await game.settings.set(MODULE_ID, SETTING_KEY, table);
+                } catch (err) {
+                    checkbox.checked = game.settings.get(MODULE_ID, SETTING_KEY)?.[name]?.hideRegionFromPlayers === true;
+                    console.error("Region Spell Automation | Could not save Region visibility:", err);
+                    ui.notifications.error("Could not save Region visibility. Check F12 console.");
+                } finally { checkbox.disabled = false; }
+            });
+        }
+
+        if (this.editingSpell) {
+            root.querySelector("[data-rsa-save-region-config]")?.addEventListener("click", async () => {
+                await this.close();
+                this.manager.render({force:true});
+                this.manager.bringToFront?.();
+            });
+            this._activateSpellHandlers(root);
+            const scroller = root.querySelector("[data-rsa-manager-scroll]");
+            if (scroller) {
+                scroller.scrollTop = this.managerScrollTop;
+                scroller.addEventListener("scroll", () => { this.managerScrollTop = scroller.scrollTop; });
+            }
+            return;
+        }
+        for (const button of root.querySelectorAll(".rsa-edit-spell")) {
+            button.addEventListener("click", () => {
+                const name = decodeURIComponent(button.dataset.spell);
+                let editor = this.spellEditors.get(name);
+                if (!editor) { editor = new RegionSpellConfigEditor(this, name); this.spellEditors.set(name, editor); }
+                editor.render({ force: true });
+            });
+        }
+
         root.querySelector("#rsa-add-new-spell")?.addEventListener("click", () => {
             if (!game.user.isGM) return;
             this.spellDropDialog ??= new RegionSpellDropDialog(this);
@@ -956,7 +983,7 @@ class RegionSpellManager
                 const enabled = card.dataset.enabled !== "false";
                 const matchesState = this.spellStateFilter === "all" ||
                     (this.spellStateFilter === "enabled" ? enabled : !enabled);
-                card.style.display = matchesName && matchesState ? "" : "none";
+                card.style.display = matchesName && matchesState ? "flex" : "none";
                 if (matchesName && matchesState) count++;
             }
             if (countDisplay) countDisplay.textContent = query || this.spellStateFilter !== "all"
@@ -991,6 +1018,10 @@ class RegionSpellManager
         // DROP SPELL
         // ====================================================
 
+        this._activateSpellHandlers(root);
+    }
+
+    _activateSpellHandlers(root) {
         // ENABLE / DISABLE
         // ====================================================
 
@@ -1529,8 +1560,6 @@ class RegionSpellManager
         }
     }
 
-
-    // ========================================================
     // FIND SPELL ITEM
     // ========================================================
 
@@ -1953,6 +1982,7 @@ class RegionSpellManager
                                     </div>
                                 </fieldset>
 
+
                                 <fieldset>
                                     <legend>Movement Damage</legend>
                                     <div class="form-group">
@@ -2161,6 +2191,7 @@ class RegionSpellManager
 
                 enabled:
                     true,
+                hideRegionFromPlayers: false,
 
                 sourceUuid:
                     item.uuid,
@@ -2442,6 +2473,7 @@ class RegionSpellManager
 
                 enabled:
                     true,
+                hideRegionFromPlayers: false,
 
                 sourceUuid:
                     item.uuid,
@@ -2538,6 +2570,68 @@ class RegionSpellManager
 // REGISTER SETTINGS MENU
 // ============================================================
 
+class RegionConditionPicker extends foundry.applications.api.ApplicationV2 {
+    static DEFAULT_OPTIONS = {window:{title:"Choose Region Conditions"},position:{width:420,height:"auto"}};
+    constructor(editor, name) {
+        super({id:`rsa-conditions-${encodeURIComponent(name)}`});
+        this.editor = editor;
+        this.spellName = name;
+    }
+    async _renderHTML() {
+        const selected = game.settings.get(MODULE_ID, SETTING_KEY)?.[this.spellName]?.regionConditions ?? [];
+        const choices = Object.values(CONFIG.statusEffects).filter(status => status.id)
+            .map(status => ({id:status.id,name:game.i18n.localize(status.name)}))
+            .sort((a,b)=>a.name.localeCompare(b.name));
+        return `<div style="padding:12px;">
+            <div style="max-height:55vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+                ${choices.map(status => `<label style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" data-rsa-condition="${foundry.utils.escapeHTML(status.id)}" ${selected.includes(status.id)?"checked":""}>
+                    ${foundry.utils.escapeHTML(status.name)}</label>`).join("")}
+            </div>
+            <button type="button" data-rsa-save-conditions style="margin-top:16px;width:100%;">Confirm Conditions</button>
+        </div>`;
+    }
+    _replaceHTML(result, content) {content.innerHTML=result;}
+    _onRender(context, options) {
+        super._onRender(context, options);
+        const button=this.element.querySelector("[data-rsa-save-conditions]");
+        button.addEventListener("click", async () => {
+            if (!game.user.isGM || button.disabled) return;
+            button.disabled=true;
+            try {
+                const table=foundry.utils.deepClone(game.settings.get(MODULE_ID,SETTING_KEY) ?? {});
+                if (!table[this.spellName]) {await this.close();return;}
+                // Preserve saved IDs unavailable in the current system's list.
+                const boxes=Array.from(this.element.querySelectorAll("[data-rsa-condition]"));
+                const shown=new Set(boxes.map(box=>box.dataset.rsaCondition));
+                table[this.spellName].regionConditions=[
+                    ...(table[this.spellName].regionConditions ?? []).filter(id=>!shown.has(id)),
+                    ...boxes.filter(box=>box.checked).map(box=>box.dataset.rsaCondition)
+                ];
+                await game.settings.set(MODULE_ID,SETTING_KEY,table);
+                await this.close();
+                this.editor.render({force:true});
+                this.editor.bringToFront?.();
+            } catch(err) {
+                console.error("Region Spell Automation | Could not save Region conditions:",err);
+                ui.notifications.error("Could not save Region conditions.");
+            } finally {button.disabled=false;}
+        });
+    }
+}
+class RegionSpellConfigEditor extends RegionSpellManager {
+    static DEFAULT_OPTIONS = { position: { width: 720, height: 650 } };
+    constructor(manager, spellName) {
+        super({ id: `rsa-edit-spell-${encodeURIComponent(spellName)}`, window: { title: `Edit ${spellName} Region Configuration` } });
+        this.manager = manager;
+        this.editingSpell = spellName;
+    }
+    render(options, legacy) {
+        this.manager.render({ force: true });
+        return super.render(options, legacy);
+    }
+}
+
 class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
     static DEFAULT_OPTIONS = {
         id: "rsa-add-spell-region",
@@ -2554,7 +2648,7 @@ class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
     async _renderHTML() {
         return `<div id="rsa-drop-zone" style="border:2px dashed var(--color-border-light-2);border-radius:6px;padding:28px;text-align:center;">
             <strong>Drag / Drop Spell Here</strong>
-            <p>Drop a spell from an actor sheet, Items, or a compendium to configure its Region activity trigger.</p>
+            <p>Drop a spell from an actor sheet, Items, or a compendium to save its Region configuration and open the editor.</p>
         </div>`;
     }
 
@@ -2576,8 +2670,20 @@ class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
                     ui.notifications.warn("Please drop a spell Item.");
                     return;
                 }
+                const table = foundry.utils.deepClone(game.settings.get(MODULE_ID, SETTING_KEY) ?? {});
+                table[item.name] ??= {
+                    enabled:true, hideRegionFromPlayers:false,
+                    triggers:[], regionEffects:[], regionConditions:[]
+                };
+                table[item.name].sourceUuid = item.uuid;
+                await game.settings.set(MODULE_ID, SETTING_KEY, table);
                 await this.close();
-                await this.manager._configureTrigger(item, null);
+                let editor = this.manager.spellEditors.get(item.name);
+                if (!editor) {
+                    editor = new RegionSpellConfigEditor(this.manager, item.name);
+                    this.manager.spellEditors.set(item.name, editor);
+                }
+                editor.render({force:true});
             } catch (err) {
                 console.error("Region Spell Automation | Could not add dropped spell:", err);
                 ui.notifications.error("Could not add the spell. Check F12 console.");
@@ -2639,6 +2745,6 @@ Hooks.once("init", () => {
 
 
     console.log(
-        "Region Spell Automation | v0.5.6 Spell Manager registered"
+        "Region Spell Automation | v0.5.7 Spell Manager registered"
     );
 });

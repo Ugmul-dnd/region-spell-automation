@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+const manifest = JSON.parse(Buffer.from(process.env.RSA_CONDITIONS_MANIFEST, "base64").toString());
+const serverTypes = Object.keys(manifest.documentTypes.RegionBehavior).map(type => `${manifest.id}.${type}`);
+assert.ok(serverTypes.includes("region-spell-automation.conditions"), "Server prefixes manifest subtype keys with the module ID");
+assert.ok(manifest.esmodules.includes("scripts/region-conditions.js"));
+globalThis.Hooks = {once(){}};
+let counter=0;
+const effect = (id, flags={}) => ({id, getFlag:(module,key)=>flags[key]});
+const actor={uuid:"Actor.one",effects:[effect("existing")],
+    async createEmbeddedDocuments(type, data){for(const value of data)this.effects.push(effect(`new${++counter}`,value.flags["region-spell-automation"]));},
+    async deleteEmbeddedDocuments(type, ids){this.effects=this.effects.filter(effect=>!ids.includes(effect.id));}};
+globalThis.game={user:{id:"gm",isGM:true},users:{activeGM:{id:"gm"}},actors:[actor]};
+globalThis.foundry={documents:{ActiveEffect:{async fromStatusEffect(id){return {toObject:()=>({_id:"fixed",name:id,statuses:[id]})};}}}};
+const source=process.env.RSA_CONDITIONS_SOURCE;
+const {syncRegionConditions}=await import(`data:text/javascript;base64,${source}`);
+const token={actor};
+const region={uuid:"Scene.one.Region.one",parent:{tokens:[token]},tokens:new Set([token])};
+await Promise.all([syncRegionConditions(region,["blinded"]),syncRegionConditions(region,["blinded"])]);
+assert.equal(actor.effects.length,2,"Entry creates one source effect despite concurrent events");
+const other={...region,uuid:"Scene.one.Region.two"};
+await syncRegionConditions(other,["blinded"]);
+assert.equal(actor.effects.length,3,"Overlapping Regions retain independent sources");
+region.tokens.clear();
+await syncRegionConditions(region,["blinded"]);
+assert.equal(actor.effects.length,2,"Exit removes only its source");
+await syncRegionConditions(other,[],true);
+assert.deepEqual(actor.effects.map(effect=>effect.id),["existing"],"Deletion preserves unrelated condition");
+game.user.isGM=false;region.tokens.add(token);
+await syncRegionConditions(region,["blinded"]);
+assert.equal(actor.effects.length,1,"Players do not duplicate GM writes");
+console.log("Region condition checks passed: concurrency, overlap, exit, deletion, unrelated effects and GM authority.");

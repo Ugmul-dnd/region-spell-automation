@@ -1,6 +1,6 @@
 // ============================================================
 // Region Spell Automation
-// v0.5.6
+// v0.5.7
 // Foundry VTT v14 / D&D5e 6.0.5
 //
 // Features:
@@ -10,18 +10,20 @@
 // - Optional Once Per Turn limiter
 // - Native D&D5e Region Active Effects
 // - tokenEnter delayed-attachment workaround
-// - Skip End Turn triggers for dead/defeated/0 HP tokens
+// - Skip all activity triggers for hidden/dead/defeated/0 HP tokens
 // ============================================================
 
 const MODULE_ID = "region-spell-automation";
 const SETTING_KEY = "spellTable";
 
-import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets }
+import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets, isEligibleTarget }
     from "./shared-activity-card.js";
 import { MOVEMENT_EVENTS, recordMovementDamage, registerMovementDamageHooks } from "./movement-damage.js";
 import { resolveRegionEffect } from "./starter-spells.js";
+import { promptTargetSave, registerSavePromptHooks } from "./save-prompts.js";
 
 const sharedCardHistory = new Map();
+const pendingCastAllowances = new Map();
 const enqueueRegionEvent = createEventQueue();
 
 
@@ -34,7 +36,7 @@ const oncePerTurnHistory =
 
 
 console.log(
-    "Region Spell Automation | v0.5.6 JS loaded"
+    "Region Spell Automation | v0.5.7 JS loaded"
 );
 
 
@@ -43,6 +45,14 @@ console.log(
 // ============================================================
 
 Hooks.once("init", () => {
+    game.settings.register(MODULE_ID, "promptForSaveOnRegionTriggers", {
+        name: "Prompt for Save on Region Triggers",
+        hint: "Open saving throw dialogs for affected token owners when Region Save activities trigger. NPCs use the active GM. Applies to Region triggers only.",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true
+    });
 
     game.settings.register(
         MODULE_ID,
@@ -73,82 +83,6 @@ Hooks.once("init", () => {
         "Region Spell Automation | Settings registered"
     );
 });
-
-
-// ============================================================
-// DEAD / DEFEATED CHECK
-// ============================================================
-
-function isDefeatedOrDead(
-    targetDoc
-) {
-
-    const actor =
-        targetDoc?.actor;
-
-
-    // --------------------------------------------------------
-    // HP CHECK
-    // --------------------------------------------------------
-
-    const hp =
-        actor?.system
-            ?.attributes
-            ?.hp
-            ?.value;
-
-
-    if (
-        typeof hp === "number" &&
-        hp <= 0
-    ) {
-
-        return true;
-    }
-
-
-    // --------------------------------------------------------
-    // DEAD STATUS
-    // --------------------------------------------------------
-
-    if (
-        actor?.statuses
-            ?.has?.("dead")
-    ) {
-
-        return true;
-    }
-
-
-    // --------------------------------------------------------
-    // COMBATANT DEFEATED FLAG
-    // --------------------------------------------------------
-
-    const combat =
-        game.combat;
-
-
-    if (combat) {
-
-        const combatant =
-            combat.combatants.find(
-                entry =>
-                    entry.tokenId ===
-                    targetDoc.id
-            );
-
-
-        if (
-            combatant?.defeated
-        ) {
-
-            return true;
-        }
-    }
-
-
-    return false;
-}
 
 
 // ============================================================
@@ -353,19 +287,15 @@ async function executeRegionEvent({
 
 
     // ========================================================
-    // SKIP END TURN FOR DEAD / DEFEATED
+    // SKIP ALL EVENTS FOR EXCLUDED TARGETS
     // ========================================================
 
     if (
-        event.name ===
-            "tokenTurnEnd" &&
-        isDefeatedOrDead(
-            targetDoc
-        )
+        !isEligibleTarget(targetDoc)
     ) {
 
         console.log(
-            `Region Spell Automation | Skipping End Turn trigger for dead/defeated token "${targetToken.name}".`
+            `Region Spell Automation | Skipping ${event.name} for hidden/dead/defeated/0 HP token "${targetToken.name}".`
         );
 
         return;
@@ -642,7 +572,9 @@ async function executeRegionEvent({
 
     if (sharedMessage) {
         try {
+            const isNewTarget = !sharedMessage.system.targets?.some(target => target.token === targetDoc.uuid);
             await appendSharedTarget(sharedMessage, describeTarget(targetDoc));
+            if (isNewTarget) await promptTargetSave(sharedMessage, targetDoc, trigger);
             if (turnKey) oncePerTurnHistory.add(turnKey);
             console.log(`Region Spell Automation | Added "${targetToken.name}" to this turn's shared card for "${spell.name}".`);
         } catch (err) {
@@ -752,13 +684,16 @@ async function executeRegionEvent({
                 configure:
                     false
             },
-            sharedKey ? {
+            {
                 data: {
                     system: { targets: [describeTarget(targetDoc)] },
-                    flags: { [MODULE_ID]: { sharedCardPerTurn: true, sharedCardKeys: [sharedKey] } }
+                    flags: { [MODULE_ID]: { regionTriggered: true,
+                        ...(sharedKey ? { sharedCardPerTurn: true, sharedCardKeys: [sharedKey] } : {}) } }
                 }
-            } : {}
+            }
         );
+
+        if (results?.message?.id) await promptTargetSave(results.message, targetDoc, trigger);
 
         if (sharedKey) {
             if (results?.message?.id) {
@@ -848,6 +783,19 @@ globalThis.RegionSpellAutomation = {
 
 Hooks.once("ready", () => {
     registerMovementDamageHooks(enqueueRegionEvent);
+    registerSavePromptHooks();
+
+    // Visibility controls the overlay without disabling Region behaviors.
+    // Pre-creation runs on the creating client, including a player caster.
+    Hooks.on("preCreateRegion", region => {
+        const itemUUID = region.flags?.dnd5e?.item;
+        if (!itemUUID) return;
+        const item = fromUuidSync(itemUUID, { strict: false });
+        const config = item ? game.settings.get(MODULE_ID, SETTING_KEY)?.[item.name] : null;
+        if (config?.hideRegionFromPlayers === true) {
+            region.updateSource({ visibility: CONST.REGION_VISIBILITY.GAMEMASTER });
+        }
+    });
 
     // A normal cast creates its usage card before placing the Region. Unlike
     // activity uses initiated by our event handler, that card wasn't previously
@@ -879,6 +827,10 @@ Hooks.once("ready", () => {
                 [`flags.${MODULE_ID}.sharedCardPerTurn`]: true,
                 [`flags.${MODULE_ID}.sharedCardKeys`]: sharedCardKeys
             });
+            if (message.getFlag?.(MODULE_ID, "targetsConfirmationPending")) {
+                pendingCastAllowances.set(message.id, { registrations, event });
+                return;
+            }
             for (const trigger of registrations) {
                 if (!trigger.oncePerTurn) continue;
                 for (const descriptor of message.system.targets ?? []) {
@@ -894,9 +846,24 @@ Hooks.once("ready", () => {
         });
     });
 
-    console.log(
-        "Region Spell Automation | Installing v0.5.6 Region hook"
-    );
+    Hooks.on("regionSpellAutomation.targetsConfirmed", message => {
+        const pending = pendingCastAllowances.get(message.id);
+        if (!pending) return;
+        pendingCastAllowances.delete(message.id);
+        enqueueRegionEvent(async () => {
+            for (const trigger of pending.registrations) {
+                if (!trigger.oncePerTurn) continue;
+                for (const descriptor of message.system.targets ?? []) {
+                    const token = descriptor.token ? await fromUuid(descriptor.token) : null;
+                    if (!token?.id) continue;
+                    const key = getOncePerTurnKey(trigger, token, pending.event);
+                    if (key) oncePerTurnHistory.add(key);
+                }
+            }
+        }).catch(err => console.error("Region Spell Automation | Confirmed target registration failed:", err));
+    });
+
+    console.log("Region Spell Automation | Installing v0.5.7 Region hook");
 
 
     // ========================================================
@@ -910,6 +877,7 @@ Hooks.once("ready", () => {
 
             oncePerTurnHistory.clear();
             sharedCardHistory.clear();
+            pendingCastAllowances.clear();
 
 
             console.log(
@@ -1460,7 +1428,10 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         try {
             const item = await fromUuid(itemUUID);
             if (item) {
-                await region.update({ [`flags.${MODULE_ID}.casterUserId`]: userId ?? game.user.id });
+                const update = { [`flags.${MODULE_ID}.casterUserId`]: userId ?? game.user.id };
+                const config = game.settings.get(MODULE_ID, SETTING_KEY)?.[item.name];
+                if (config?.hideRegionFromPlayers === true) update.visibility = CONST.REGION_VISIBILITY.GAMEMASTER;
+                await region.update(update);
                 await attachSpellRegions({ item }, [region]);
             }
         } catch (err) {
@@ -1469,6 +1440,6 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         }
     });
     console.log(
-        "Region Spell Automation | v0.5.6 Ready"
+        "Region Spell Automation | v0.5.7 Ready"
     );
 });

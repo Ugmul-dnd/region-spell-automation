@@ -6,6 +6,7 @@ export function canEndConcentration(actor) {
 }
 
 export async function endTokenConcentration(actor) {
+    if (!game.settings.get("region-spell-automation", "showConcentrationHud")) return;
     if (!canEndConcentration(actor) || pendingActors.has(actor)) return;
     pendingActors.add(actor);
     try {
@@ -17,6 +18,7 @@ export async function endTokenConcentration(actor) {
 }
 
 export function addConcentrationControl(hud, html) {
+    if (!game.settings.get("region-spell-automation", "showConcentrationHud")) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     const actor = hud.actor ?? hud.document?.actor;
     if (!root || !canEndConcentration(actor)) return;
@@ -57,6 +59,13 @@ export function addConcentrationControl(hud, html) {
     });
     column.append(button);
 }
+
+Hooks.once("init", () => game.settings.register("region-spell-automation", "showConcentrationHud", {
+    name: "Show End Concentration on Token HUD",
+    hint: "Show the concentration-ending control when a GM or owner right-clicks a concentrating token.",
+    scope: "world", config: true, type: Boolean, default: true,
+    onChange: () => { const hud = globalThis.canvas?.hud?.token; if (hud?.rendered) hud.render({ force: true }); }
+}));
 
 Hooks.once("ready", () => {
     if (game.system.id !== "dnd5e") return;

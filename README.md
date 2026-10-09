@@ -6,7 +6,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 ## Compatibility
 
-- Module version: **0.5.6**.
+- Module version: **0.5.7**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
@@ -58,9 +58,54 @@ The URL requires a published release containing `module.json` and `region-spell-
 
 ## Quick start
 
+### Module settings
+
+These world-wide toggles are available under **Configure Settings → Region Spell
+Automation**, enabled by default:
+
+- Prompt for Save on Region Triggers
+- Prompt for Save on Spells and Features
+- Auto Target and Confirm Spell/Feature Regions
+- Adjust Saving Throw Advantage
+- Show Retarget on Spell/Feature Cards
+- Remove Instantaneous Areas at Turn End
+- Show End Concentration on Token HUD
+
+Retarget, save-roll controls, and the concentration HUD refresh when toggled.
+Disabling area cleanup stops automatic tracking/deletion; it does not remove
+areas itself. Per-spell visibility and per-trigger shared-card/movement options
+remain in the manager.
+
+### Area targeting and confirmation
+
+With **Auto Target and Confirm Spell/Feature Regions** enabled (default on),
+placing a spell or Feature area selects visible actor tokens inside it and opens
+**Confirm Targets**. Enemy/ally targeting is relative to the casting token's
+disposition. A matching manager trigger's targeting mode is used when the card
+does not specify enemies/allies; otherwise everyone in the area is selected.
+Neutral creatures are not automatically enemies.
+
+Target tokens normally on the map to add them, including manual choices outside
+the automatic filter. Click a listed name to deselect and remove that token.
+Confirming replaces the activity card's target list, prompts the affected owners
+for saves if enabled, and opens the damage dialog if the activity has damage.
+Region follow-up activities are excluded. No resources are consumed again.
+
+**Close — Resolve Manually** closes the popup without undoing the cast or refunding
+resources; the activity card remains available for manual resolution. Turn-end
+area cleanup still runs normally, so finish confirming/resolving before ending
+the caster's turn. Disable competing live targeting in Tweaks while using this
+feature. Initial automatic selection happens after placement; it does not
+continuously retarget while you move the mouse.
+
 GMs can open the manager directly from **Compendiums → Open Region Spell
 Manager**, beneath D&D5e's **Open Compendium Browser** button. The settings-menu
 entry remains available.
+
+Each spell has a single row with selection, name, Enable/Disable, Edit, and Delete.
+Disabled spells show **(Disabled)** after their name. Click **Edit** to open a
+separate configuration window for Activity Triggers, Hide Region from Players,
+and Region Effects.
 
 Click **Add New Spell Region**, beside **Add Starting Spell List**, to open the
 spell drop popup. Drop a spell there to open its activity-trigger configuration.
@@ -97,7 +142,33 @@ and combine with the search text. Click the active filter again to show both
 states. Search, filter, selection, and scroll position are preserved when
 enabling or disabling spells.
 
+## Hide Region from Players
+
+Each spell card has a **Hide Region from Players** checkbox, unchecked by default.
+It is saved with that configuration and applies only to newly created Regions
+linked to its originating spell or Feature item. When checked, the Region uses
+Foundry's native **Gamemaster** visibility. Its `hidden` flag is not changed, so
+configured behaviors stay active. GM controls, animations, concentration, and
+cleanup keep their existing behavior. Unchecking leaves new Region visibility
+at the value supplied by the system or creating module; existing Regions are
+never changed by this option.
+
+Use this when an animation or map artwork represents the area. Manually drawn
+trap/hazard Regions without an originating-item link are not matched to a module
+configuration; set their native visibility in Foundry's Region configuration.
+Foundry may show Regions to observers while their Region layer is active,
+regardless of the Gamemaster visibility mode. Test player-owned Regions and
+any modules that expose Region-layer controls to players.
+
 ## Trigger events
+
+All Region activity events and automatic spell/Feature targeting exclude tokens
+that are **hidden**, marked **dead/defeated**, or have numeric HP **0 or lower**.
+This also applies to entries, movement, and start-turn triggers, not only end
+turn. The confirmation list rejects excluded manual additions and rechecks
+targets before confirming. Save prompts and Retarget use the same rule; shared
+cards drop newly excluded targets when updated. Existing rolls and applied
+damage are not undone. Native ongoing Region Effects keep their own system behavior.
 
 | Manager label | Event | When it runs |
 | --- | --- | --- |
@@ -126,6 +197,51 @@ Different dispositions can include neutral creatures. Exclude Friendlies and Hos
 
 These filters apply to activity triggers. Native Region Effects are attached with empty disposition, size, and creature-type filters and do not inherit trigger targeting.
 
+## Prompt for Save on Region Triggers
+
+In **Configure Settings → Region Spell Automation**, use **Prompt for Save on
+Region Triggers** to control save prompts for the whole world. It defaults on
+and is no longer configured separately on each trigger.
+The affected token's connected player gets the native saving-throw dialog;
+NPCs and targets with no connected player owner fall back to the active GM.
+When several players own the actor, the assigned character's player is preferred,
+then one active owner is chosen. The casting player is not the recipient unless
+they also control the affected creature.
+
+The prompt uses the activity's save ability, DC, bonus, and originating chat card.
+Shared cards prompt only newly added targets, and Once Per Turn still applies.
+The option does not apply to ordinary spell casts, movement damage, or non-Save
+activities. Canceling a prompt leaves the card's Save button available for a
+manual retry. Other modules or native fast-roll preferences may alter dialogs;
+test with both GM and player clients after reloading.
+
+## Prompt for Save on Spells and Features
+
+The world setting **Prompt for Save on Spells and Features** defaults on. When
+a spell, player feature, or monster ability uses a Save activity, each token listed on its activity card receives
+its native saving-throw prompt on one connected owner's client. NPCs use the
+active GM. For example, Fireball with four targeted tokens sends four prompts,
+with the spell's save ability, DC, bonuses, and original card association.
+
+Select the targets before casting, or ensure the system/module records them on
+the cast card. NPC saves from a GM cast stay on that GM's client, even when
+another GM is designated active. Actor-only target records are resolved to their
+synthetic token or a unique active token; ambiguous actor-only targets are logged
+and skipped rather than guessing.
+
+This feature does not scan template geometry to choose targets. It waits briefly
+for asynchronous AOE targeting updates and watches recorded-target changes on
+casts made during the current session, prompting only newly recorded tokens.
+Token names and added name labels do not affect routing. It applies to Save
+spell and Feature activities, not attack/damage-only activities or saves mentioned
+only in descriptive text. Region-generated
+activity uses are excluded and continue to use **Prompt for Save on Region
+Triggers**. The two settings can be toggled independently. Canceled prompts
+leave the card's Save button available.
+
+This is the renamed spell-cast setting: its saved on/off preference is preserved.
+It does not add on-hit save mechanics or determine whether an attack hit.
+
 ## Once Per Turn
 
 This option limits a trigger to one use per target during the current **combat turn**, including another creature's turn. It is not once per round.
@@ -134,7 +250,7 @@ The allowance is keyed by combat ID, round, turn, token ID, and trigger ID. Even
 
 Without combat turn information, events can repeat. History is client-local, resets on reload or combat deletion, and is not a cross-client lock. Rewinding combat can encounter a previously recorded allowance. An activity error releases the allowance; a canceled activity that returns normally may still consume it.
 
-## Shared Activity Card Per Turn
+## Shared Activity Card Per Turn (development)
 
 Enable **Share Activity Card Per Turn** when editing a trigger to add newly affected
 tokens to one activity card during the current combat turn. For Spirit Guardians,
@@ -170,7 +286,7 @@ only for the first target. Verify with your module stack before using it at the
 table. The shared-card workflow was confirmed working in-world by the author
 with D&D5e 6.0.6 on October 7, 2026. Other module combinations still need testing.
 
-## Movement Damage
+## Movement Damage (development)
 
 For Spike Growth, prepare a **Damage** activity with **2d4 piercing** damage on
 the originating spell. In its trigger, enable **Accumulate Movement Damage** and
@@ -218,7 +334,7 @@ A new combat turn starts a new pending card; older cards remain usable. Outside
 combat, movement accumulates on the same card. Pending totals are stored on chat
 messages and survive reload; deleting a pending card deletes its record. This
 feature does not provide a cross-client lock. Damage application remains manual.
-Automated regression checks and GM/player in-world testing passed on Foundry v14 with D&D5e 6.0.6.
+Automated checks pass; in-world verification is still needed.
 
 ## Region Effects and concentration
 
@@ -250,6 +366,58 @@ Match timing to the spell version used in your world. End-turn activity handling
 
 ## Troubleshooting and support
 
+### Adjust saving throw advantage after rolling
+
+Enable **Adjust Saving Throw Advantage** in module settings (default on). Hover
+over a completed saving throw, including an inline save summary on an activity
+card, to show **ADV / NORMAL / DISADV**. The current mode is highlighted.
+Turn the setting off to hide the controls; changing it refreshes the chat cards
+without another world reload.
+
+The original d20 and bonus dice are preserved. A missing extra d20 is rolled
+once and cached; subsequent mode switches reuse the same results. If Dice So
+Nice is installed, newly rolled extra dice animate with the save's original
+whisper/blind visibility; cached mode switches do not animate a new roll. The save's
+total and success/failure update, including its parent card and linked damage
+card's save outcomes. Previously applied damage is not reversed. GMs, the roll
+author, and the affected actor's owners can use the controls; the active GM
+handles remote edits. If Tweaks already provides controls on that standalone
+save, the module skips adding a duplicate set. Attack rolls are unchanged.
+
+### Retarget a spell or Feature card
+
+Use **Retarget** on a spell or Feature activity card to replace its recorded targets with
+your currently targeted tokens (target markers, not merely controlled/selected
+tokens). With no current targets, it clears the list. The GM or card owner can
+use the button. Associated damage cards you can edit receive the same list.
+
+This switches the card to targeted mode without rerolling saves/damage,
+consuming resources, or undoing previously applied damage. Retarget itself does
+not request new saving throws; use the card's Save button as needed. After placing
+a template, choose the desired targets and click Retarget to correct an overly
+broad initial list. Another module can still change targets afterward.
+
+After retargeting, inline save summaries for removed targets are hidden on the
+card. Their original rolls remain in chat history, and applied damage is not
+undone. Adding a target back allows its existing summary to appear again.
+
+### Instantaneous spell area cleanup
+
+New Regions created by instantaneous spells and Features, such as Fireball or
+Hell Hound Fire Breath, are removed when
+their activity duration is instantaneous. Feature durations are read from the
+originating activity; spells retain their item duration unless explicitly overridden.
+These areas are removed when
+the caster's combat turn ends. The spell must have its originating item and
+caster token linked to the Region, and an active GM must be connected. Save
+and damage chat cards remain available after the area is removed.
+
+Spells or Features with activity triggers or Region Effects configured in the manager,
+lasting-duration spells, and concentration spells are preserved. A configuration
+added before cleanup is also respected. Existing Regions are not retroactively
+tracked. Outside combat, areas stay for manual removal; combat rewinds do not
+delete them. Finish resolving saves and damage before ending the caster's turn.
+
 ### End concentration from the token HUD
 
 Right-click a concentrating token to show its HUD. A concentration icon with a
@@ -277,10 +445,19 @@ Open the browser console with **F12** and look for `Region Spell Automation |` m
 
 ## Development and releases
 
-The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The module version is defined in `module.json`.
+The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The manager's v0.5.4 header reflects its component revision; the module version is defined in `module.json`.
 
 See [RELEASING.md](RELEASING.md) for packaging and the public-release checklist.
 
 ## License
 
 Copyright (c) 2026 Ugmul. Released under the [MIT License](LICENSE).
+
+### Region Conditions
+
+In a configured spell or feature's **Edit** window, select standard conditions
+under **Region Conditions**. New Regions apply these conditions to creatures
+inside them and remove their own effects on exit or Region deletion. Separate
+Regions and unrelated effects retain their own condition sources. Keep an active
+GM connected. Changes apply to newly created Regions; recast to use new settings.
+These conditions apply automatically without a saving throw.
