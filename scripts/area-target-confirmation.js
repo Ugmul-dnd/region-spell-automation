@@ -45,19 +45,35 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
         const targets = this.eligibleTargets();
         return `<div style="padding:8px;">
             <p>Target tokens on the map to add them. Click a listed name to remove it.</p>
-            <div style="max-height:40vh;overflow-y:auto;">
+            <div style="max-height:40vh;overflow-y:auto;margin-bottom:16px;">
                 ${targets.length ? targets.map(token => `<button type="button" data-rsa-remove-target="${escape(token.id)}"
-                    style="display:block;width:100%;margin-bottom:4px;">${escape(token.name)} <i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`).join("") : "<p>No targets. You can add targets on the map.</p>"}
+                    style="display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:5px 10px;margin-bottom:5px;text-align:left;">
+                    <img src="${escape(token.document?.texture?.src ?? token.texture?.src ?? "icons/svg/mystery-man.svg")}" alt=""
+                        style="width:32px;height:32px;flex:0 0 32px;object-fit:contain;border:0;border-radius:4px;">
+                    <span style="flex:1;">${escape(token.name)}</span> <i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`).join("") : "<p>No targets. You can add targets on the map.</p>"}
             </div>
             <button type="button" data-rsa-confirm-targets>Confirm Targets (${targets.length})</button>
             <button type="button" data-rsa-cancel-targets>Close — Resolve Manually</button>
         </div>`;
     }
-    _replaceHTML(result, content) { content.innerHTML = result; }
+    _replaceHTML(result, content) { this.clearTokenHighlight(); content.innerHTML = result; }
+    clearTokenHighlight(event = {}) {
+        this.highlightedToken?._onHoverOut?.(event);
+        this.highlightedToken = null;
+    }
     _onRender(context, options) {
         super._onRender(context, options);
         for (const button of this.element.querySelectorAll("[data-rsa-remove-target]")) {
+            button.addEventListener("mouseenter", event => {
+                this.clearTokenHighlight(event);
+                const token = Array.from(game.user.targets).find(target => target.id === button.dataset.rsaRemoveTarget);
+                if (!token || token.isVisible === false || token.hover) return;
+                token._onHoverIn?.(event, {hoverOutOthers: true});
+                this.highlightedToken = token;
+            });
+            button.addEventListener("mouseleave", event => this.clearTokenHighlight(event));
             button.addEventListener("click", () => {
+                this.clearTokenHighlight();
                 const token = Array.from(game.user.targets).find(target => target.id === button.dataset.rsaRemoveTarget);
                 token?.setTarget(false, { user: game.user, releaseOthers: false });
             });
@@ -77,6 +93,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
         this.element.querySelector("[data-rsa-cancel-targets]").addEventListener("click", () => this.close());
     }
     async close(options) {
+        this.clearTokenHighlight();
         if (this.targetHook) Hooks.off("targetToken", this.targetHook);
         for (const [name, id] of this.statusHooks ?? []) Hooks.off(name, id);
         if (!this.confirmed) this.finish?.(null);

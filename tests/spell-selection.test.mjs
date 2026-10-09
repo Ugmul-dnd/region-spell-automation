@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-class BaseApplication { _onRender() {} render() {} }
+class BaseApplication { _onRender() {} render() { this.renderCount = (this.renderCount ?? 0) + 1; } close() { this.closed = true; } }
 const nodes = new Map();
 const makeNode = spell => ({ dataset: {spell:encodeURIComponent(spell)}, checked:false, disabled:false,
     events:{}, addEventListener(name, fn) { this.events[name]=fn; } });
@@ -18,9 +18,10 @@ globalThis.ui = {notifications:{info(){},error(message){throw new Error(message)
 globalThis.Hooks = {once(){},on(){}};
 const source = Buffer.from(process.env.RSA_MANAGER_SOURCE,"base64").toString()
     .replace('"./starter-spells.js"',JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`))
-    + "\nglobalThis.RSA_TEST_MANAGER = RegionSpellManager;";
+    + "\nglobalThis.RSA_TEST_MANAGER = RegionSpellManager; globalThis.RSA_TEST_EDITOR = RegionSpellConfigEditor;";
 await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 const manager = new globalThis.RSA_TEST_MANAGER();
+const editor = new globalThis.RSA_TEST_EDITOR(manager, "Spirit Guardians");
 manager.element=root;
 manager._onRender({},{});
 hideBoxes[0].checked=true;
@@ -28,13 +29,13 @@ await hideBoxes[0].events.change();
 assert.equal(table["Spirit Guardians"].hideRegionFromPlayers,true);
 assert.equal(table["Spirit Guardians"].enabled,true);
 assert.equal(table["Spike Growth"].hideRegionFromPlayers,undefined);
-assert.match(await manager._renderHTML({},{}),/class="rsa-hide-region" data-spell="Spirit%20Guardians"\s+checked/);
+assert.match(await editor._renderHTML({},{}),/class="rsa-hide-region" data-spell="Spirit%20Guardians"\s+checked/);
 foundry.applications.api.DialogV2.input = async () => ({triggerName:"Entry",activity:"Damage",tokenEnter:true,targeting:"everyone"});
 const configuredItem = {name:"Spirit Guardians",uuid:"Actor.caster.Item.spell",
     system:{activities:[{id:"damage",name:"Damage",type:"damage"}]}};
 await manager._configureTrigger(configuredItem,null);
 assert.equal(table["Spirit Guardians"].hideRegionFromPlayers,true,"Saving a trigger preserves spell visibility setting");
-assert.match(await manager._renderHTML({},{}),/class="rsa-hide-region" data-spell="Spirit%20Guardians"\s+checked/);
+assert.match(await editor._renderHTML({},{}),/class="rsa-hide-region" data-spell="Spirit%20Guardians"\s+checked/);
 hideBoxes[0].checked=false;
 await hideBoxes[0].events.change();
 assert.equal(table["Spirit Guardians"].hideRegionFromPlayers,false);
@@ -101,12 +102,12 @@ const originalQueryAll = root.querySelectorAll;
 root.querySelectorAll = selector => selector === ".rsa-spell-card" ? cards : originalQueryAll(selector);
 manager._onRender({},{});
 await click("#rsa-show-disabled");
-assert.equal(cards[0].style.display,"none");assert.equal(cards[1].style.display,"");
+assert.equal(cards[0].style.display,"none");assert.equal(cards[1].style.display,"flex");
 nodes.get("#rsa-search").value="guardians";
 nodes.get("#rsa-search").events.input();
 assert.equal(cards[1].style.display,"none");
 await click("#rsa-show-enabled");
-assert.equal(cards[0].style.display,"");
+assert.equal(cards[0].style.display,"flex");
 assert.equal(nodes.get("#rsa-show-enabled").attributes["aria-pressed"],"true");
 scroller.scrollTop=850; scroller.events.scroll();
 manager._replaceHTML("new content",{querySelector:()=>scroller},{});
@@ -118,3 +119,28 @@ assert.equal(manager.spellStateFilter,"enabled");
 await click("#rsa-show-enabled");
 assert.equal(manager.spellStateFilter,"all");
 console.log("Filter/scroll checks passed: enabled/disabled filters, combined search, toggle to all, persistent search/filter and restored scroll.");
+
+const compact = await manager._renderHTML({},{});
+assert.match(compact, /rsa-edit-spell/);
+assert.doesNotMatch(compact, /rsa-hide-region|rsa-add-trigger|rsa-add-effect/);
+const detail = new globalThis.RSA_TEST_EDITOR(manager, "Spike Growth");
+const detailHtml = await detail._renderHTML({},{});
+assert.match(detailHtml, /Hide Region from Players/);
+assert.match(detailHtml, /Activity Triggers/);
+assert.match(detailHtml, /Region Effects/);
+assert.doesNotMatch(detailHtml, /rsa-select-spell|rsa-add-starters|rsa-search|Spirit Guardians/);
+const before = manager.renderCount ?? 0;
+detail.render({force:true});
+assert.equal(manager.renderCount, before + 1, "Editor changes refresh the manager");
+const editButton = makeNode("Spike Growth");
+root.querySelectorAll = selector => selector === ".rsa-edit-spell" ? [editButton] : originalQueryAll(selector);
+manager._onRender({},{});
+editButton.events.click();
+const opened = manager.spellEditors.get("Spike Growth");
+assert.ok(opened);
+editButton.events.click();
+assert.equal(manager.spellEditors.get("Spike Growth"), opened, "Reuse the spell editor");
+delete table["Spike Growth"];
+await manager._renderHTML({},{});
+assert.equal(opened.closed, true, "Deleting a spell closes its editor");
+console.log("Compact list/editor checks passed: separate details, manager refresh, editor reuse and deletion cleanup.");

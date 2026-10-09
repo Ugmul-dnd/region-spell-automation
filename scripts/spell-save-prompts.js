@@ -74,6 +74,12 @@ Hooks.once("ready", () => {
     Hooks.on("dnd5e.postUseActivity", (activity, usage, results) => {
         scheduleCastSaves(activity, results);
     });
+    Hooks.on("regionSpellAutomation.targetsConfirmed", message => {
+        // Confirmation can finish after the post-use timer has already skipped
+        // the pending card. Resume explicitly, even without a cached cast.
+        const activity = casts.get(message.id)?.activity ?? message.getAssociatedActivity?.();
+        scheduleCastSaves(activity, { message });
+    });
     Hooks.on("updateChatMessage", (message, changes, options) => {
         if (options?.rsaRetarget) {
             // Retarget edits the card, rather than requesting another save.

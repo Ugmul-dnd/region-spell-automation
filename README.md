@@ -102,6 +102,11 @@ GMs can open the manager directly from **Compendiums → Open Region Spell
 Manager**, beneath D&D5e's **Open Compendium Browser** button. The settings-menu
 entry remains available.
 
+Each spell has a single row with selection, name, Enable/Disable, Edit, and Delete.
+Disabled spells show **(Disabled)** after their name. Click **Edit** to open a
+separate configuration window for Activity Triggers, Hide Region from Players,
+and Region Effects.
+
 Click **Add New Spell Region**, beside **Add Starting Spell List**, to open the
 spell drop popup. Drop a spell there to open its activity-trigger configuration.
 
