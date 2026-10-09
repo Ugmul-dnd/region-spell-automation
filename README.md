@@ -452,3 +452,12 @@ See [RELEASING.md](RELEASING.md) for packaging and the public-release checklist.
 ## License
 
 Copyright (c) 2026 Ugmul. Released under the [MIT License](LICENSE).
+
+### Region Conditions
+
+In a configured spell or feature's **Edit** window, select standard conditions
+under **Region Conditions**. New Regions apply these conditions to creatures
+inside them and remove their own effects on exit or Region deletion. Separate
+Regions and unrelated effects retain their own condition sources. Keep an active
+GM connected. Changes apply to newly created Regions; recast to use new settings.
+These conditions apply automatically without a saving throw.

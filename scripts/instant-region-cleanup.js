@@ -5,7 +5,7 @@ export function shouldCleanInstantRegion(item, config, activity = null) {
         ? activity?.duration ?? item?.system?.duration : item?.system?.duration;
     return ["spell", "feat"].includes(item?.type) && duration?.units === "inst" && !duration.concentration &&
         !item.system?.properties?.has?.("concentration") &&
-        !(config?.triggers?.length || config?.regionEffects?.length);
+        !(config?.triggers?.length || config?.regionEffects?.length || config?.regionConditions?.length);
 }
 
 function isActiveGM() {

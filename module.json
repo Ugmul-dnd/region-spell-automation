@@ -9,6 +9,11 @@
   "bugs": "https://github.com/Ugmul-dnd/region-spell-automation/issues",
   "license": "LICENSE",
   "socket": true,
+  "documentTypes": {
+    "RegionBehavior": {
+      "conditions": {}
+    }
+  },
   "authors": [
     {
       "name": "Ugmul"
@@ -36,6 +41,7 @@
     "scripts/save-prompts.js",
     "scripts/movement-damage.js",
     "scripts/region-spell-automation.js",
+    "scripts/region-conditions.js",
     "scripts/spell-save-prompts.js",
     "scripts/area-target-confirmation.js",
     "scripts/retarget-card.js",

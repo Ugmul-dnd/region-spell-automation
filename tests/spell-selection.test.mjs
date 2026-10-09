@@ -14,11 +14,13 @@ let writes=0, confirm=false, prompt;
 globalThis.foundry = { applications:{api:{ApplicationV2:BaseApplication,DialogV2:{async confirm(options){prompt=options;return confirm;}}}},
     utils:{deepClone:structuredClone,escapeHTML:String,randomID:()=>"random"} };
 globalThis.game = {user:{isGM:true},settings:{get:()=>table,async set(id,key,value){writes++;table=value;}}};
+globalThis.CONFIG = {statusEffects:{blinded:{id:"blinded",name:"Blinded"}}};
+game.i18n = {localize: value => value};
 globalThis.ui = {notifications:{info(){},error(message){throw new Error(message);}}};
 globalThis.Hooks = {once(){},on(){}};
 const source = Buffer.from(process.env.RSA_MANAGER_SOURCE,"base64").toString()
     .replace('"./starter-spells.js"',JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`))
-    + "\nglobalThis.RSA_TEST_MANAGER = RegionSpellManager; globalThis.RSA_TEST_EDITOR = RegionSpellConfigEditor;";
+    + "\nglobalThis.RSA_TEST_MANAGER = RegionSpellManager; globalThis.RSA_TEST_EDITOR = RegionSpellConfigEditor; globalThis.RSA_TEST_PICKER = RegionConditionPicker;";
 await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 const manager = new globalThis.RSA_TEST_MANAGER();
 const editor = new globalThis.RSA_TEST_EDITOR(manager, "Spirit Guardians");
@@ -144,3 +146,19 @@ delete table["Spike Growth"];
 await manager._renderHTML({},{});
 assert.equal(opened.closed, true, "Deleting a spell closes its editor");
 console.log("Compact list/editor checks passed: separate details, manager refresh, editor reuse and deletion cleanup.");
+CONFIG.statusEffects={z:{id:"z",name:"Zzz"},a:{id:"a",name:"Alpha"}};
+table["Spike Growth"]={enabled:true,regionConditions:["z"],triggers:[],regionEffects:[]};
+const picker=new RSA_TEST_PICKER(detail,"Spike Growth");
+const pickerHtml=await picker._renderHTML();
+assert.ok(pickerHtml.indexOf("Alpha") < pickerHtml.indexOf("Zzz"));
+const conditionButtons=[{dataset:{rsaCondition:"a"},checked:true},{dataset:{rsaCondition:"z"},checked:false}];
+const saveCondition=makeNode("");
+picker.element={querySelector:()=>saveCondition,querySelectorAll:()=>conditionButtons};
+picker._onRender({},{});
+assert.deepEqual(table["Spike Growth"].regionConditions,["z"],"Draft selection does not save before confirmation");
+await saveCondition.events.click();
+assert.deepEqual(table["Spike Growth"].regionConditions,["a"]);
+assert.equal(picker.closed,true);
+assert.match(await detail._renderHTML(), /<li>Alpha<\/li>/);
+assert.doesNotMatch(await detail._renderHTML(), /data-rsa-condition=/);
+console.log("Condition picker checks passed: alphabetical choices, draft isolation, explicit save and selected-only summary.");

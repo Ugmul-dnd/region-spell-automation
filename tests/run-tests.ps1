@@ -51,6 +51,17 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Area confirmation tests failed.' }
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'target-eligibility.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Target eligibility tests failed.' }
+    $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
+    $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
+    try {
+        $env:RSA_CONDITIONS_MANIFEST = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'module.json')))
+        $env:RSA_CONDITIONS_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/region-conditions.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'region-conditions.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) { throw 'Region condition tests failed.' }
+    } finally {
+        $env:RSA_CONDITIONS_SOURCE = $rsaOldConditionsSource
+        $env:RSA_CONDITIONS_MANIFEST = $rsaOldConditionsManifest
+    }
 } finally {
     $env:RSA_SHARED_SOURCE = $rsaOldSharedSource
     $env:RSA_RUNTIME_SOURCE = $rsaOldRuntimeSource

@@ -53,7 +53,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
                     <span style="flex:1;">${escape(token.name)}</span> <i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`).join("") : "<p>No targets. You can add targets on the map.</p>"}
             </div>
             <button type="button" data-rsa-confirm-targets>Confirm Targets (${targets.length})</button>
-            <button type="button" data-rsa-cancel-targets>Close — Resolve Manually</button>
+            <button type="button" data-rsa-cancel-targets style="margin-top:8px;">Close — Resolve Manually</button>
         </div>`;
     }
     _replaceHTML(result, content) { this.clearTokenHighlight(); content.innerHTML = result; }
