@@ -151,3 +151,17 @@ await promptCastSaves(activity,{message:card});
 assert.equal(packets.length,beforeExcluded+1);
 assert.deepEqual(card.system.targets,[{token:tokens.get("one").uuid}]);
 console.log("Save-card exclusion checks passed: hidden/dead/zero-HP targets removed and not prompted.");
+
+activity.item={type:"feat",name:"Fear Aura"};activity.name="Save";
+activity.target={template:{type:"emanation"}};
+card.id="turn-only-aura";card.author=gm;messages.set(card.id,card);
+card.system.targets=[{token:tokens.get("one").uuid}];
+const oldSettingGet=game.settings.get;
+game.settings.get=(id,key)=>key==="spellTable"?{"Fear Aura":{enabled:true,triggers:[{activity:"Save",events:["tokenTurnStart"],targeting:"hostilesOnly"}]}}:oldSettingGet(id,key);
+const auraPackets=packets.length;
+await promptCastSaves(activity,{message:card});
+assert.equal(packets.length,auraPackets,"Turn-only aura activation must not prompt initial saves");
+game.settings.get=(id,key)=>key==="spellTable"?{"Fear Aura":{enabled:true,triggers:[{activity:"Save",events:["tokenEnter"]}]}}:oldSettingGet(id,key);
+await promptCastSaves(activity,{message:card});
+assert.equal(packets.length,auraPackets+1,"Entry-triggered feature retains initial saves");
+console.log("Aura activation checks passed: turn-only features defer saves; entry-triggered features preserved.");

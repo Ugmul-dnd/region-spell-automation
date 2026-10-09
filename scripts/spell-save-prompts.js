@@ -9,6 +9,13 @@ export async function promptCastSaves(activity, results) {
     if (message?.getFlag?.(MODULE_ID, "targetsConfirmationPending") || message?.getFlag?.(MODULE_ID, "targetsConfirmationCanceled")) return;
     if (activity?.type !== "save" || !["spell", "feat"].includes(activity.item?.type) || !message?.id) return;
     if (message.author?.id !== game.user.id || message.getFlag?.(MODULE_ID, "regionTriggered")) return;
+    // A configured turn-only feature aura is activated now, but its saves
+    // belong to the Region's turn events rather than the initial use card.
+    const config = game.settings.get(MODULE_ID, "spellTable")?.[activity.item.name];
+    const matching = config?.enabled === false ? [] : (config?.triggers ?? []).filter(trigger => trigger.activity === activity.name);
+    if (activity.item.type === "feat" && activity.target?.template?.type && matching.length &&
+        matching.every(trigger => trigger.events?.length && trigger.events.every(event =>
+            ["tokenTurnStart", "tokenTurnEnd"].includes(event)))) return;
     const promptedTokens = sentTargets.get(message.id) ?? new Set();
     sentTargets.set(message.id, promptedTokens);
     const excluded = new Set();

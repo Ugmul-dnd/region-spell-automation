@@ -20,7 +20,7 @@ globalThis.ui = {notifications:{info(){},error(message){throw new Error(message)
 globalThis.Hooks = {once(){},on(){}};
 const source = Buffer.from(process.env.RSA_MANAGER_SOURCE,"base64").toString()
     .replace('"./starter-spells.js"',JSON.stringify(`data:text/javascript;base64,${process.env.RSA_STARTER_SOURCE}`))
-    + "\nglobalThis.RSA_TEST_MANAGER = RegionSpellManager; globalThis.RSA_TEST_EDITOR = RegionSpellConfigEditor; globalThis.RSA_TEST_PICKER = RegionConditionPicker;";
+    + "\nglobalThis.RSA_TEST_MANAGER = RegionSpellManager; globalThis.RSA_TEST_EDITOR = RegionSpellConfigEditor; globalThis.RSA_TEST_PICKER = RegionConditionPicker; globalThis.RSA_TEST_DROP = RegionSpellDropDialog;";
 await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 const manager = new globalThis.RSA_TEST_MANAGER();
 const editor = new globalThis.RSA_TEST_EDITOR(manager, "Spirit Guardians");
@@ -162,3 +162,19 @@ assert.equal(picker.closed,true);
 assert.match(await detail._renderHTML(), /<li>Alpha<\/li>/);
 assert.doesNotMatch(await detail._renderHTML(), /data-rsa-condition=/);
 console.log("Condition picker checks passed: alphabetical choices, draft isolation, explicit save and selected-only summary.");
+const feature={documentName:"Item",type:"feat",name:"Fear Aura",uuid:"Actor.fiend.Item.aura"};
+globalThis.fromUuid=async()=>feature;
+foundry.applications.ux={TextEditor:{getDragEventData:()=>({uuid:feature.uuid})}};
+const dropZone=makeNode("");
+const drop=new RSA_TEST_DROP(manager);
+drop.element={querySelector:()=>dropZone};
+drop._onRender({},{});
+await dropZone.events.drop({preventDefault(){},stopPropagation(){}});
+assert.equal(table["Fear Aura"].sourceUuid,feature.uuid);
+assert.deepEqual(table["Fear Aura"].triggers,[]);
+assert.ok(manager.spellEditors.get("Fear Aura"));
+assert.equal(drop.closed,true);
+table["Fear Aura"].sourceUuid=null;
+game.actors=[{items:[feature]}];
+assert.equal(await manager._findSpellItem("Fear Aura"),feature,"Actor fallback accepts monster features");
+console.log("Feature manager checks passed: ability drop, saved configuration, editor opening and actor fallback.");
