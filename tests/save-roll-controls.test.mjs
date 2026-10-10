@@ -50,7 +50,7 @@ await updateSaveMode(message,1,0);
 assert.equal(updates,1);assert.equal(message.rolls[0].total,22);assert.match(message.flavor,/Advantage/);
 await updateSaveMode(message,0,0);
 assert.equal(message.rolls[0].total,13);assert.equal(message.flavor,"Wisdom Save");
-await assert.rejects(updateSaveMode({...message,type:"attack"},1,0));
+await assert.rejects(updateSaveMode({...message,type:"skill"},1,0));
 console.log("Save mode checks passed: original dice retained, one extra die cached, bonuses/DC/outcomes preserved, mode cycling, ties, existing advantage, save-only permissions.");
 
 let refreshes=0,renders=0;
@@ -111,8 +111,8 @@ delete game.dice3d;
 await updateSaveMode({...message,rolls:[new D20Roll([8])]},1,0);
 console.log("Save animation checks passed: new die only, cached switches skipped, whisper/blind routing, optional integration.");
 
-let registeredSetting,chatRenders=0;
-game.settings.register=(module,key,config)=>{assert.equal(key,"adjustSavingThrowAdvantage");registeredSetting=config;};
+let registeredSetting,chatRenders=0; const settingsByKey=new Map();
+game.settings.register=(module,key,config)=>{settingsByKey.set(key,config);if(key==="adjustSavingThrowAdvantage")registeredSetting=config;};
 ui.chat.render=options=>{assert.equal(options.force,true);chatRenders++;};
 registeredHooks.get("init")();
 assert.equal(registeredSetting.scope,"world");assert.equal(registeredSetting.config,true);assert.equal(registeredSetting.default,true);
@@ -122,3 +122,22 @@ const disabledRoot=new Element();disabledRoot.summaries=[new Element()];disabled
 addSaveControls({type:"usage"},disabledRoot);
 assert.equal(disabledRoot.summaries[0].children.length,0);
 console.log("Save-control setting checks passed: visible world toggle, default on, chat refresh, no controls while disabled.");
+
+assert.equal(settingsByKey.get("adjustAttackRollAdvantage").default,true);
+assert.equal(settingsByKey.get("adjustAttackRollAdvantage").scope,"world");
+game.settings.get=(id,key)=>key==="adjustAttackRollAdvantage";
+const attackMessage={...message,type:"attack",id:"attack",rolls:[new D20Roll([8])],flavor:"Sword Attack"};
+game.messages.set(attackMessage.id,attackMessage);
+const attackSummary=new Element();attackSummary.dataset.messageId=attackMessage.id;attackSummary.rollElement=new Element();
+const combinedRoot=new Element();combinedRoot.summaries=[attackSummary];
+addSaveControls({type:"usage"},combinedRoot);
+assert.deepEqual(attackSummary.children[0].children.map(button=>button.textContent),["ADV","NORMAL","DISADV"]);
+addSaveControls({type:"usage"},combinedRoot);assert.equal(attackSummary.children.length,1);
+await updateSaveMode(attackMessage,1,0);
+assert.equal(attackMessage.rolls[0].total,22);
+await updateSaveMode(attackMessage,-1,0);assert.equal(attackMessage.rolls[0].total,13);
+await updateSaveMode(attackMessage,0,0);assert.equal(attackMessage.rolls[0].total,13);
+game.settings.get=(id,key)=>key==="adjustSavingThrowAdvantage";
+const offAttack=new Element();offAttack.summaries=[new Element()];offAttack.summaries[0].dataset.messageId=attackMessage.id;offAttack.summaries[0].rollElement=new Element();
+addSaveControls({type:"usage"},offAttack);assert.equal(offAttack.summaries[0].children.length,0);
+console.log("Attack adjustment checks passed: inline controls, dice reuse, mode switching, no duplicates and independent setting.");

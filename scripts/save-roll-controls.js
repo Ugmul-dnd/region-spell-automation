@@ -4,13 +4,13 @@ const channel = `module.${MODULE_ID}`;
 const enqueue = createEventQueue();
 
 export function canAdjustSave(message, user) {
-    return message?.type === "save" && Boolean(user?.isGM || message.author?.id === user?.id ||
+    return ["save", "attack"].includes(message?.type) && Boolean(user?.isGM || message.author?.id === user?.id ||
         message.getAssociatedActor?.()?.testUserPermission?.(user, "OWNER"));
 }
 
 export async function changeSaveMode(roll, mode) {
-    if (![1, 0, -1].includes(mode)) throw new Error("Invalid saving throw roll mode.");
-    if (!(roll instanceof CONFIG.Dice.D20Roll) || !roll.d20 || !roll._evaluated) throw new Error("Expected a completed native d20 saving throw.");
+    if (![1, 0, -1].includes(mode)) throw new Error("Invalid d20 roll mode.");
+    if (!(roll instanceof CONFIG.Dice.D20Roll) || !roll.d20 || !roll._evaluated) throw new Error("Expected a completed native d20 roll.");
     if ((roll.options.advantageMode ?? 0) === mode) return roll;
     // Deserialize to preserve every evaluated bonus die and avoid modifying the
     // original roll object before the message update succeeds.
@@ -45,7 +45,7 @@ export async function changeSaveMode(roll, mode) {
 }
 
 export async function updateSaveMode(message, mode, index, user = game.user) {
-    if (!canAdjustSave(message, user)) throw new Error("You cannot adjust this saving throw.");
+    if (!canAdjustSave(message, user)) throw new Error("You cannot adjust this roll.");
     const roll = message.rolls?.[index];
     const adjusted = await changeSaveMode(roll, mode);
     if (adjusted === roll) return;
@@ -77,8 +77,13 @@ export async function animateNewSaveDice(message, results, user = game.user) {
     }
 }
 
+function adjustmentEnabled(message) {
+    return ["save","attack"].includes(message?.type) && game.settings.get(MODULE_ID,
+        message.type === "attack" ? "adjustAttackRollAdvantage" : "adjustSavingThrowAdvantage") === true;
+}
+
 function requestChange(message, mode, index) {
-    if (!game.settings.get(MODULE_ID, "adjustSavingThrowAdvantage")) return;
+    if (!adjustmentEnabled(message)) return;
     if (!canAdjustSave(message, game.user)) return;
     const gm = game.users.activeGM;
     if (gm && gm.id !== game.user.id) {
@@ -87,12 +92,12 @@ function requestChange(message, mode, index) {
 }
 
 function reportError(err) {
-    console.error("Region Spell Automation | Save advantage adjustment failed:", err);
-    ui.notifications.error("Could not adjust the saving throw. Check F12 console.");
+    console.error("Region Spell Automation | Roll advantage adjustment failed:", err);
+    ui.notifications.error("Could not adjust the roll. Check F12 console.");
 }
 
 export async function refreshSaveSummary(message, changes) {
-    if (message.type !== "save" || !Object.hasOwn(changes, "rolls") || Object.hasOwn(changes, "system")) return;
+    if (!["save", "attack"].includes(message.type) || !Object.hasOwn(changes, "rolls") || Object.hasOwn(changes, "system")) return;
     const origin = message.system?.origin;
     if (!origin) return;
     // D&D5e refreshes inline summaries for system changes, but a rolls-only
@@ -102,17 +107,16 @@ export async function refreshSaveSummary(message, changes) {
 }
 
 export function addSaveControls(message, html) {
-    if (!game.settings.get(MODULE_ID, "adjustSavingThrowAdvantage")) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
     const entries = [];
-    if (message.type === "save") entries.push({ message, root });
+    if (["save","attack"].includes(message.type)) entries.push({ message, root });
     for (const summary of root.querySelectorAll(".card-summary[data-message-id]")) {
         const save = game.messages.get(summary.dataset.messageId);
-        if (save?.type === "save" && !summary.hidden) entries.push({ message: save, root: summary });
+        if (["save","attack"].includes(save?.type) && !summary.hidden) entries.push({ message: save, root: summary });
     }
     for (const entry of entries) {
-        if (!canAdjustSave(entry.message, game.user) || !entry.message.isContentVisible) continue;
+        if (!adjustmentEnabled(entry.message) || !canAdjustSave(entry.message, game.user) || !entry.message.isContentVisible) continue;
         const index = entry.message.rolls?.findIndex(roll => roll instanceof CONFIG.Dice.D20Roll) ?? -1;
         if (index < 0 || entry.root.querySelector("[data-rsa-save-modes]")) continue;
         const rollElement = entry.root.querySelector(".dice-roll");
@@ -143,21 +147,23 @@ export function addSaveControls(message, html) {
     }
 }
 
-Hooks.once("init", () => game.settings.register(MODULE_ID, "adjustSavingThrowAdvantage", {
-    name: "Adjust Saving Throw Advantage",
-    hint: "Expand saving throw cards on hover to show ADV / NORMAL / DISADV controls. Reuses existing dice; does not undo applied damage.",
-    scope: "world", config: true, type: Boolean, default: true,
-    onChange: () => ui.chat?.render({ force: true })
-}));
-
+Hooks.once("init", () => {
+    for (const [key,name,kind] of [
+        ["adjustSavingThrowAdvantage","Adjust Saving Throw Advantage","saving throw"],
+        ["adjustAttackRollAdvantage","Adjust Attack Roll Advantage","attack roll"]
+    ]) game.settings.register(MODULE_ID,key,{
+        name, hint:`Expand ${kind} cards on hover to show ADV / NORMAL / DISADV controls. Reuses existing dice; does not undo applied damage.`,
+        scope:"world",config:true,type:Boolean,default:true,
+        onChange:()=>ui.chat?.render({force:true})
+    });
+});
 Hooks.once("ready", () => {
     Hooks.on("dnd5e.renderChatMessage", addSaveControls);
     Hooks.on("updateChatMessage", (message, changes) => refreshSaveSummary(message, changes).catch(reportError));
     game.socket.on(channel, packet => {
-        if (!game.settings.get(MODULE_ID, "adjustSavingThrowAdvantage")) return;
         if (packet?.action !== "adjustSaveMode" || packet.gmId !== game.user.id || !game.user.isGM || game.users.activeGM?.id !== game.user.id) return;
         const message = game.messages.get(packet.messageId), user = game.users.get(packet.userId);
-        if (!user?.active || !canAdjustSave(message, user) || ![1, 0, -1].includes(packet.mode) || !Number.isInteger(packet.index) || packet.index < 0) return;
+        if (!adjustmentEnabled(message) || !user?.active || !canAdjustSave(message, user) || ![1, 0, -1].includes(packet.mode) || !Number.isInteger(packet.index) || packet.index < 0) return;
         enqueue(() => updateSaveMode(message, packet.mode, packet.index, user)).catch(reportError);
     });
 });

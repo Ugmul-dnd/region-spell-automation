@@ -43,6 +43,7 @@
     "scripts/region-spell-automation.js",
     "scripts/region-conditions.js",
     "scripts/spell-save-prompts.js",
+    "scripts/damage-prompts.js",
     "scripts/area-target-confirmation.js",
     "scripts/retarget-card.js",
     "scripts/save-roll-controls.js",

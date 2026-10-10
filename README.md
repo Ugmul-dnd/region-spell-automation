@@ -467,3 +467,26 @@ monster abilities such as a Pit Fiend's Fear Aura and player features. Use
 **Add New Spell / Feature Region**, drop the ability Item, and configure its
 triggers, conditions, and effects. The ability's activity must create a D&D5e
 Region; the manager does not create an aura for abilities without a Region.
+
+### Automatic Damage Dialogs
+
+**Prompt Damage for Save Activities** opens the caster's native Damage dialog
+for Save activities that include damage. Area casts wait for target confirmation.
+Turn-only feature auras wait for their configured Region triggers.
+
+**Prompt Damage after an Attack Hit** opens the attacker's native Damage dialog
+only when the attack card reports a hit against a target. It waits for Dice So
+Nice's animation to finish, retains critical-hit and weapon-mode options, and
+uses the usage card's consumed resources and upcast scaling. No target or unknown
+hit result means no automatic dialog; use the Damage button manually.
+
+Both settings are enabled by default and can be disabled independently. Disable
+competing automatic damage dialogs in other modules while testing. Restart the
+Foundry server after installing this update to load the added script.
+
+**Adjust Attack Roll Advantage** adds the same ADV / NORMAL / DISADV hover
+controls to attack results on spell, weapon, and feature cards. It is independent
+of **Adjust Saving Throw Advantage**. The original d20 and bonuses are retained;
+only an additional required die is rolled and animated. Result summaries refresh,
+but damage already rolled or applied is not reversed. Both menus use compact
+buttons at 75% of the standard button height.

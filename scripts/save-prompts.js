@@ -51,7 +51,9 @@ export async function receiveSavePrompt(packet) {
     const config = { ability, target: dc };
     if (bonusData.parts.length) config.rolls = [bonusData];
     try {
-        await actor.rollSavingThrow(config, { configure: true, options: { id: `rsa-save-${message.id}-${token.id ?? token.uuid}` } }, { data: {
+        const dialog = { configure: true, options: { id: `rsa-save-${message.id}-${token.id ?? token.uuid}` } };
+        const positioned = globalThis.RegionSpellAutomationDamage?.configurePromptDialog("save",dialog) ?? dialog;
+        await actor.rollSavingThrow(config, positioned, { data: {
             speaker: ChatMessage.getSpeaker({ actor, scene: token.parent, token }),
             system: { ...activity.messageSources, origin: message.id }
         } });

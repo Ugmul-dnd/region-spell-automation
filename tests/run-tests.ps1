@@ -51,6 +51,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Area confirmation tests failed.' }
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'target-eligibility.test.mjs') -Raw | node --input-type=module
     if ($LASTEXITCODE -ne 0) { throw 'Target eligibility tests failed.' }
+    $rsaOldDamageSource = $env:RSA_DAMAGE_SOURCE
+    try {
+        $env:RSA_DAMAGE_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/damage-prompts.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'damage-prompts.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Damage prompt tests failed.'}
+    } finally {$env:RSA_DAMAGE_SOURCE = $rsaOldDamageSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {
