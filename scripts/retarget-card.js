@@ -16,8 +16,27 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
     })).values()];
     pendingCards.add(message);
     try {
-        const cards = [...new Set([message, ...(message.getAssociatedRolls?.("attack") ?? []),
-            ...(message.getAssociatedRolls?.("damage") ?? [])])];
+        let cards;
+        if (message.type === "attack") {
+            const origin=message.system?.origin;
+            const usage=typeof origin === "string" ? game.messages.get(origin) : origin;
+            const attacks=usage?.getAssociatedRolls?.("attack") ?? [message];
+            const damage=(usage?.getAssociatedRolls?.("damage") ?? message.getAssociatedRolls?.("damage") ?? []).filter(card=>{
+                const source=card.getFlag?.("region-spell-automation","damageAttackId");
+                if (source) return source === message.id;
+                // Native/manual damage may lack our explicit attack flag.
+                // Use the most recent attack preceding that damage roll.
+                if (!Number.isFinite(card.timestamp) || !Number.isFinite(message.timestamp)) return attacks.length === 1;
+                const preceding=[...attacks].filter(attack=>attack.timestamp <= card.timestamp)
+                    .sort((a,b)=>b.timestamp-a.timestamp)[0];
+                return preceding?.id === message.id;
+            });
+            cards=[message, ...damage];
+        } else {
+            cards=[message, ...(message.getAssociatedRolls?.("attack") ?? []),
+                ...(message.getAssociatedRolls?.("damage") ?? [])];
+        }
+        cards=[...new Set(cards)];
         let skipped = false;
         for (const card of cards) {
             if (!game.user.isGM && !card.isOwner) { skipped = true; continue; }
@@ -38,12 +57,33 @@ export function addRetargetButton(message, html) {
     hideRemovedTargetSummaries(message, html);
     if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
     if (!supportsRetarget(message) || (!game.user.isGM && !message.isOwner)) return;
+    if (message.type === "usage" && message.getAssociatedActivity?.()?.type === "attack" &&
+        game.settings.get("region-spell-automation","simplifyAttackCards") === true) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
-    if (!root || root.querySelector("[data-rsa-retarget]")) return;
-    const controls = root.querySelector(".chat-card > .icon-row:last-child ul") ??
-        root.querySelector(".card-buttons") ?? root.querySelector(".chat-card") ??
-        (message.type === "attack" ? root.querySelector(".message-content") : null);
+    if (!root) return;
+    const existingButton=root.querySelector("[data-rsa-retarget]");
+    if (existingButton && message.type !== "attack") return;
+    let controls;
+    if (message.type === "attack") {
+        controls=root.querySelector(".rsa-attack-actions");
+        if (!controls) {
+            const face=root.querySelector(".chat-card") ?? root.querySelector(".message-content");
+            if (!face) return;
+            controls=document.createElement("div");
+            controls.className="rsa-attack-actions";
+            face.append(controls);
+        }
+    } else {
+        controls=root.querySelector(".chat-card > .icon-row:last-child ul") ??
+            root.querySelector(".card-buttons") ?? root.querySelector(".chat-card");
+    }
     if (!controls) return;
+    if (existingButton) {
+        const oldEntry=existingButton.closest("li");
+        controls.append(existingButton);
+        if (oldEntry && !oldEntry.children.length) oldEntry.remove();
+        return;
+    }
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.rsaRetarget = "";

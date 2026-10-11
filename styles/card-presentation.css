@@ -1,0 +1,43 @@
+.rsa-action-colors [data-action="rollAttack"],
+.rsa-action-colors [data-forward-action="rollAttack"] { color: #43b76b; }
+.rsa-action-colors [data-action="rollDamage"],
+.rsa-action-colors [data-forward-action="rollDamage"] { color: #ed6262; }
+.rsa-action-colors [data-action="rollSave"],
+.rsa-action-colors [data-forward-action="rollSave"] { color: #57a8ed; }
+.rsa-action-colors :is([data-action="rollAttack"],[data-forward-action="rollAttack"]) img {
+    filter: brightness(0) saturate(100%) invert(62%) sepia(37%) saturate(707%) hue-rotate(89deg);
+}
+.rsa-action-colors :is([data-action="rollDamage"],[data-forward-action="rollDamage"]) img {
+    filter: brightness(0) saturate(100%) invert(51%) sepia(71%) saturate(1648%) hue-rotate(326deg);
+}
+.rsa-action-colors :is([data-action="rollSave"],[data-forward-action="rollSave"]) img {
+    filter: brightness(0) saturate(100%) invert(63%) sepia(43%) saturate(1351%) hue-rotate(177deg);
+}
+.rsa-roll-attack { border-left: 3px solid #43b76b !important; }
+.rsa-roll-save { border-left: 3px solid #57a8ed !important; }
+.rsa-roll-damage { border-left: 3px solid #ed6262 !important; }
+.card-summary:is(.rsa-roll-attack,.rsa-roll-save,.rsa-roll-damage) { padding-left: 5px; }
+.rsa-action-colors :is([data-action="rollAttack"],[data-forward-action="rollAttack"],
+    [data-action="rollDamage"],[data-forward-action="rollDamage"],
+    [data-action="rollSave"],[data-forward-action="rollSave"]) i { color: inherit; }
+
+/* Native chat display rules can override the browser's hidden attribute. */
+.rsa-processed-attack { display: none !important; }
+
+/* Keep actions out of the native property-pill list. */
+.rsa-attack-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+.rsa-attack-actions button { width: auto; flex: 0 0 auto; }
+.rsa-attack-actions { width: 100%; align-self: stretch; flex-wrap: wrap; }
+.rsa-action-colors .chat-card > .icon-row:has(> ul.pills) > ul.pills {
+    align-items: center;
+}
+.rsa-action-colors .chat-card > .icon-row > ul.pills > li.pill {
+    flex: 0 0 auto;
+    align-self: center;
+}

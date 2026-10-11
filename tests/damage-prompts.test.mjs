@@ -78,3 +78,17 @@ assert.deepEqual(configurePromptDialog("attack").options.position,{left:460,top:
 assert.deepEqual(settings.promptDialogPositions.save,{left:350,top:250});
 assert.deepEqual(settings.promptDialogPositions.damage,{left:220,top:180});
 console.log("Attack positioning checks passed: remembered position independent of saves and damage, native advantage retained.");
+activity.type="save";activity.item={type:"spell",name:"Fireball",isOwner:true};
+card.id="linked-damage";card.system.targets=[{token:"defender"}];cards.set(card.id,card);
+let nativeDamageConfig;
+activity.onChatAction=async event=>{
+    assert.equal(event,null,"Automatic action has no fabricated mouse coordinate");
+    nativeDamageConfig={data:{}};
+    for(const value of [...hooks.values()]) {
+        if(value?.name==="dnd5e.preRollDamageV2")value.fn({subject:activity},{},nativeDamageConfig);
+    }
+};
+await promptDamage(activity,card);
+assert.equal(nativeDamageConfig.data.system.origin,card.id);
+assert.deepEqual(nativeDamageConfig.data.system.targets,card.system.targets);
+console.log("Automatic damage linkage checks passed: native action preserves usage origin and recorded targets.");

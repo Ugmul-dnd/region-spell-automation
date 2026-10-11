@@ -69,6 +69,12 @@ try {
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'shield-reaction.test.mjs') -Raw | node --input-type=module
         if ($LASTEXITCODE -ne 0) {throw 'Shield reaction tests failed.'}
     } finally {$env:RSA_SHIELD_SOURCE = $rsaOldShieldSource}
+    $rsaOldCardPresentationSource = $env:RSA_CARD_PRESENTATION_SOURCE
+    try {
+        $env:RSA_CARD_PRESENTATION_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/card-presentation.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'card-presentation.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Card presentation tests failed.'}
+    } finally {$env:RSA_CARD_PRESENTATION_SOURCE = $rsaOldCardPresentationSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {

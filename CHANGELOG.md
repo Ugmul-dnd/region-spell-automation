@@ -23,6 +23,8 @@
 
 ### Changed
 
+- Attack actions and roll borders are green, damage red, and saves blue. Optional processed-attack cleanup hides used base-card buttons and removes the base face after the attack roll exists, with a native Damage button beside Retarget on the attack result, retaining all underlying messages and result controls.
+
 - Damage cards linked to Shield-refreshed attacks are hidden when every target is now a miss. Rolls and application history are retained; cards stay visible if any target is still hit.
 
 - Advantage adjustment buttons for attacks and saves use 75% of the standard

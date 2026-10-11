@@ -510,3 +510,13 @@ AC change, keep the intended creature targeted and click **Retarget** on the
 activity card. Linked attack rolls receive current AC descriptors and recalculate
 hit/miss results. Original dice and damage history remain unchanged; this does
 not undo damage already applied or automatically reopen a damage dialog.
+
+### Card Presentation
+
+Attack actions and result borders are green, damage red, and saves blue.
+**Simplify Processed Attack Cards** hides the base Attack and Damage buttons as
+their rolls are created, leaves Retarget on the attack result, and hides the base
+attack card once the attack roll exists. A Damage button beside Retarget on the
+attack result opens the native damage dialog and hides once its linked damage roll exists. With inline summaries, only the base face is
+hidden. No messages, dice, or damage history are deleted. Disable the setting to
+show the complete base cards again.

@@ -97,6 +97,11 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
             const hook = Hooks.on("dnd5e.preRollDamageV2", (config, dialog, damageMessage) => {
                 if (config.subject?.uuid !== activity.uuid) return;
                 Object.assign(dialog, configurePromptDialog("damage",dialog));
+                if (damageMessage) {
+                    damageMessage.data ??= {};damageMessage.data.system ??= {};
+                    damageMessage.data.system.origin = message.id;
+                    damageMessage.data.system.targets = message.system.targets;
+                }
                 if (attack && damageMessage) {
                     damageMessage.data ??= {};damageMessage.data.flags ??= {};
                     damageMessage.data.flags[MODULE_ID] = {...damageMessage.data.flags[MODULE_ID],damageAttackId:attack.id};
