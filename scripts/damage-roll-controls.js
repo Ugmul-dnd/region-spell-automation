@@ -88,6 +88,7 @@ export async function changeDamageCritical(roll,critical) {
     return adjusted;
 }
 export async function updateDamageCritical(message,critical,user=game.user) {
+    if (game.settings.get(MODULE_ID,"adjustDamageCritical") !== true) return;
     if (!canAdjustDamage(message,user)) throw Error("You cannot adjust this damage roll.");
     const rolls=[];const dice=[];
     for (const roll of message.rolls ?? []) {
@@ -122,6 +123,7 @@ export function addDamageModeControls(message,html) {
             const active=Boolean(roll.options.isCritical)===critical;button.disabled=active;button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));
             button.addEventListener("click",event=>{
                 event.preventDefault();event.stopPropagation();
+                if (game.settings.get(MODULE_ID,"adjustDamageCritical") !== true) return;
                 for(const control of menu.querySelectorAll("button"))control.disabled=true;
                 const gm=game.users.activeGM;
                 if(gm&&gm.id!==game.user.id)game.socket.emit(`module.${MODULE_ID}`,{action:"adjustDamageCritical",messageId:entry.message.id,critical,userId:game.user.id,gmId:gm.id});

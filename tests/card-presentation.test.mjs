@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-globalThis.Hooks={once(){}};
+globalThis.Hooks={once(){},on(){}};
 let enabled=true;
 globalThis.game={settings:{get:()=>enabled},messages:new Map()};
 class Element {
@@ -13,7 +13,7 @@ class Element {
     }
 }
 globalThis.HTMLElement=Element;
-const {attackCardProgress,styleActivityCard,linkedAttackDamage,rollAttackCardDamage}=await import(`data:text/javascript;base64,${process.env.RSA_CARD_PRESENTATION_SOURCE}`);
+const {attackCardProgress,styleActivityCard,linkedAttackDamage,rollAttackCardDamage,scrollOnChatTab}=await import(`data:text/javascript;base64,${process.env.RSA_CARD_PRESENTATION_SOURCE}`);
 let attack=[],damage=[];
 const card={type:"usage",getAssociatedActivity:()=>({type:"attack"}),getAssociatedRolls:type=>type==="attack"?attack:damage};
 const root=new Element();root.face=new Element();
@@ -43,3 +43,10 @@ assert.equal(nativeMessageConfig.data.flags["region-spell-automation"].damageAtt
 assert.deepEqual(nativeMessageConfig.data.system.targets,linkedAttack.system.targets);
 linkedDamages=[{getFlag:()=>linkedAttack.id}];assert.equal(linkedAttackDamage(linkedAttack).length,1);
 console.log("Attack-card damage checks passed: native Damage action, explicit attack linkage, current targets and completed-roll detection.");
+let scrolls=0;globalThis.ui={chat:{async scrollBottom(options){assert.equal(options.waitImages,true);scrolls++;}}};
+globalThis.requestAnimationFrame=callback=>queueMicrotask(callback);
+enabled=true;await scrollOnChatTab(ui.chat);assert.equal(scrolls,1);
+await scrollOnChatTab({});assert.equal(scrolls,1,"Other tabs do not scroll chat");
+const opening=scrollOnChatTab(ui.chat);await scrollOnChatTab({});await opening;assert.equal(scrolls,1,"Changing away cancels the pending scroll");
+enabled=false;await scrollOnChatTab(ui.chat);assert.equal(scrolls,1);
+console.log("Chat tab checks passed: deferred image-aware bottom scroll, other tabs, cancellation and client toggle.");

@@ -129,3 +129,19 @@ Hooks.once("ready",()=>{
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
     for (const hook of ["createChatMessage","updateChatMessage","deleteChatMessage"]) Hooks.on(hook,refreshOrigin);
 });
+
+let chatTabScrollRequest=0;
+export async function scrollOnChatTab(tab) {
+    const request=++chatTabScrollRequest;
+    if (tab !== ui.chat || game.settings.get(MODULE_ID,"scrollChatOnOpen") !== true) return;
+    // Sidebar applies its active-tab class after emitting the hook. Wait for
+    // layout, then include images so late image sizing cannot leave a gap.
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if (request !== chatTabScrollRequest) return;
+    await ui.chat.scrollBottom({waitImages:true});
+}
+Hooks.once("init",()=>game.settings.register(MODULE_ID,"scrollChatOnOpen",{
+    name:"Scroll Chat to Bottom on Open",hint:"When switching to the Chat tab, scroll to the newest message after the log becomes visible.",
+    scope:"client",config:true,type:Boolean,default:true
+}));
+Hooks.on("changeSidebarTab",tab=>scrollOnChatTab(tab).catch(err=>console.error("Region Spell Automation | Chat scroll failed:",err)));
