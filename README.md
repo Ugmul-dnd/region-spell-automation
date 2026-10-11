@@ -520,3 +520,11 @@ attack card once the attack roll exists. A Damage button beside Retarget on the
 attack result opens the native damage dialog and hides once its linked damage roll exists. With inline summaries, only the base face is
 hidden. No messages, dice, or damage history are deleted. Disable the setting to
 show the complete base cards again.
+
+**Adjust Damage Normal / Critical** adds NORMAL / CRITICAL controls when hovering
+on a damage result. Switching to Normal preserves base dice and bonuses; Critical
+adds and animates only the extra dice required. Switching again reuses cached
+results. All damage parts on the message change mode together. Damage already
+applied is not undone. The first implementation supports standard, unmodified
+dice terms, including powerful critical (rolled dice plus their maximized bonus). Extra critical bonus formulas, modified dice, and
+complex nested expressions require manual correction.

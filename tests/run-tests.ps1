@@ -75,6 +75,12 @@ try {
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'card-presentation.test.mjs') -Raw | node --input-type=module
         if ($LASTEXITCODE -ne 0) {throw 'Card presentation tests failed.'}
     } finally {$env:RSA_CARD_PRESENTATION_SOURCE = $rsaOldCardPresentationSource}
+    $rsaOldDamageModeSource = $env:RSA_DAMAGE_MODE_SOURCE
+    try {
+        $env:RSA_DAMAGE_MODE_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/damage-roll-controls.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'damage-roll-controls.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Damage mode tests failed.'}
+    } finally {$env:RSA_DAMAGE_MODE_SOURCE = $rsaOldDamageModeSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {

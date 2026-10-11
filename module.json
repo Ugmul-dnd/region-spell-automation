@@ -50,6 +50,7 @@
     "scripts/retarget-card.js",
     "scripts/card-presentation.js",
     "scripts/save-roll-controls.js",
+    "scripts/damage-roll-controls.js",
     "scripts/instant-region-cleanup.js",
     "scripts/concentration-cleanup.js",
     "scripts/concentration-hud.js",
