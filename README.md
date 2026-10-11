@@ -528,3 +528,10 @@ results. All damage parts on the message change mode together. Damage already
 applied is not undone. The first implementation supports standard, unmodified
 dice terms, including powerful critical (rolled dice plus their maximized bonus). Extra critical bonus formulas, modified dice, and
 complex nested expressions require manual correction.
+
+**Spell/Feature Region Placement Controls** snaps cone tips to square-grid
+intersections while casting. Scroll rotates by 15 degrees; Shift-scroll uses
+5 degrees; Ctrl-scroll zooms. Square templates can rotate during placement even
+when the system's grid-aligned-square setting is enabled. Outside casting
+placement, normal canvas controls remain in effect. Cone grid snapping is scoped
+to square grids. Disable competing placement overrides in other modules if needed.

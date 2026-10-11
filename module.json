@@ -47,6 +47,7 @@
     "scripts/effect-automation.js",
     "scripts/shield-reaction.js",
     "scripts/area-target-confirmation.js",
+    "scripts/region-placement-controls.js",
     "scripts/retarget-card.js",
     "scripts/card-presentation.js",
     "scripts/save-roll-controls.js",

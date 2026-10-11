@@ -81,6 +81,12 @@ try {
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'damage-roll-controls.test.mjs') -Raw | node --input-type=module
         if ($LASTEXITCODE -ne 0) {throw 'Damage mode tests failed.'}
     } finally {$env:RSA_DAMAGE_MODE_SOURCE = $rsaOldDamageModeSource}
+    $rsaOldPlacementSource = $env:RSA_PLACEMENT_SOURCE
+    try {
+        $env:RSA_PLACEMENT_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/region-placement-controls.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'region-placement-controls.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Placement control tests failed.'}
+    } finally {$env:RSA_PLACEMENT_SOURCE = $rsaOldPlacementSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {
