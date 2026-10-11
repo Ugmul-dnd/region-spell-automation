@@ -1,17 +1,23 @@
 import { describeTarget, isEligibleTarget } from "./shared-activity-card.js";
 const pendingCards = new WeakSet();
 
+function supportsRetarget(message) {
+    return ["usage","attack"].includes(message?.type) && (
+        ["spell","feat","weapon"].includes(message.getAssociatedItem?.()?.type) ||
+        message.getAssociatedActivity?.()?.type === "attack");
+}
+
 export async function retargetSpellCard(message, targets = game.user.targets) {
     if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
-    if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
-    if (!["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
+    if (!supportsRetarget(message) || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
     const descriptors = [...new Map(Array.from(targets).filter(isEligibleTarget).map(target => {
         const token = target.document ?? target;
         return [token.uuid, describeTarget(token)];
     })).values()];
     pendingCards.add(message);
     try {
-        const cards = [message, ...(message.getAssociatedRolls?.("damage") ?? [])];
+        const cards = [...new Set([message, ...(message.getAssociatedRolls?.("attack") ?? []),
+            ...(message.getAssociatedRolls?.("damage") ?? [])])];
         let skipped = false;
         for (const card of cards) {
             if (!game.user.isGM && !card.isOwner) { skipped = true; continue; }
@@ -24,24 +30,24 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
             await card.update({ "system.targets": descriptors,
                 "flags.region-spell-automation.retargeted": true }, { rsaRetarget: true });
         }
-        if (skipped) ui.notifications.warn("Spell card retargeted. A damage card belongs to another user; ask the GM to retarget it too.");
+        if (skipped) ui.notifications.warn("Card retargeted. A linked roll belongs to another user; ask the GM to refresh it too.");
     } finally { pendingCards.delete(message); }
 }
 
 export function addRetargetButton(message, html) {
     hideRemovedTargetSummaries(message, html);
     if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
-    if (message.type !== "usage" || (!game.user.isGM && !message.isOwner) ||
-        !["spell", "feat"].includes(message.getAssociatedItem?.()?.type)) return;
+    if (!supportsRetarget(message) || (!game.user.isGM && !message.isOwner)) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     if (!root || root.querySelector("[data-rsa-retarget]")) return;
     const controls = root.querySelector(".chat-card > .icon-row:last-child ul") ??
-        root.querySelector(".card-buttons") ?? root.querySelector(".chat-card");
+        root.querySelector(".card-buttons") ?? root.querySelector(".chat-card") ??
+        (message.type === "attack" ? root.querySelector(".message-content") : null);
     if (!controls) return;
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.rsaRetarget = "";
-    button.dataset.tooltip = "Replace this card's targets with your currently targeted tokens";
+    button.dataset.tooltip = "Replace targets with your current map targets and refresh attack results using current AC";
     button.innerHTML = '<i class="fa-solid fa-bullseye" aria-hidden="true"></i> Retarget';
     button.addEventListener("click", async event => {
         event.preventDefault(); event.stopPropagation();
@@ -75,8 +81,8 @@ export function hideRemovedTargetSummaries(message, html) {
 // Core renderChatMessageHTML fires before D&D5e injects its usage-card template.
 // Use the system's completed-card hook so the action row exists.
 Hooks.once("init", () => game.settings.register("region-spell-automation", "retargetActivityCards", {
-    name: "Show Retarget on Spell/Feature Cards",
-    hint: "Allow GMs and card owners to replace an activity card's targets with their current map targets. Previous rolls remain unchanged.",
+    name: "Show Retarget on Spell, Feature and Attack Cards",
+    hint: "Allow GMs and card owners to replace an activity card's targets with their current map targets. Attack results refresh against current AC; previous dice rolls remain unchanged.",
     scope: "world", config: true, type: Boolean, default: true,
     onChange: () => ui.chat?.render({ force: true })
 }));

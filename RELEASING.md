@@ -1,6 +1,8 @@
 # Releasing Region Spell Automation
 
-Current release preparation: **v0.5.7**.
+Current development revision: **v0.5.8 (unreleased)**. Changes are in `CHANGELOG.md`.
+
+The checklist below records the v0.5.7 release. Update its tag and notes before preparing the next release.
 Tested on Foundry VTT v14 build 369 and D&D5e 6.0.6.
 
 1. Run `./tests/run-tests.ps1` and `./tools/build-release.ps1`.

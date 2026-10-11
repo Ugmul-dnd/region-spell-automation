@@ -90,3 +90,19 @@ await retargetSpellCard(card,[]);assert.deepEqual(card.system.targets,beforeDisa
 const disabledHTML=new Element();disabledHTML.controls=new Element("UL");disabledHTML.querySelectorAll=()=>[];
 addRetargetButton(card,disabledHTML);assert.equal(disabledHTML.controls.children.length,0);
 console.log("Retarget toggle checks passed: no button or card edits while disabled.");
+
+retargetEnabled=true;game.user.isGM=true;
+token.actor.system={attributes:{ac:{value:15}}};
+const attack={type:"attack",isOwner:true,system:{targets:[]},rolls:[{total:18}],getAssociatedItem:()=>({type:"weapon"}),
+    async update(data){this.system.targets=data["system.targets"];}};
+const weapon={...card,getAssociatedItem:()=>({type:"weapon"}),getAssociatedRolls:type=>type==="attack"?[attack]:[]};
+await retargetSpellCard(weapon,[token]);
+assert.equal(attack.system.targets[0].ac,15);
+assert.equal(attack.rolls[0].total >= attack.system.targets[0].ac,true);
+token.actor.system.attributes.ac.value=20;
+await retargetSpellCard(weapon,[token]);
+assert.equal(attack.system.targets[0].ac,20,"Shield's current AC replaces the attack's stored AC");
+assert.equal(attack.rolls[0].total >= attack.system.targets[0].ac,false);
+assert.equal(attack.rolls[0].total,18,"Attack dice remain unchanged");
+await retargetSpellCard(attack,[token]);assert.equal(attack.system.targets[0].ac,20,"Standalone attack cards can refresh targets");
+console.log("Attack Retarget checks passed: weapon cards, linked attack AC refresh, hit-to-miss after Shield and preserved dice.");

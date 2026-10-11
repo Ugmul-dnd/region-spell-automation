@@ -94,9 +94,13 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
         // onChatAction applies the usage card's consumption and upcast scaling
         // and invokes the same native damage action as its Damage button.
         if (typeof activity.onChatAction === "function") {
-            const hook = Hooks.on("dnd5e.preRollDamageV2", (config, dialog) => {
+            const hook = Hooks.on("dnd5e.preRollDamageV2", (config, dialog, damageMessage) => {
                 if (config.subject?.uuid !== activity.uuid) return;
                 Object.assign(dialog, configurePromptDialog("damage",dialog));
+                if (attack && damageMessage) {
+                    damageMessage.data ??= {};damageMessage.data.flags ??= {};
+                    damageMessage.data.flags[MODULE_ID] = {...damageMessage.data.flags[MODULE_ID],damageAttackId:attack.id};
+                }
                 Hooks.off("dnd5e.preRollDamageV2",hook);
             });
             try {

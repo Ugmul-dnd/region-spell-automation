@@ -6,7 +6,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 ## Compatibility
 
-- Module version: **0.5.7**.
+- Module version: **0.5.8**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
@@ -490,3 +490,23 @@ of **Adjust Saving Throw Advantage**. The original d20 and bonuses are retained;
 only an additional required die is rolled and animated. Result summaries refresh,
 but damage already rolled or applied is not reversed. Both menus use compact
 buttons at 75% of the standard button height.
+
+### Effect Automation
+
+**Effect Automation: Automatically Apply Buffs** applies the configured activity
+Effects when a non-rolling Utility spell or feature is used. Self activities use
+the caster; Ally activities use the recorded targets. Creature-targeted activities
+apply to the caster or tokens with the caster's disposition. An active GM handles
+player casts on other actors; without a GM, users can apply only to owned actors.
+
+The effect must already be configured on the activity. This does not invent a
+Rage, Shield, Mage Armor, or Light effect. Native D&D5e application handles duration,
+scaling, concentration dependencies, and refreshing existing effects. Attacks,
+Save activities, damage/healing rolls, and Region activities are excluded.
+Light cast on a plain map object without an actor is not automated.
+
+Retarget also supports weapon and attack cards. After applying Shield or another
+AC change, keep the intended creature targeted and click **Retarget** on the
+activity card. Linked attack rolls receive current AC descriptors and recalculate
+hit/miss results. Original dice and damage history remain unchanged; this does
+not undo damage already applied or automatically reopen a damage dialog.

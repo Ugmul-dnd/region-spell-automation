@@ -1,0 +1,51 @@
+# Changelog
+
+## v0.5.8 — Unreleased
+
+### Added
+
+- **Shield reaction cue:** optional manual casting icon on successful attack results for owned targets with a configured Shield reaction. Native casting handles resources; applying its buff refreshes that attack against current AC.
+
+- Retarget supports weapon and attack cards and refreshes linked attack results using current target AC, allowing reassessment after reactions such as Shield without rerolling.
+
+- **Effect Automation:** optional automatic application of configured buffs from non-rolling Utility spells and features to Self, Allies, or friendly targeted creatures. Native effect application preserves duration, concentration, scaling, and refresh behavior. Attack, Save, damage/healing roll, and Region activities remain manual.
+
+- Spell and Region Management accepts monster abilities and player features,
+  including auras, alongside spells.
+- Independent settings to automatically open the caster's damage dialog for
+  Save activities and the attacker's damage dialog after a confirmed hit.
+- Attack damage prompts wait for Dice So Nice animations to finish. Native
+  critical-hit, weapon-mode, consumption, and scaling options are preserved.
+- Separate remembered positions for prompted attack, save, and damage dialogs
+  on each user's client.
+- Retroactive ADV / NORMAL / DISADV controls for attack rolls on spell, weapon,
+  and feature cards, with an independent enable/disable setting.
+
+### Changed
+
+- Damage cards linked to Shield-refreshed attacks are hidden when every target is now a miss. Rolls and application history are retained; cards stay visible if any target is still hit.
+
+- Advantage adjustment buttons for attacks and saves use 75% of the standard
+  button height.
+- Configured turn-only feature auras defer initial save and damage prompts to
+  their Region turn events.
+
+### Fixed
+
+- Automatic damage dialogs no longer receive invalid mouse-based positions.
+
+### Direction for the next revision
+
+- Keep one configurable module, organized into Region management, targeting,
+  and roll-control components.
+- Retain independent settings for optional features. Disabled features should
+  stop their gameplay behavior as well as hide their controls.
+- Consider separate modules only if a component needs independent publication,
+  broader system support, or separate maintenance.
+- A broader module name remains a future consideration; no rename is scheduled.
+
+This revision is in development. The local module version is 0.5.8; this revision has not been published.
+
+## v0.5.7
+
+See [v0.5.7 release notes](RELEASE-NOTES-0.5.7.md) for the documented release changes.

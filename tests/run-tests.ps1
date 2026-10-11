@@ -57,6 +57,18 @@ try {
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'damage-prompts.test.mjs') -Raw | node --input-type=module
         if ($LASTEXITCODE -ne 0) {throw 'Damage prompt tests failed.'}
     } finally {$env:RSA_DAMAGE_SOURCE = $rsaOldDamageSource}
+    $rsaOldEffectAutomationSource = $env:RSA_EFFECT_AUTOMATION_SOURCE
+    try {
+        $env:RSA_EFFECT_AUTOMATION_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/effect-automation.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'effect-automation.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Effect automation tests failed.'}
+    } finally {$env:RSA_EFFECT_AUTOMATION_SOURCE = $rsaOldEffectAutomationSource}
+    $rsaOldShieldSource = $env:RSA_SHIELD_SOURCE
+    try {
+        $env:RSA_SHIELD_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/shield-reaction.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'shield-reaction.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Shield reaction tests failed.'}
+    } finally {$env:RSA_SHIELD_SOURCE = $rsaOldShieldSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {
