@@ -4,6 +4,8 @@
 
 ### Added
 
+- Dedicated Module Options window with Regions, Targeting, Rolls & Damage, Effects, and Chat tabs. Existing settings are preserved; drafts save on confirmation, with GM-only world edits and per-client options.
+
 - Spell/feature placement controls: cone origins snap to square-grid intersections; scroll rotates 15 degrees, Shift-scroll rotates 5 degrees, and Ctrl-scroll zooms. Square rotation is allowed during casting previews.
 
 - Damage Normal/Critical toggles also support powerful critical: rolled damage dice plus their maximized bonus, preserving modifiers without rerolling.

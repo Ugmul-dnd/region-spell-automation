@@ -535,3 +535,12 @@ intersections while casting. Scroll rotates by 15 degrees; Shift-scroll uses
 when the system's grid-aligned-square setting is enabled. Outside casting
 placement, normal canvas controls remain in effect. Cone grid snapping is scoped
 to square grids. Disable competing placement overrides in other modules if needed.
+
+### Module Options
+
+Open **Configure Settings → Region Spell Automation → Open Module Options**.
+Options are grouped into Regions, Targeting, Rolls & Damage, Effects, and Chat.
+Changes remain drafts while switching tabs; **Save Options** applies them and
+**Cancel** leaves stored values unchanged. GMs manage world options; players can
+change their client options. The Regions tab also opens the spell/feature manager.
+The window uses existing settings, so previous selections carry over.

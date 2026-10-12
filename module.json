@@ -55,7 +55,8 @@
     "scripts/instant-region-cleanup.js",
     "scripts/concentration-cleanup.js",
     "scripts/concentration-hud.js",
-    "scripts/spell-manager.js"
+    "scripts/spell-manager.js",
+    "scripts/module-settings.js"
   ],
-  "styles": ["styles/save-roll-controls.css", "styles/card-presentation.css"]
+  "styles": ["styles/save-roll-controls.css", "styles/card-presentation.css", "styles/module-settings.css"]
 }

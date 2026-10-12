@@ -87,6 +87,12 @@ try {
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'region-placement-controls.test.mjs') -Raw | node --input-type=module
         if ($LASTEXITCODE -ne 0) {throw 'Placement control tests failed.'}
     } finally {$env:RSA_PLACEMENT_SOURCE = $rsaOldPlacementSource}
+    $rsaOldModuleSettingsSource = $env:RSA_MODULE_SETTINGS_SOURCE
+    try {
+        $env:RSA_MODULE_SETTINGS_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/module-settings.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'module-settings.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Module settings interface tests failed.'}
+    } finally {$env:RSA_MODULE_SETTINGS_SOURCE = $rsaOldModuleSettingsSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {
