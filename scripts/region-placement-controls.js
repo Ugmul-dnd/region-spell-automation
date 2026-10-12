@@ -53,3 +53,41 @@ Hooks.once("ready",()=>{
     window.addEventListener("wheel",handlePlacementWheel,{capture:true,passive:false});
 });
 Hooks.on("canvasReady",()=>installPlacementControls(canvas.regions));
+
+export function prepareSelfEmanation(activity,config) {
+    if (game.settings.get(MODULE_ID,"autoAttachSelfEmanations") !== true ||
+        !["spell","feat"].includes(activity.item?.type) || !config.shapes?.length ||
+        !config.shapes.every(shape=>shape.type === "emanation")) return;
+    const self=activity.target?.affects?.type === "self" || activity.range?.units === "self" ||
+        activity.item?.system?.range?.units === "self";
+    if (!self) return;
+    const usage=activity.getUsageToken?.();
+    const token=usage?.document ?? usage;
+    // Never guess from a different controlled token or ambiguous actor copies.
+    if (!token?.id || canvas.scene?.tokens.get(token.id)?.actor?.uuid !== activity.actor?.uuid) return;
+    config.rsaSelfEmanationToken=token.id;
+}
+
+export function installSelfEmanationPlacement(Placement) {
+    if (!Placement || Placement._rsaSelfEmanationInstalled) return;
+    Placement._rsaSelfEmanationInstalled=true;
+    const original=Placement.place;
+    Placement.place=function(config) {
+        const token=canvas.scene?.tokens.get(config.rsaSelfEmanationToken);
+        if (!token || game.settings.get(MODULE_ID,"autoAttachSelfEmanations") !== true) return original.call(this,config);
+        const scale=canvas.scene.grid.size/canvas.scene.grid.distance;
+        return Promise.resolve(config.shapes.map(shape=>({
+            type:"emanation",radius:shape.size*scale,token:token.id,
+            base:{type:"token",x:token.x,y:token.y,width:token.width,height:token.height,shape:token.shape,rotation:0}
+        })));
+    };
+}
+Hooks.once("init",()=>game.settings.register(MODULE_ID,"autoAttachSelfEmanations",{
+    name:"Automatically Attach Self Emanations",
+    hint:"Place self-origin emanations on the casting token without manual placement. Uses native Region creation and attachment. Other template shapes keep manual placement.",
+    scope:"world",config:true,type:Boolean,default:true
+}));
+Hooks.once("ready",()=>{
+    installSelfEmanationPlacement(dnd5e.canvas.TemplatePlacement);
+    Hooks.on("dnd5e.preCreateMeasuredTemplate",prepareSelfEmanation);
+});

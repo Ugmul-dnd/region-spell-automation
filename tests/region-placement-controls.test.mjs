@@ -5,7 +5,7 @@ globalThis.game={settings:{get:()=>enabled}};
 globalThis.CONST={GRID_SNAPPING_MODES:{VERTEX:16}};
 const board={contains:()=>false};globalThis.document={getElementById:()=>board};
 globalThis.canvas={grid:{isSquare:true,getSnappedPoint:p=>({x:Math.round(p.x/100)*100,y:Math.round(p.y/100)*100})},_onMouseWheel:event=>calls.push(["zoom",event])};
-const {placementOptions,installPlacementControls,handlePlacementWheel}=await import(`data:text/javascript;base64,${process.env.RSA_PLACEMENT_SOURCE}`);
+const {placementOptions,installPlacementControls,handlePlacementWheel,prepareSelfEmanation,installSelfEmanationPlacement}=await import(`data:text/javascript;base64,${process.env.RSA_PLACEMENT_SOURCE}`);
 let moved;const options=placementOptions({onRotate:()=>false});
 assert.equal(options.onMove({shape:{type:"cone",move:p=>moved=p},position:{x:151,y:42}}),false);
 assert.deepEqual(moved,{x:200,y:0});
@@ -21,3 +21,18 @@ handlePlacementWheel(wheel({ctrlKey:true}));assert.equal(calls.at(-1)[0],"zoom")
 finish([]);await placing;const count=calls.length;
 handlePlacementWheel(wheel());assert.equal(calls.length,count,"Outside placement wheel remains native");
 console.log("Placement checks passed: vertex snapping, rectangle rotation override, Shift precision, Ctrl zoom and placement cleanup.");
+
+const caster={id:"caster",x:100,y:200,width:2,height:2,shape:0,actor:{uuid:"Actor.caster"}};
+canvas.scene={tokens:new Map([[caster.id,caster]]),grid:{size:100,distance:5}};
+const activity={item:{type:"spell"},actor:caster.actor,range:{units:"self"},target:{affects:{type:"enemy"}},getUsageToken:()=>caster};
+const config={shapes:[{type:"emanation",size:10}]};enabled=true;
+prepareSelfEmanation(activity,config);assert.equal(config.rsaSelfEmanationToken,caster.id,"Self range works with enemy-only affected targets");
+let manual=0;const Placement={place:async()=>{manual++;return "manual";}};
+installSelfEmanationPlacement(Placement);
+const placed=await Placement.place(config);
+assert.equal(manual,0);assert.equal(placed[0].token,caster.id);assert.equal(placed[0].radius,200);assert.equal(placed[0].base.width,2);
+const coneConfig={shapes:[{type:"cone",size:15}]};prepareSelfEmanation(activity,coneConfig);assert.equal(coneConfig.rsaSelfEmanationToken,undefined);
+await Placement.place(coneConfig);assert.equal(manual,1);
+const wrong={shapes:[{type:"emanation",size:10}]};prepareSelfEmanation({...activity,actor:{uuid:"Actor.other"}},wrong);assert.equal(wrong.rsaSelfEmanationToken,undefined);
+enabled=false;await Placement.place(config);assert.equal(manual,2);
+console.log("Self emanation checks passed: actual caster, enemy-targeted self range, native attachment data, token size, shape exclusion, ambiguous caster and disabled fallback.");

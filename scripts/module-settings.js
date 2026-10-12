@@ -1,6 +1,6 @@
 const MODULE_ID="region-spell-automation";
 export const SETTINGS_GROUPS=[
-    {id:"regions",name:"Regions",icon:"fa-draw-polygon",keys:["promptForSaveOnRegionTriggers","regionPlacementControls","cleanupTargetingRegions"]},
+    {id:"regions",name:"Regions",icon:"fa-draw-polygon",keys:["promptForSaveOnRegionTriggers","regionPlacementControls","autoAttachSelfEmanations","cleanupTargetingRegions"]},
     {id:"targeting",name:"Targeting",icon:"fa-bullseye",keys:["confirmAreaTargets","retargetActivityCards"]},
     {id:"rolls",name:"Rolls & Damage",icon:"fa-dice",keys:["promptForSaveOnSpellCasts","promptDamageOnSave","promptDamageOnHit","adjustSavingThrowAdvantage","adjustAttackRollAdvantage","adjustDamageCritical"]},
     {id:"effects",name:"Effects",icon:"fa-wand-magic-sparkles",keys:["autoApplyBuffEffects","showShieldReaction","showConcentrationHud"]},
