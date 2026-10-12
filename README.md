@@ -1,15 +1,21 @@
 # Region Spell Automation
 
-Automate D&D5e spell Regions with configurable activity triggers and native Region Active Effects in Foundry Virtual Tabletop.
+Manage D&D5e spell and feature Regions, targeting, roll controls, weapon masteries, damage, and effect automation in Foundry Virtual Tabletop.
 
 Configure a spell once, then cast it normally. The module attaches configured behaviors to the Regions created by that spell. The spell's activities define saves, damage, and other activity behavior.
 
 ## Compatibility
 
-- Module version: **0.5.8**.
+- Module version: **0.6.0 — in development, unreleased**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
+
+See [Module Compatibility and Test Setup](COMPATIBLE-MODULES.md) for the
+Fragment of the Fallen test world's enabled modules and installed versions,
+confirmed Dice So Nice and Automated Conditions integrations, and overlap notes.
+An enabled module in that snapshot is not automatically a certified compatible
+module; the document distinguishes specific test evidence from coexistence.
 
 An active GM must be connected when spells create Regions. The module uses the
 active GM's client to attach Region behaviors and track movement damage,
@@ -445,7 +451,7 @@ Open the browser console with **F12** and look for `Region Spell Automation |` m
 
 ## Development and releases
 
-The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The manager's v0.5.4 header reflects its component revision; the module version is defined in `module.json`.
+The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The module version is defined in `module.json`.
 
 See [RELEASING.md](RELEASING.md) for packaging and the public-release checklist.
 

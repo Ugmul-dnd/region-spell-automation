@@ -15,7 +15,7 @@ $rsaZipPath = Join-Path $rsaDist 'region-spell-automation.zip'
 $rsaStream = [IO.File]::Open($rsaZipPath, [IO.FileMode]::Create)
 $rsaArchive = [IO.Compression.ZipArchive]::new($rsaStream, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    $rsaFiles = @('module.json','README.md','STARTER-SPELLS.md','LICENSE') | ForEach-Object {Get-Item -LiteralPath (Join-Path $rsaRoot $_)}
+    $rsaFiles = @('module.json','README.md','CHANGELOG.md','COMPATIBLE-MODULES.md','STARTER-SPELLS.md','LICENSE') | ForEach-Object {Get-Item -LiteralPath (Join-Path $rsaRoot $_)}
     $rsaFiles += Get-ChildItem -LiteralPath (Join-Path $rsaRoot 'scripts'), (Join-Path $rsaRoot 'styles') -File -Recurse
     foreach ($rsaFile in $rsaFiles) {
         $rsaEntry = $rsaFile.FullName.Substring($rsaRoot.Length + 1).Replace('\','/')

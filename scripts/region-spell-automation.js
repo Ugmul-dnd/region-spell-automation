@@ -1,7 +1,7 @@
 // ============================================================
 // Region Spell Automation
-// v0.5.8
-// Foundry VTT v14 / D&D5e 6.0.5
+// v0.6.0
+// Foundry VTT v14 / D&D5e 6.0.5+ (tested with 6.0.6)
 //
 // Features:
 // - Multiple activity triggers per spell
@@ -36,7 +36,7 @@ const oncePerTurnHistory =
 
 
 console.log(
-    "Region Spell Automation | v0.5.8 JS loaded"
+    "Region Spell Automation | v0.6.0 JS loaded"
 );
 
 
@@ -863,7 +863,7 @@ Hooks.once("ready", () => {
         }).catch(err => console.error("Region Spell Automation | Confirmed target registration failed:", err));
     });
 
-    console.log("Region Spell Automation | Installing v0.5.8 Region hook");
+    console.log("Region Spell Automation | Installing v0.6.0 Region hook");
 
 
     // ========================================================
@@ -1459,6 +1459,6 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         }
     });
     console.log(
-        "Region Spell Automation | v0.5.8 Ready"
+        "Region Spell Automation | v0.6.0 Ready"
     );
 });

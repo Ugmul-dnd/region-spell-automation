@@ -1,8 +1,10 @@
 # Changelog
 
-## v0.5.8 — Unreleased
+## v0.6.0 — Unreleased
 
 ### Added
+
+- Module compatibility reference records the Fragment of the Fallen test world's enabled modules and installed versions, distinguishing confirmed integrations from modules merely present during testing.
 
 - The first manual Apply Effect also records Undo Effect history, including effects applied after a retroactive save correction with no previous undo.
 
@@ -30,7 +32,7 @@
 
 - Self-origin spell/feature emanations can automatically attach to the casting token, skipping manual placement. The Regions options tab includes an independent toggle.
 
-- Dedicated Module Options window with Regions, Targeting, Rolls & Damage, Effects, and Chat tabs. Existing settings are preserved; drafts save on confirmation, with GM-only world edits and per-client options.
+- Dedicated Module Options window with Regions, Targeting, Rolls & Damage, Effects, Weapon Mastery & Attack Properties, GM NPC & Damage, and Chat tabs. Existing settings are preserved; drafts save on confirmation, with GM-only world edits and per-client options.
 
 - Spell/feature placement controls: cone origins snap to square-grid intersections; scroll rotates 15 degrees, Shift-scroll rotates 5 degrees, and Ctrl-scroll zooms. Square rotation is allowed during casting previews.
 
@@ -42,7 +44,7 @@
 
 - Retarget supports weapon and attack cards and refreshes linked attack results using current target AC, allowing reassessment after reactions such as Shield without rerolling.
 
-- **Effect Automation:** optional automatic application of configured buffs from non-rolling Utility spells and features to Self, Allies, or friendly targeted creatures. Native effect application preserves duration, concentration, scaling, and refresh behavior. Attack, Save, damage/healing roll, and Region activities remain manual.
+- **Effect Automation:** optional automatic application of configured buffs from non-rolling Utility spells and features to Self, Allies, or friendly targeted creatures. Native effect application preserves duration, concentration, and scaling; existing matching active effects are left unchanged. Attack and Save effects use their independent automation options, while healing rolls remain manual and region effects keep their region lifecycle.
 
 - Spell and Region Management accepts monster abilities and player features,
   including auras, alongside spells.
@@ -88,7 +90,7 @@
   broader system support, or separate maintenance.
 - A broader module name remains a future consideration; no rename is scheduled.
 
-This revision is in development. The local module version is 0.5.8; this revision has not been published.
+This revision is in development. The local module version is 0.6.0; this revision has not been published.
 
 ## v0.5.7
 
