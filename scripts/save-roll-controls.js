@@ -2,6 +2,30 @@ import { createEventQueue } from "./shared-activity-card.js";
 const MODULE_ID = "region-spell-automation";
 const channel = `module.${MODULE_ID}`;
 const enqueue = createEventQueue();
+const visualAnimations=new Map();
+
+export function trackRollAnimations(dice3d=game.dice3d) {
+    const queue=dice3d?.pipeline?.queue;
+    if(!queue||typeof queue.enqueue!=="function")return false;
+    if(queue.rsaTrackRollAnimations)return true;
+    const original=queue.enqueue;
+    queue.enqueue=function(data,...args) {
+        const animation=original.call(this,data,...args);
+        const id=data?.messageId;
+        if(id&&animation?.then) {
+            const pending=visualAnimations.get(id)??new Set();
+            pending.add(animation);visualAnimations.set(id,pending);
+            const finish=()=>{pending.delete(animation);if(!pending.size)visualAnimations.delete(id);};
+            animation.then(finish,finish);
+        }
+        return animation;
+    };
+    queue.rsaTrackRollAnimations=true;
+    return true;
+}
+export async function waitForTrackedRollAnimation(message) {
+    await Promise.all(Array.from(visualAnimations.get(message.id)??[]));
+}
 
 export function canAdjustSave(message, user) {
     return ["save", "attack"].includes(message?.type) && Boolean(user?.isGM || message.author?.id === user?.id ||
@@ -55,8 +79,11 @@ export async function updateSaveMode(message, mode, index, user = game.user) {
     const labels = ["Advantage", "Disadvantage", game.i18n.localize("DND5E.Advantage"), game.i18n.localize("DND5E.Disadvantage")];
     for (const label of labels) flavor = flavor.replaceAll(` (${label})`, "");
     if (mode !== 0) flavor += ` (${game.i18n.localize(mode === 1 ? "DND5E.Advantage" : "DND5E.Disadvantage")})`;
-    await message.update({ rolls, flavor });
     await animateNewSaveDice(message, adjusted._rsaNewD20Results, user);
+    if(adjusted._rsaNewD20Results?.length&&game.dice3d?.showForRoll&&game.user.isGM) {
+        await globalThis.RegionSpellAutomationNpcDamage?.waitForWorkflowAnimations?.(message);
+    }
+    await message.update({ rolls, flavor });
 }
 
 export async function animateNewSaveDice(message, results, user = game.user) {
@@ -68,12 +95,19 @@ export async function animateNewSaveDice(message, results, user = game.user) {
         die._evaluated = true;
         const visualRoll = Roll.fromTerms([die]);
         const roller = game.users?.get(message.author?.id) ?? message.author ?? user;
-        await game.dice3d.showForRoll(visualRoll, roller, true,
-            message.whisper?.length ? message.whisper : null, message.blind ?? false, message.id, message.speaker);
+        trackRollAnimations();
+        const animation=Promise.resolve(game.dice3d.showForRoll(visualRoll, roller, true,
+            message.whisper?.length ? message.whisper : null, message.blind ?? false, message.id, message.speaker));
+        // A hidden GM can defer its local animation indefinitely. Other visible
+        // clients still finish their dice before the coordinated result update.
+        if(globalThis.document?.hidden){animation.catch(err=>console.warn("Region Spell Automation | Background dice animation failed:",err));return;}
+        const wait=globalThis.RegionSpellAutomationNpcDamage?.waitForDamageAnimation;
+        if(wait)await wait(message,animation);
+        else await Promise.all([animation,waitForTrackedRollAnimation(message)]);
     } catch (err) {
-        // The actual save is already updated; optional animation failure must
-        // not retry the adjustment or generate another die.
-        console.warn("Region Spell Automation | Save adjusted, but dice animation failed:", err);
+        // An optional animation failure must not retry the adjustment or
+        // generate another die. Commit the already evaluated result afterward.
+        console.warn("Region Spell Automation | Roll adjustment dice animation failed:", err);
     }
 }
 
@@ -159,6 +193,9 @@ Hooks.once("init", () => {
     });
 });
 Hooks.once("ready", () => {
+    globalThis.RegionSpellAutomationRollVisualWait=waitForTrackedRollAnimation;
+    Hooks.on("diceSoNiceReady",dice=>trackRollAnimations(dice));
+    trackRollAnimations();
     Hooks.on("dnd5e.renderChatMessage", addSaveControls);
     Hooks.on("updateChatMessage", (message, changes) => refreshSaveSummary(message, changes).catch(reportError));
     game.socket.on(channel, packet => {

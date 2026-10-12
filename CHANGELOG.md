@@ -76,6 +76,8 @@
 
 ### Fixed
 
+- Attack/save Advantage and Disadvantage corrections retain the old total until newly added dice finish animating, including player clients and Dice So Nice's immediate-chat mode. Cached dice switches stay immediate.
+
 - Vex/Sap integrate with Automated Conditions 5e through its public runtime-rule API, preserving condition-based advantage/disadvantage and cancellation.
 
 - Automatic damage dialogs no longer receive invalid mouse-based positions.

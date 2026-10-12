@@ -116,7 +116,7 @@ export async function applyAutomaticDamage(message) {
         ui.notifications.error("Automatic damage stopped. Check the card and apply any remaining damage manually.");
     } finally {holder?.remove();running.delete(message.id);appliedNow.delete(message.id);}
 }
-export async function waitForDamageAnimation(message) {
+export async function waitForDamageAnimation(message,extraAnimation) {
     // Background clients can pause DSN rendering. Damage resolution must not
     // depend on a GM watching the animation on their own screen.
     if(document.hidden)return;
@@ -127,7 +127,11 @@ export async function waitForDamageAnimation(message) {
         onVisibility();
     });
     try {
-        await Promise.race([hidden,globalThis.RegionSpellAutomationDamage?.waitForAttackAnimation?.(message)]);
+        const animation=(async()=>{
+            await Promise.all([extraAnimation,globalThis.RegionSpellAutomationRollVisualWait?.(message)]);
+            await globalThis.RegionSpellAutomationDamage?.waitForAttackAnimation?.(message);
+        })();
+        await Promise.race([hidden,animation]);
     } finally {document.removeEventListener("visibilitychange",onVisibility);}
 }
 export async function waitForWorkflowAnimations(message) {
@@ -260,7 +264,7 @@ Hooks.once("init",()=>{
     ])game.settings.register(MODULE_ID,key,{name,hint,scope:"world",config:true,type:Boolean,default:true});
 });
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationNpcDamage={shouldAutoRollNpc};
+    globalThis.RegionSpellAutomationNpcDamage={shouldAutoRollNpc,waitForWorkflowAnimations,waitForDamageAnimation};
 
     Hooks.on("dnd5e.preRollD20TestV2",(config,dialog)=>{if(config.rsaAutoNpcSave)dialog.configure=false;});
     for(const event of ["createChatMessage","updateChatMessage"])Hooks.on(event,(message)=>{
