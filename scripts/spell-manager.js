@@ -1,7 +1,7 @@
 // ============================================================
 // Region Spell Automation
 // Spell Manager
-// v0.5.7
+// v0.6.0
 //
 // Supports:
 // - Multiple activity triggers
@@ -2744,6 +2744,6 @@ Hooks.once("init", () => {
 
 
     console.log(
-        "Region Spell Automation | v0.5.7 Spell Manager registered"
+        "Region Spell Automation | v0.6.0 Spell Manager registered"
     );
 });

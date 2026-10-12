@@ -1,15 +1,21 @@
 # Region Spell Automation
 
-Automate D&D5e spell Regions with configurable activity triggers and native Region Active Effects in Foundry Virtual Tabletop.
+Manage D&D5e spell and feature Regions, targeting, roll controls, weapon masteries, damage, and effect automation in Foundry Virtual Tabletop.
 
 Configure a spell once, then cast it normally. The module attaches configured behaviors to the Regions created by that spell. The spell's activities define saves, damage, and other activity behavior.
 
 ## Compatibility
 
-- Module version: **0.5.7**.
+- Module version: **0.6.0 — in development, unreleased**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
+
+See [Module Compatibility and Test Setup](COMPATIBLE-MODULES.md) for the
+Fragment of the Fallen test world's enabled modules and installed versions,
+confirmed Dice So Nice and Automated Conditions integrations, and overlap notes.
+An enabled module in that snapshot is not automatically a certified compatible
+module; the document distinguishes specific test evidence from coexistence.
 
 An active GM must be connected when spells create Regions. The module uses the
 active GM's client to attach Region behaviors and track movement damage,
@@ -445,7 +451,7 @@ Open the browser console with **F12** and look for `Region Spell Automation |` m
 
 ## Development and releases
 
-The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The manager's v0.5.4 header reflects its component revision; the module version is defined in `module.json`.
+The runtime lives in `scripts/region-spell-automation.js`, cleanup in `scripts/concentration-cleanup.js`, and the manager in `scripts/spell-manager.js`. The module version is defined in `module.json`.
 
 See [RELEASING.md](RELEASING.md) for packaging and the public-release checklist.
 
@@ -467,3 +473,175 @@ monster abilities such as a Pit Fiend's Fear Aura and player features. Use
 **Add New Spell / Feature Region**, drop the ability Item, and configure its
 triggers, conditions, and effects. The ability's activity must create a D&D5e
 Region; the manager does not create an aura for abilities without a Region.
+
+### Automatic Damage Dialogs
+
+**Prompt Damage for Save Activities** opens the caster's native Damage dialog
+for Save activities that include damage. Area casts wait for target confirmation.
+Turn-only feature auras wait for their configured Region triggers.
+
+**Prompt Damage after an Attack Hit** opens the attacker's native Damage dialog
+only when the attack card reports a hit against a target. It waits for Dice So
+Nice's animation to finish, retains critical-hit and weapon-mode options, and
+uses the usage card's consumed resources and upcast scaling. No target or unknown
+hit result means no automatic dialog; use the Damage button manually.
+
+Both settings are enabled by default and can be disabled independently. Disable
+competing automatic damage dialogs in other modules while testing. Restart the
+Foundry server after installing this update to load the added script.
+
+**Adjust Attack Roll Advantage** adds the same ADV / NORMAL / DISADV hover
+controls to attack results on spell, weapon, and feature cards. It is independent
+of **Adjust Saving Throw Advantage**. The original d20 and bonuses are retained;
+only an additional required die is rolled and animated. Result summaries refresh,
+but damage already rolled or applied is not reversed. Both menus use compact
+buttons at 75% of the standard button height.
+
+### Effect Automation
+
+**Effect Automation: Automatically Apply Buffs** applies the configured activity
+Effects when a non-rolling Utility spell or feature is used. Self activities use
+the caster; Ally activities use the recorded targets. Creature-targeted activities
+apply to the caster or tokens with the caster's disposition. An active GM handles
+player casts on other actors; without a GM, users can apply only to owned actors.
+
+The effect must already be configured on the activity. This does not invent a
+Rage, Shield, Mage Armor, or Light effect. Native D&D5e application handles duration,
+scaling, concentration dependencies, and refreshing existing effects. Attacks,
+Save activities, damage/healing rolls, and Region activities are excluded.
+Light cast on a plain map object without an actor is not automated.
+
+Retarget also supports weapon and attack cards. After applying Shield or another
+AC change, keep the intended creature targeted and click **Retarget** on the
+activity card. Linked attack rolls receive current AC descriptors and recalculate
+hit/miss results. Original dice and damage history remain unchanged; this does
+not undo damage already applied or automatically reopen a damage dialog.
+
+### Card Presentation
+
+Attack actions and result borders are green, damage red, and saves blue.
+**Simplify Processed Attack Cards** hides the base Attack and Damage buttons as
+their rolls are created, leaves Retarget on the attack result, and hides the base
+attack card once the attack roll exists. A Damage button beside Retarget on the
+attack result opens the native damage dialog and hides once its linked damage roll exists. With inline summaries, only the base face is
+hidden. No messages, dice, or damage history are deleted. Disable the setting to
+show the complete base cards again.
+
+**Adjust Damage Normal / Critical** adds NORMAL / CRITICAL controls when hovering
+on a damage result. Switching to Normal preserves base dice and bonuses; Critical
+adds and animates only the extra dice required. Switching again reuses cached
+results. All damage parts on the message change mode together. Damage already
+applied is not undone. The first implementation supports standard, unmodified
+dice terms, including powerful critical (rolled dice plus their maximized bonus). Extra critical bonus formulas, modified dice, and
+complex nested expressions require manual correction.
+
+**Spell/Feature Region Placement Controls** snaps cone tips to square-grid
+intersections while casting. Scroll rotates by 15 degrees; Shift-scroll uses
+5 degrees; Ctrl-scroll zooms. Square templates can rotate during placement even
+when the system's grid-aligned-square setting is enabled. Outside casting
+placement, normal canvas controls remain in effect. Cone grid snapping is scoped
+to square grids. Disable competing placement overrides in other modules if needed.
+
+### Module Options
+
+Open **Configure Settings → Region Spell Automation → Open Module Options**.
+Options are grouped into Regions, Targeting, Rolls & Damage, Effects, and Chat.
+Changes remain drafts while switching tabs; **Save Options** applies them and
+**Cancel** leaves stored values unchanged. GMs manage world options; players can
+change their client options. The Regions tab also opens the spell/feature manager.
+The window uses existing settings, so previous selections carry over.
+
+### Weapon Masteries
+
+Enable **Effect Automation: Weapon Masteries** in **Module Options → Weapon Mastery & Attack Properties**.
+An active GM is required. The actor must have the weapon's mastery unlocked in
+D&D5e's native Weapon Mastery configuration, and the attack must use that mastery.
+
+- **Sap:** applied on a hit to the victim; defaults its next attack to disadvantage.
+- **Vex:** applied to the attacker only after damage is dealt, and defaults its
+  next attack against that exact target to advantage. Attacking other creatures leaves Vex available. The matching attack consumes it, whether it hits or misses.
+- **Sap/Vex:** attack-card buttons can apply/remove them for corrections. The user
+  can change the next roll's mode. These effects are consumed when the relevant
+  attack is rolled, not when its dialog is merely opened. Native source-turn expiry
+  also applies: Sap at the source's next turn start, Vex at its next turn end.
+- **Graze:** miss-only action creates a flat damage card for the attack's ability
+  modifier, of the weapon's damage type. It does not apply HP damage automatically.
+- **Slow:** automatically applies after damage is dealt; its button toggles a non-stacking
+  10-foot speed reduction until the source's next turn starts.
+- **Topple:** hit-only action prompts the defender's owner (GM for NPCs) for a
+  Constitution save against 8 + attack ability modifier + proficiency. A failed
+  save applies a source-tracked Prone effect. Save corrections and Legendary
+  Resistance remove that source without removing unrelated Prone effects.
+
+Retroactive hit-to-miss corrections remove this attack's own mastery effects.
+Push, Nick, and Cleave remain manual. This does not add damage or movement
+workflows for those properties. Disable competing mastery automation when testing.
+
+### Undo Damage
+
+After applying a damage card, GMs see **Undo Damage** in its action area. It
+reverses this card's recorded HP, temporary HP, and temporary maximum HP changes,
+clears its undo records, and reopens Apply. Multiple applications recorded on the
+same card are reversed together. Original dice and other cards remain unchanged.
+A connected GM is required to record player applications. Only applications made
+after this feature loads are tracked; older damage cannot be reconstructed.
+
+### GM NPC & Damage
+
+The **GM NPC & Damage** options tab has independent settings for:
+
+- **Automatically Roll GM NPC Saves:** prompted saves for NPCs with no player
+  owners use native fast-forward rolls. Player-owned NPCs and PCs retain manual
+  save prompts. Native D&D5e/Automated Conditions advantage and disadvantage
+  calculation remains in use, including on Topple saves.
+- **Auto Apply Damage:** applies for all casters and attackers,
+  through the native damage tray. Save-based damage waits until every eligible
+  recorded target has a success/failure result; mixed NPC/PC groups wait together.
+  Attack damage applies only to confirmed hit targets. Graze and other non-save,
+  non-attack damage use their recorded targets. Unidentified attack links remain
+  manual. Each target is applied once, including shared Region cards gaining targets.
+- **Magic Resistance Saving Throws:** recognizes a Magic Resistance feature by
+  its name or standard identifier, even without an Active Effect. Saves against
+  spells and features marked Magical recommend advantage. Ordinary nonmagical
+  saves are unaffected. Automated Conditions receives this as an advantage source
+  so opposing disadvantage still cancels it normally.
+- **Auto Apply Saved Effects:** waits for every required save and visible dice
+  animation. Failed saves receive the activity's assigned effects; successful
+  saves receive only effects marked **On Save**. With automatic damage enabled,
+  effects apply after damage; with it disabled, effects resolve independently.
+  Saves with effects and no damage also work.
+- **Autoapply Status on Hit:** applies the attack activity's assigned effects
+  only to hit targets after dice animations finish. Misses receive no effects.
+  This option works independently of automatic damage.
+
+Automatic effects use native application for duration, concentration, and scaling.
+Completed trays collapse, and card refreshes do not
+duplicate applications. Browsing old chat history does not apply old conditions.
+
+Matching active effects already on a target are left unchanged by card automation.
+Applicable native region effects take priority, including while their application
+is pending. This prevents Spirit Guardians' region speed reduction from being
+applied again by its save card. Region effects and conditions use the manager's
+trigger targeting relative to the caster; Hostiles Only excludes creatures with
+the caster's disposition. When multiple triggers use different filters, region
+effects cover the combined eligible groups. Existing region filters refresh when
+the scene loads.
+
+The GM's **Undo Effect** button appears beside **Undo Damage** after automatic
+effects apply. It removes effects created by that card or restores the previous
+state of an effect that was refreshed, without undoing HP changes. Applications
+superseded by a later cast are preserved. Undo clears its history and reopens the
+source card's effect tray for manual use. Effects-only activities show the button
+on their source card. This records new automatic applications after the update.
+Using Apply Effect after an undo records the new application and brings Undo
+Effect back, including when a player-owned target receives the manual application.
+The first manual application is also tracked, including after a retroactive save
+correction makes an effect applicable for the first time.
+
+An active GM is required for automatic application. Native save multipliers,
+resistance, vulnerability, immunity, and damage Undo tracking remain available.
+Clicking, changing, or right-clicking controls on the relevant chat cards stops
+that activity's automatic damage workflow. Manual damage application also stops it.
+Save/damage dialog submission itself does not count as manual card interaction.
+After takeover, use the card normally; the workflow does not automatically resume.
+Previously applied damage is not reversed by a later save correction.

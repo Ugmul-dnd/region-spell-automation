@@ -1,4 +1,51 @@
 // Shared cards retain D&D5e's native save and damage workflow.
+function effectSources(effect) {
+    return new Set([effect?.uuid,effect?._stats?.duplicateSource,effect?._stats?.compendiumSource].filter(Boolean));
+}
+export function equivalentEffect(left,right) {
+    const sources=effectSources(left);
+    if([...effectSources(right)].some(source=>sources.has(source)))return true;
+    const name=effect=>effect?.name?.trim().toLocaleLowerCase();
+    return !!name(left)&&name(left)===name(right)&&
+        JSON.stringify(left.system?.changes??left.changes??[])===JSON.stringify(right.system?.changes??right.changes??[]);
+}
+export function hasEquivalentActiveEffect(actor,effect) {
+    return Array.from(actor?.effects??[]).some(existing=>existing.disabled!==true&&existing.active!==false&&
+        existing.system?.expired!==true&&equivalentEffect(existing,effect));
+}
+export function regionOwnsEffect(token,effect) {
+    const document=token?.document??token;
+    const regions=document?.parent?.regions??globalThis.canvas?.scene?.regions??[];
+    const sources=effectSources(effect);
+    for(const region of regions) {
+        if(!Array.from(region.tokens??[]).some(entry=>(entry.document??entry).uuid===document?.uuid))continue;
+        for(const behavior of region.behaviors??[]) {
+            if(behavior.disabled===true||behavior.active===false)continue;
+            if(behavior.type==="dnd5e.applyActiveEffect"&&
+                (!behavior.system.dispositions?.size||behavior.system.dispositions.has(document.disposition))&&
+                Array.from(behavior.system.effects??[]).some(uuid=>sources.has(uuid)))return true;
+        }
+    }
+    return false;
+}
+export function regionEffectDispositions(config,caster) {
+    const modes=(config?.triggers??[]).filter(trigger=>trigger.enabled!==false).map(trigger=>trigger.targeting??"everyone");
+    if(!modes.length||modes.includes("everyone"))return [];
+    const document=caster?.document??caster;
+    if(typeof document?.disposition!=="number")return null;
+    const dispositions=[CONST.TOKEN_DISPOSITIONS.HOSTILE,CONST.TOKEN_DISPOSITIONS.NEUTRAL,CONST.TOKEN_DISPOSITIONS.FRIENDLY];
+    return dispositions.filter(disposition=>modes.some(mode=>mode==="friendliesOnly"?disposition===document.disposition:
+        ["hostilesOnly","excludeFriendlies"].includes(mode)&&disposition!==document.disposition));
+}
+export async function resolveRegionCaster(region,item=null) {
+    const uuid=region.flags?.dnd5e?.origin;
+    const origin=uuid?await fromUuid(uuid):null;
+    if(origin?.documentName==="Token"||typeof origin?.disposition==="number")return origin;
+    const actor=origin?.actor??origin??item?.actor;
+    const tokens=Array.from(region.parent?.tokens??[]).filter(token=>token.actor?.uuid===actor?.uuid);
+    return tokens.length===1?tokens[0]:null;
+}
+
 export function isEligibleTarget(token) {
     const document = token?.document ?? token;
     const actor = document?.actor;

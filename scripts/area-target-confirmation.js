@@ -216,7 +216,11 @@ export async function finishConfirmedCast(activity, message, targets) {
     pendingCards.delete(message.id);
     Hooks.callAll("regionSpellAutomation.targetsConfirmed", message);
     if (message.getFlag?.(MODULE_ID, "resumeAreaDamage") !== false && targets.length && activity.damage?.parts?.length && typeof activity.rollDamage === "function") {
+        if (activity.type === "save" && globalThis.RegionSpellAutomationDamage) {
+            await globalThis.RegionSpellAutomationDamage.promptDamage(activity, message);
+        } else {
         await activity.rollDamage({}, { configure: true }, { data: { system: { origin: message.id, targets } } });
+        }
     }
 }
 

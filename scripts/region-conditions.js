@@ -1,3 +1,4 @@
+import {isEligibleTarget,regionEffectDispositions,resolveRegionCaster} from "./shared-activity-card.js";
 const MODULE_ID = "region-spell-automation";
 const TYPE = `${MODULE_ID}.conditions`;
 const queues = new Map();
@@ -12,7 +13,11 @@ export async function syncRegionConditions(region, conditions = [], removed = fa
         const actors = new Map();
         for (const actor of game.actors) actors.set(actor.uuid, actor);
         for (const token of region.parent.tokens) if (token.actor) actors.set(token.actor.uuid, token.actor);
-        const inside = new Set(removed ? [] : Array.from(region.tokens).map(token => token.actor?.uuid));
+        const item=region.flags?.dnd5e?.item?await fromUuid(region.flags.dnd5e.item):null;
+        const config=game.settings?.get(MODULE_ID,"spellTable")?.[item?.name];
+        const dispositions=regionEffectDispositions(config,await resolveRegionCaster(region,item));
+        const inside = new Set(removed ? [] : Array.from(region.tokens).filter(token=>isEligibleTarget(token)&&
+            dispositions!==null&&(!dispositions.length||dispositions.includes((token.document??token).disposition))).map(token => token.actor?.uuid));
         for (const actor of actors.values()) {
             const owned = Array.from(actor.effects).filter(effect => effect.getFlag(MODULE_ID, "conditionRegion") === region.uuid);
             const wanted = inside.has(actor.uuid) ? conditions : [];

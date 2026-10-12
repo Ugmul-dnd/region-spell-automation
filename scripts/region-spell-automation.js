@@ -1,7 +1,7 @@
 // ============================================================
 // Region Spell Automation
-// v0.5.7
-// Foundry VTT v14 / D&D5e 6.0.5
+// v0.6.0
+// Foundry VTT v14 / D&D5e 6.0.5+ (tested with 6.0.6)
 //
 // Features:
 // - Multiple activity triggers per spell
@@ -16,7 +16,7 @@
 const MODULE_ID = "region-spell-automation";
 const SETTING_KEY = "spellTable";
 
-import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets, isEligibleTarget }
+import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets, isEligibleTarget, regionEffectDispositions, resolveRegionCaster }
     from "./shared-activity-card.js";
 import { MOVEMENT_EVENTS, recordMovementDamage, registerMovementDamageHooks } from "./movement-damage.js";
 import { resolveRegionEffect } from "./starter-spells.js";
@@ -36,7 +36,7 @@ const oncePerTurnHistory =
 
 
 console.log(
-    "Region Spell Automation | v0.5.7 JS loaded"
+    "Region Spell Automation | v0.6.0 JS loaded"
 );
 
 
@@ -863,7 +863,7 @@ Hooks.once("ready", () => {
         }).catch(err => console.error("Region Spell Automation | Confirmed target registration failed:", err));
     });
 
-    console.log("Region Spell Automation | Installing v0.5.7 Region hook");
+    console.log("Region Spell Automation | Installing v0.6.0 Region hook");
 
 
     // ========================================================
@@ -1009,6 +1009,8 @@ Hooks.once("ready", () => {
                 if (!region) {
                     continue;
                 }
+                const caster=await resolveRegionCaster(region,item);
+                const effectDispositions=regionEffectDispositions(config,caster);
 
 
                 // =================================================
@@ -1341,7 +1343,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                             region.behaviors ??
                             []
                         )
-                            .some(
+                            .find(
                                 existing =>
                                     existing.type ===
                                         "dnd5e.applyActiveEffect" &&
@@ -1354,6 +1356,15 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     if (
                         alreadyAttached
                     ) {
+                        if(effectDispositions!==null) {
+                            const previous=[...(alreadyAttached.system.dispositions??[])].sort();
+                            if(JSON.stringify(previous)!==JSON.stringify([...effectDispositions].sort()))
+                                await alreadyAttached.update({"system.dispositions":effectDispositions});
+                        } else await alreadyAttached.update({disabled:true});
+                        continue;
+                    }
+                    if(effectDispositions===null) {
+                        console.warn("Region Spell Automation | Region effect targeting needs a unique caster token.",region.uuid);
                         continue;
                     }
 
@@ -1380,7 +1391,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                                         ],
 
                                         dispositions:
-                                            [],
+                                            effectDispositions,
 
                                         sizes:
                                             [],
@@ -1418,6 +1429,14 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
 
 
     // Core document creation hooks reach GM clients for player-created Regions.
+    Hooks.on("canvasReady",async()=>{
+        if(!game.user.isGM||(game.users.activeGM&&game.users.activeGM.id!==game.user.id))return;
+        for(const region of canvas.scene?.regions??[]) {
+            const uuid=region.flags?.dnd5e?.item;if(!uuid)continue;
+            try {const item=await fromUuid(uuid);if(item)await attachSpellRegions({item},[region]);}
+            catch(err){console.error("Region Spell Automation | Region targeting refresh failed:",err);}
+        }
+    });
     // D&D5e's local post-template hook ran on the caster and cannot write
     // GM-only RegionBehavior documents when that caster is a player.
     Hooks.on("createRegion", async (region, options, userId) => {
@@ -1440,6 +1459,6 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         }
     });
     console.log(
-        "Region Spell Automation | v0.5.7 Ready"
+        "Region Spell Automation | v0.6.0 Ready"
     );
 });
