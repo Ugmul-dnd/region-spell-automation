@@ -41,3 +41,9 @@
     flex: 0 0 auto;
     align-self: center;
 }
+.rsa-attack-actions [data-rsa-attack-damage] { order: 1; }
+.rsa-attack-actions [data-rsa-retarget] { order: 2; }
+.rsa-attack-actions [data-rsa-mastery] { order: 3; }
+.rsa-save-pending-label { margin-left: auto; opacity: .7; font-style: italic; white-space: nowrap; width: auto; flex: 0 0 auto; padding: 2px 8px; }
+.rsa-damage-actions [data-rsa-undo-damage] { order: 4; }
+.rsa-damage-actions [data-rsa-undo-effect] { order: 5; }

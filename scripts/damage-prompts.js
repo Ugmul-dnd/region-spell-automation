@@ -6,11 +6,20 @@ const dialogClasses = new Map();
 let positionWrites = Promise.resolve();
 
 export function configurePromptDialog(kind, dialog = {}) {
-    const base = globalThis.CONFIG?.Dice?.[kind === "damage" ? "DamageRoll" : "D20Roll"]?.DefaultConfigurationDialog;
+    const base = dialog.applicationClass ?? globalThis.CONFIG?.Dice?.[kind === "damage" ? "DamageRoll" : "D20Roll"]?.DefaultConfigurationDialog;
     if (!base) return dialog;
     let PositionedDialog = dialogClasses.get(kind);
     if (!PositionedDialog) {
         PositionedDialog = class extends base {
+            async _prepareButtonsContext(context, options) {
+                const prepared=await super._prepareButtonsContext(context,options);
+                if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.prepareAttackButtons(this,prepared);
+                return prepared;
+            }
+            _onRender(context,options) {
+                super._onRender(context,options);
+                if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.focusMasteryAttackButtons(this);
+            }
             _onPosition(position) {
                 super._onPosition(position);
                 if (!this.rendered) return;
@@ -133,7 +142,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-    globalThis.RegionSpellAutomationDamage = {promptDamage,configurePromptDialog};
+    globalThis.RegionSpellAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation};
     Hooks.on("dnd5e.preRollAttackV2", (config, dialog) => {
         const configure = dialog.configure;
         Object.assign(dialog, configurePromptDialog("attack",dialog));

@@ -1,3 +1,4 @@
+import {hasEquivalentActiveEffect,regionOwnsEffect} from "./shared-activity-card.js";
 const MODULE_ID="region-spell-automation";
 const completed=new Set();
 const pending=new Set();
@@ -10,6 +11,7 @@ export function eligibleBuffActivity(activity) {
 
 export async function applyBuffEffects(message) {
     if (game.settings.get(MODULE_ID,"autoApplyBuffEffects") !== true || !message?.id || completed.has(message.id) || pending.has(message.id)) return;
+    if(message.getFlag?.(MODULE_ID,"manualDamageWorkflow"))return;
     if (message.getFlag?.(MODULE_ID,"targetsConfirmationPending") || message.getFlag?.(MODULE_ID,"targetsConfirmationCanceled")) return;
     const activity=message.getAssociatedActivity?.({scaled:true});
     if (!eligibleBuffActivity(activity)) return;
@@ -49,9 +51,13 @@ export async function applyBuffEffects(message) {
         if (typeof tray._applyEffectToActor !== "function") throw Error("D&D5e effect application API is unavailable.");
         for (const actor of actors.values()) for (const effect of effects) {
             // A prior partial attempt may already have applied this source.
-            if (Array.from(actor.effects).some(existing=>existing.system?.origin?.message === message.uuid &&
-                (existing._stats?.duplicateSource === effect.uuid || existing._stats?.compendiumSource === effect.uuid))) continue;
-            await tray._applyEffectToActor(effect,actor);
+            if(hasEquivalentActiveEffect(actor,effect))continue;
+            const tokens=await Promise.all((message.system.targets??[]).filter(target=>target.actor===actor.uuid||actors.size===1)
+                .map(target=>target.token?fromUuid(target.token):null));
+            if(tokens.some(token=>token?.actor?.uuid===actor.uuid&&regionOwnsEffect(token,effect)))continue;
+            const undo=globalThis.RegionSpellAutomationEffectUndo;
+            if(undo)await undo.apply(message,message,effect,actor,tray);
+            else await tray._applyEffectToActor(effect,actor);
         }
         completed.add(message.id);
         await message.update({[`flags.${MODULE_ID}.buffAutoApplied`]:true});
@@ -60,7 +66,12 @@ export async function applyBuffEffects(message) {
 }
 
 export function collapseAppliedBuffTray(message, html) {
-    if (!message.getFlag?.(MODULE_ID,"buffAutoApplied")) return;
+    if(message.getFlag?.(MODULE_ID,"effectApplyReopened")&&!message.getFlag?.(MODULE_ID,"outcomeEffectsApplied")&&!message.getFlag?.(MODULE_ID,"buffAutoApplied")) {
+        const root=html instanceof HTMLElement?html:html?.[0];
+        for(const tray of root?.querySelectorAll("effect-application")??[])tray.open=true;
+        return;
+    }
+    if (!message.getFlag?.(MODULE_ID,"buffAutoApplied")&&!message.getFlag?.(MODULE_ID,"outcomeEffectsApplied")) return;
     const root=html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
     for (const tray of root.querySelectorAll("effect-application")) tray.open=false;
@@ -80,7 +91,7 @@ async function requestBuffs(message) {
 
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"autoApplyBuffEffects",{
     name:"Effect Automation: Automatically Apply Buffs",
-    hint:"Apply configured effects from non-rolling Utility spells/features to Self, Allies, or friendly targeted creatures. Attack, Save, damage, and Region activities remain manual.",
+    hint:"Apply configured effects from non-rolling Utility spells/features to Self, Allies, or friendly targeted creatures. Save and attack effects use their separate GM NPC & Damage options.",
     scope:"world",config:true,type:Boolean,default:true
 }));
 Hooks.once("ready",()=>{

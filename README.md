@@ -544,3 +544,98 @@ Changes remain drafts while switching tabs; **Save Options** applies them and
 **Cancel** leaves stored values unchanged. GMs manage world options; players can
 change their client options. The Regions tab also opens the spell/feature manager.
 The window uses existing settings, so previous selections carry over.
+
+### Weapon Masteries
+
+Enable **Effect Automation: Weapon Masteries** in **Module Options → Weapon Mastery & Attack Properties**.
+An active GM is required. The actor must have the weapon's mastery unlocked in
+D&D5e's native Weapon Mastery configuration, and the attack must use that mastery.
+
+- **Sap:** applied on a hit to the victim; defaults its next attack to disadvantage.
+- **Vex:** applied to the attacker only after damage is dealt, and defaults its
+  next attack against that exact target to advantage. Attacking other creatures leaves Vex available. The matching attack consumes it, whether it hits or misses.
+- **Sap/Vex:** attack-card buttons can apply/remove them for corrections. The user
+  can change the next roll's mode. These effects are consumed when the relevant
+  attack is rolled, not when its dialog is merely opened. Native source-turn expiry
+  also applies: Sap at the source's next turn start, Vex at its next turn end.
+- **Graze:** miss-only action creates a flat damage card for the attack's ability
+  modifier, of the weapon's damage type. It does not apply HP damage automatically.
+- **Slow:** automatically applies after damage is dealt; its button toggles a non-stacking
+  10-foot speed reduction until the source's next turn starts.
+- **Topple:** hit-only action prompts the defender's owner (GM for NPCs) for a
+  Constitution save against 8 + attack ability modifier + proficiency. A failed
+  save applies a source-tracked Prone effect. Save corrections and Legendary
+  Resistance remove that source without removing unrelated Prone effects.
+
+Retroactive hit-to-miss corrections remove this attack's own mastery effects.
+Push, Nick, and Cleave remain manual. This does not add damage or movement
+workflows for those properties. Disable competing mastery automation when testing.
+
+### Undo Damage
+
+After applying a damage card, GMs see **Undo Damage** in its action area. It
+reverses this card's recorded HP, temporary HP, and temporary maximum HP changes,
+clears its undo records, and reopens Apply. Multiple applications recorded on the
+same card are reversed together. Original dice and other cards remain unchanged.
+A connected GM is required to record player applications. Only applications made
+after this feature loads are tracked; older damage cannot be reconstructed.
+
+### GM NPC & Damage
+
+The **GM NPC & Damage** options tab has independent settings for:
+
+- **Automatically Roll GM NPC Saves:** prompted saves for NPCs with no player
+  owners use native fast-forward rolls. Player-owned NPCs and PCs retain manual
+  save prompts. Native D&D5e/Automated Conditions advantage and disadvantage
+  calculation remains in use, including on Topple saves.
+- **Auto Apply Damage:** applies for all casters and attackers,
+  through the native damage tray. Save-based damage waits until every eligible
+  recorded target has a success/failure result; mixed NPC/PC groups wait together.
+  Attack damage applies only to confirmed hit targets. Graze and other non-save,
+  non-attack damage use their recorded targets. Unidentified attack links remain
+  manual. Each target is applied once, including shared Region cards gaining targets.
+- **Magic Resistance Saving Throws:** recognizes a Magic Resistance feature by
+  its name or standard identifier, even without an Active Effect. Saves against
+  spells and features marked Magical recommend advantage. Ordinary nonmagical
+  saves are unaffected. Automated Conditions receives this as an advantage source
+  so opposing disadvantage still cancels it normally.
+- **Auto Apply Saved Effects:** waits for every required save and visible dice
+  animation. Failed saves receive the activity's assigned effects; successful
+  saves receive only effects marked **On Save**. With automatic damage enabled,
+  effects apply after damage; with it disabled, effects resolve independently.
+  Saves with effects and no damage also work.
+- **Autoapply Status on Hit:** applies the attack activity's assigned effects
+  only to hit targets after dice animations finish. Misses receive no effects.
+  This option works independently of automatic damage.
+
+Automatic effects use native application for duration, concentration, and scaling.
+Completed trays collapse, and card refreshes do not
+duplicate applications. Browsing old chat history does not apply old conditions.
+
+Matching active effects already on a target are left unchanged by card automation.
+Applicable native region effects take priority, including while their application
+is pending. This prevents Spirit Guardians' region speed reduction from being
+applied again by its save card. Region effects and conditions use the manager's
+trigger targeting relative to the caster; Hostiles Only excludes creatures with
+the caster's disposition. When multiple triggers use different filters, region
+effects cover the combined eligible groups. Existing region filters refresh when
+the scene loads.
+
+The GM's **Undo Effect** button appears beside **Undo Damage** after automatic
+effects apply. It removes effects created by that card or restores the previous
+state of an effect that was refreshed, without undoing HP changes. Applications
+superseded by a later cast are preserved. Undo clears its history and reopens the
+source card's effect tray for manual use. Effects-only activities show the button
+on their source card. This records new automatic applications after the update.
+Using Apply Effect after an undo records the new application and brings Undo
+Effect back, including when a player-owned target receives the manual application.
+The first manual application is also tracked, including after a retroactive save
+correction makes an effect applicable for the first time.
+
+An active GM is required for automatic application. Native save multipliers,
+resistance, vulnerability, immunity, and damage Undo tracking remain available.
+Clicking, changing, or right-clicking controls on the relevant chat cards stops
+that activity's automatic damage workflow. Manual damage application also stops it.
+Save/damage dialog submission itself does not count as manual card interaction.
+After takeover, use the card normally; the workflow does not automatically resume.
+Previously applied damage is not reversed by a later save correction.

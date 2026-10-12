@@ -93,6 +93,24 @@ try {
         Get-Content -LiteralPath (Join-Path $PSScriptRoot 'module-settings.test.mjs') -Raw | node --input-type=module
         if ($LASTEXITCODE -ne 0) {throw 'Module settings interface tests failed.'}
     } finally {$env:RSA_MODULE_SETTINGS_SOURCE = $rsaOldModuleSettingsSource}
+    $rsaOldMasterySource = $env:RSA_MASTERY_SOURCE
+    try {
+        $env:RSA_MASTERY_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/weapon-masteries.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'weapon-masteries.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Weapon mastery tests failed.'}
+    } finally {$env:RSA_MASTERY_SOURCE = $rsaOldMasterySource}
+    $rsaOldDamageUndoSource = $env:RSA_DAMAGE_UNDO_SOURCE
+    try {
+        $env:RSA_DAMAGE_UNDO_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/damage-undo.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'damage-undo.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'Damage undo tests failed.'}
+    } finally {$env:RSA_DAMAGE_UNDO_SOURCE = $rsaOldDamageUndoSource}
+    $rsaOldNpcDamageSource = $env:RSA_NPC_DAMAGE_SOURCE
+    try {
+        $env:RSA_NPC_DAMAGE_SOURCE = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $rsaProject 'scripts/npc-damage-automation.js')))
+        Get-Content -LiteralPath (Join-Path $PSScriptRoot 'npc-damage-automation.test.mjs') -Raw | node --input-type=module
+        if ($LASTEXITCODE -ne 0) {throw 'NPC and damage automation tests failed.'}
+    } finally {$env:RSA_NPC_DAMAGE_SOURCE = $rsaOldNpcDamageSource}
     $rsaOldConditionsSource = $env:RSA_CONDITIONS_SOURCE
     $rsaOldConditionsManifest = $env:RSA_CONDITIONS_MANIFEST
     try {

@@ -2,7 +2,7 @@ import {createEventQueue} from "./shared-activity-card.js";
 const MODULE_ID="region-spell-automation";
 const enqueue=createEventQueue();
 export function isAttackDamage(message) {
-    if (message?.type !== "damage") return false;
+    if (message?.type !== "damage" || message.getFlag?.("region-spell-automation","masteryGraze")) return false;
     const activity=message.getAssociatedActivity?.();
     return activity?.type === "attack";
 }

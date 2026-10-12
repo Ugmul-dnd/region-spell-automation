@@ -12,6 +12,7 @@ export function styleActivityCard(message,html) {
     const root=html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
     root.classList.add("rsa-action-colors");
+    showPendingSaves(message,root);
     if (["attack","save","damage"].includes(message.type)) root.classList.add(`rsa-roll-${message.type}`);
     for (const summary of root.querySelectorAll(".card-summary[data-message-id]")) {
         const roll=game.messages.get(summary.dataset.messageId);
@@ -46,6 +47,49 @@ export function styleActivityCard(message,html) {
             root.classList.add("rsa-processed-attack");
             root.style.display="none";
         }
+    }
+}
+
+export function showPendingSaves(message,root) {
+    if(message.type!=="usage"||message.getAssociatedActivity?.()?.type!=="save")return;
+    root.querySelectorAll(".rsa-save-pending").forEach(row=>row.remove());
+    const requested=new Set(message.getFlag?.(MODULE_ID,"requestedSaveTargets")??[]);
+    if(!requested.size)return;
+    const summaries=[...root.querySelectorAll(".card-summary[data-target-uuid]")];
+    const outcomes=message.system.outcomes;
+    const saves=message.getAssociatedRolls?.("save")??[];
+    const targets=message.system.targets??[];
+    let previous=root.querySelector(".chat-card");
+    if(!previous)return;
+    for(const target of targets) {
+        const actual=summaries.find(row=>row.dataset.targetUuid===target.token);
+        const save=[...saves].reverse().find(roll=>roll.getAssociatedToken?.()?.uuid===target.token);
+        const animating=save?._dice3danimating===true;
+        if(actual&&!animating){previous=actual;continue;}
+        if(!requested.has(target.token)||(outcomes?.has(target.token)&&!animating))continue;
+        // Outcomes are known before DSN finishes. Keep the placeholder until
+        // this viewer's animation completes, even if native HTML is available.
+        if(actual)actual.remove();
+        const row=document.createElement("div");
+        row.className="card-summary rsa-roll-save rsa-save-pending";
+        row.dataset.targetUuid=target.token;
+        const section=document.createElement("section");
+        section.className="icon-row save-summary";
+        const icon=document.createElement("i");icon.className="fa-fw fa-solid fa-dice";icon.setAttribute("aria-hidden","true");
+        const list=document.createElement("ul");list.className="pills unlist";
+        const name=document.createElement("li");name.className="pill target transparent";name.textContent=target.name??"Target";list.append(name);
+        const status=document.createElement("button");status.type="button";status.className="rsa-save-pending-label";status.textContent="---pending---";
+        status.dataset.rsaRepromptSave=target.token;
+        const token=globalThis.fromUuidSync?.(target.token,{strict:false});
+        status.disabled=animating||!(game.user?.isGM||message.author?.id===game.user?.id||token?.actor?.isOwner);
+        status.title=animating?"Saving throw dice are still rolling":"Click to reopen this target's saving throw prompt";
+        status.addEventListener("click",async event=>{
+            event.preventDefault();event.stopPropagation();status.disabled=true;
+            try {await globalThis.RegionSpellAutomationRepromptSave?.(message,target.token);}
+            catch(err){console.error("Region Spell Automation | Save retry failed:",err);ui.notifications.error("Could not reopen the saving throw prompt.");}
+            finally {status.disabled=animating;}
+        });
+        section.append(icon,list,status);row.append(section);previous.after(row);previous=row;
     }
 }
 
@@ -134,7 +178,7 @@ export function followRollMenuExpansion(host,menu) {
     host.addEventListener("focusin",start);
 }
 function refreshOrigin(message) {
-    if (!["attack","damage"].includes(message?.type)) return;
+    if (!["attack","save","damage"].includes(message?.type)) return;
     const origin=message.system?.origin;
     const card=typeof origin === "string" ? game.messages.get(origin) : origin;
     if (card?.type === "usage") setTimeout(()=>{
@@ -150,6 +194,10 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"simplifyAttackCards",{
 Hooks.once("ready",()=>{
     globalThis.RegionSpellAutomationFollowRollMenu=followRollMenuExpansion;
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
+    Hooks.on("diceSoNiceRollComplete",id=>{
+        // DSN clears its animating flag after notifying listeners.
+        setTimeout(()=>refreshOrigin(game.messages.get(id)),0);
+    });
     for (const hook of ["createChatMessage","updateChatMessage","deleteChatMessage"]) Hooks.on(hook,refreshOrigin);
 });
 

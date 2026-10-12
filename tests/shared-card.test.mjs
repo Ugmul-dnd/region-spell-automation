@@ -64,7 +64,8 @@ function makeMessage(id, descriptors) {
         getAssociatedActivity() { return activity; },
         getAssociatedRolls: function() { return this.damage; },
         async update(data) { this.system.targets = data["system.targets"]; },
-        getFlag(namespace, key) { return this.flags?.[namespace]?.[key]; }
+        getFlag(namespace, key) { return this.flags?.[namespace]?.[key]; },
+        async setFlag(namespace,key,value){this.flags??={};this.flags[namespace]??={};this.flags[namespace][key]=value;}
     };
 }
 let runtimeSource = Buffer.from(process.env.RSA_RUNTIME_SOURCE, "base64").toString();
@@ -361,3 +362,23 @@ assert.deepEqual(pruningDamage.system.targets.map(target=>target.token),[b.uuid]
 assert.equal(pruningDamage.rolls[0].total,20);
 testLog("Region exclusion checks passed: all event types skipped; newly dead shared-card targets pruned without rerolling damage.");
 testLog("Shared-card checks passed: concurrency, targets, damage preservation, turns, isolation, fallback, cancellation, failed-update retry, target restoration, queue recovery.");
+
+// Verify actual native RegionBehavior creation and the existing-region repair.
+globalThis.CONST={TOKEN_DISPOSITIONS:{HOSTILE:-1,NEUTRAL:0,FRIENDLY:1}};
+const regionEffect={uuid:"Actor.caster.Item.spell.ActiveEffect.half"};
+spellConfig.regionEffects=[{id:"half",name:"Half Speed",effectUuid:regionEffect.uuid}];
+trigger.targeting="hostilesOnly";
+const casterDoc={uuid:"Scene.scene.Token.caster",disposition:1,actor:{uuid:"Actor.caster"}};
+const filteredRegion={uuid:"Scene.scene.Region.filter",flags:{dnd5e:{item:spell.uuid,origin:casterDoc.uuid}},parent:{tokens:[casterDoc]},behaviors:[],async update(){},async updateEmbeddedDocuments(){},
+    async createEmbeddedDocuments(type,data){const created=data.map((value,index)=>({...value,id:`behavior${index}`,system:{...value.system,dispositions:new Set(value.system.dispositions??[])},async update(changes){if(changes["system.dispositions"])this.system.dispositions=new Set(changes["system.dispositions"]);}}));this.behaviors.push(...created);return created;}};
+globalThis.fromUuid=async uuid=>uuid===spell.uuid?spell:uuid===regionEffect.uuid?regionEffect:uuid===casterDoc.uuid?casterDoc:null;
+await hooks.get("createRegion")(filteredRegion,{},game.user.id);
+const nativeRegionEffect=filteredRegion.behaviors.find(behavior=>behavior.type==="dnd5e.applyActiveEffect");
+assert.ok(nativeRegionEffect);assert.deepEqual([...nativeRegionEffect.system.dispositions],[-1,0]);
+assert.ok(filteredRegion.behaviors.find(behavior=>behavior.type==="executeScript"));
+casterDoc.disposition=-1;
+globalThis.canvas={scene:{regions:[filteredRegion]}};
+await hooks.get("canvasReady")();
+assert.deepEqual([...nativeRegionEffect.system.dispositions],[0,1],"Existing region filters are repaired relative to an NPC caster");
+assert.equal(filteredRegion.behaviors.filter(behavior=>behavior.type==="dnd5e.applyActiveEffect").length,1,"Refreshing targeting does not duplicate behavior documents");
+testLog("Native region effect checks passed: hostile-only creation, existing-region repair and intact trigger behaviors.");

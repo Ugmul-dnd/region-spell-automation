@@ -7,7 +7,8 @@ globalThis.fromUuid=async uuid=>({"Token.ally":allyToken,"Token.enemy":enemyToke
 globalThis.game={user:{id:"gm",isGM:true},settings:{get:()=>enabled}};
 globalThis.ui={notifications:{warn(){},error:message=>{throw Error(message);}}};
 globalThis.document={createElement:()=>({_applyEffectToActor:async function(effect,actor){applications.push({effect,actor,message:this.chatMessage});}})};
-const {eligibleBuffActivity,applyBuffEffects,collapseAppliedBuffTray}=await import(`data:text/javascript;base64,${process.env.RSA_EFFECT_AUTOMATION_SOURCE}`);
+const source=Buffer.from(process.env.RSA_EFFECT_AUTOMATION_SOURCE,"base64").toString().replace('"./shared-activity-card.js"',JSON.stringify(`data:text/javascript;base64,${process.env.RSA_SHARED_SOURCE}`));
+const {eligibleBuffActivity,applyBuffEffects,collapseAppliedBuffTray}=await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
 const buff={type:"utility",item:{type:"spell"},target:{affects:{type:"self"}},getApplicableEffects:async()=>[{uuid:"Effect.buff"}],getUsageToken:()=>casterToken};
 const card={id:"buff",uuid:"ChatMessage.buff",system:{targets:[]},getFlag:()=>false,async update(data){this.savedFlags=data;},getAssociatedActor:()=>caster,getAssociatedActivity:()=>buff};
 await Promise.all([applyBuffEffects(card),applyBuffEffects(card)]);
@@ -31,3 +32,8 @@ collapseAppliedBuffTray({getFlag:()=>false},root);assert.equal(root.trays[0].ope
 collapseAppliedBuffTray({getFlag:()=>true},root);assert.equal(root.trays[0].open,false,"Successful auto-applied cards collapse their native tray");
 root.trays[0].open=true;assert.equal(root.trays[0].open,true,"Tray remains available to expand manually");
 console.log("Auto-applied buff tray checks passed: collapse only on successful automation, manual access retained.");
+
+game.user.isGM=true;caster.effects=[{disabled:false,_stats:{duplicateSource:"Effect.buff"},system:{origin:{behavior:"Region.behavior"}}}];
+buff.target.affects.type="self";card.id="existing-region-buff";
+await applyBuffEffects(card);assert.equal(applications.length,4,"An existing region effect is kept without refreshing or duplicating it as a buff");
+console.log("Buff priority checks passed: existing native region effects are left untouched.");

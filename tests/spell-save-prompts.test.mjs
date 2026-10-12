@@ -14,14 +14,14 @@ const tokens=new Map();
 for (const [id,owner] of [["one",p1],["two",p2],["three",gm],["four",gm]]) {
     const actor={id,testUserPermission:user=>user.id===owner.id,
         get isOwner(){return game.user.isGM||game.user.id===owner.id;},
-        async rollSavingThrow(config,dialog,message){rolls.push({id,user:game.user.id,config,dialog,message});}};
+        async rollSavingThrow(config,dialog,message){rolls.push({id,user:game.user.id,config,dialog,message});return [{}];}};
     tokens.set(id,{id,uuid:`Scene.scene.Token.${id}`,actor,parent:{id:"scene"}});
 }
 const activity={type:"save",item:{type:"spell"},save:{ability:new Set(["dex"]),dc:{value:18},bonus:""},
     getRollData:()=>({}),messageSources:{activity:{uuid:"Actor.caster.Item.fireball.Activity.save"}}};
 let regionTriggered=false;
 const card={id:"fireball",author:caster,system:{targets:[...tokens.values(),tokens.get("one")].map(token=>({token:token.uuid}))},
-    getAssociatedActivity:()=>activity,getFlag:(id,key)=>key==="regionTriggered"&&regionTriggered};
+    getAssociatedActivity:()=>activity,getFlag:(id,key)=>key==="regionTriggered"?regionTriggered:card.flags?.[key],async setFlag(id,key,value){this.flags??={};this.flags[key]=value;}};
 const messages=new Map([[card.id,card]]);
 let registration;
 globalThis.game={user:caster,users,messages,settings:{get:(id,key)=>key==="promptForSaveOnSpellCasts"?enabled:regionEnabled,
