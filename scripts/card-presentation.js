@@ -111,6 +111,28 @@ function addAttackDamageButton(attack,root) {
         if (retarget) retarget.closest("li").before(item);else controls.append(item);
     } else if (retarget) retarget.before(button);else controls.append(button);
 }
+export function followRollMenuExpansion(host,menu) {
+    if (typeof ResizeObserver === "undefined") return;
+    let observer,timer,scroller;
+    const stop=()=>{observer?.disconnect();observer=null;clearTimeout(timer);scroller?.removeEventListener("wheel",stop);};
+    const start=()=>{
+        stop();
+        scroller=host.closest(".chat-scroll") ?? host.closest(".chat-log");
+        if (!scroller || scroller.scrollHeight-scroller.clientHeight-scroller.scrollTop>40) return;
+        const height=()=>menu.getBoundingClientRect().height+(parseFloat(getComputedStyle(menu).marginTop)||0);
+        let previous=height();
+        observer=new ResizeObserver(()=>{
+            if (!menu.isConnected) {stop();return;}
+            const next=height(),growth=next-previous;previous=next;
+            if (growth>0) scroller.scrollTop+=growth;
+        });
+        observer.observe(menu);
+        scroller.addEventListener("wheel",stop,{passive:true});
+        timer=setTimeout(stop,700);
+    };
+    host.addEventListener("mouseenter",start);
+    host.addEventListener("focusin",start);
+}
 function refreshOrigin(message) {
     if (!["attack","damage"].includes(message?.type)) return;
     const origin=message.system?.origin;
@@ -126,6 +148,7 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"simplifyAttackCards",{
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
 }));
 Hooks.once("ready",()=>{
+    globalThis.RegionSpellAutomationFollowRollMenu=followRollMenuExpansion;
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
     for (const hook of ["createChatMessage","updateChatMessage","deleteChatMessage"]) Hooks.on(hook,refreshOrigin);
 });

@@ -130,6 +130,7 @@ export function addDamageModeControls(message,html) {
                 else enqueue(()=>updateDamageCritical(entry.message,critical)).catch(report);
             });menu.append(button);
         }host.append(menu);
+        globalThis.RegionSpellAutomationFollowRollMenu?.(host,menu);
     }
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"adjustDamageCritical",{

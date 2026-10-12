@@ -13,7 +13,7 @@ class Element {
     }
 }
 globalThis.HTMLElement=Element;
-const {attackCardProgress,styleActivityCard,linkedAttackDamage,rollAttackCardDamage,scrollOnChatTab}=await import(`data:text/javascript;base64,${process.env.RSA_CARD_PRESENTATION_SOURCE}`);
+const {attackCardProgress,styleActivityCard,linkedAttackDamage,rollAttackCardDamage,scrollOnChatTab,followRollMenuExpansion}=await import(`data:text/javascript;base64,${process.env.RSA_CARD_PRESENTATION_SOURCE}`);
 let attack=[],damage=[];
 const card={type:"usage",getAssociatedActivity:()=>({type:"attack"}),getAssociatedRolls:type=>type==="attack"?attack:damage};
 const root=new Element();root.face=new Element();
@@ -50,3 +50,14 @@ await scrollOnChatTab({});assert.equal(scrolls,1,"Other tabs do not scroll chat"
 const opening=scrollOnChatTab(ui.chat);await scrollOnChatTab({});await opening;assert.equal(scrolls,1,"Changing away cancels the pending scroll");
 enabled=false;await scrollOnChatTab(ui.chat);assert.equal(scrolls,1);
 console.log("Chat tab checks passed: deferred image-aware bottom scroll, other tabs, cancellation and client toggle.");
+let resizeCallback,observations=0,height=0;
+globalThis.ResizeObserver=class{constructor(callback){resizeCallback=callback;}observe(){observations++;}disconnect(){}};
+globalThis.getComputedStyle=()=>({marginTop:"0"});
+const scroller={scrollHeight:1000,clientHeight:300,scrollTop:700,addEventListener(){},removeEventListener(){}};
+const events={};const host={closest:()=>scroller,addEventListener:(name,fn)=>events[name]=fn};
+const menu={isConnected:true,getBoundingClientRect:()=>({height})};
+followRollMenuExpansion(host,menu);events.mouseenter();
+height=12;resizeCallback();assert.equal(scroller.scrollTop,712);
+height=28;resizeCallback();assert.equal(scroller.scrollTop,728,"Scroll follows exactly the expansion amount");
+scroller.scrollTop=200;events.mouseenter();assert.equal(observations,1,"Reading older messages does not start bottom tracking");
+console.log("Roll hover scrolling checks passed: incremental expansion following and older-message preservation.");

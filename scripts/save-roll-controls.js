@@ -144,6 +144,7 @@ export function addSaveControls(message, html) {
             menu.append(button);
         }
         host.append(menu);
+        globalThis.RegionSpellAutomationFollowRollMenu?.(host,menu);
     }
 }
 
