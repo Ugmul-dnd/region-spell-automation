@@ -1,7 +1,5 @@
 # Region Spell Automation v0.6.0
 
-**Development draft — unreleased.** Review and finalize these notes before publishing.
-
 This revision expands the module's configurable region, combat-card, weapon mastery, damage, and effect automation. Each optional gameplay feature can be controlled through the Module Options window.
 
 ## Regions and targeting

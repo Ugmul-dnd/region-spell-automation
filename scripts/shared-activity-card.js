@@ -1,4 +1,35 @@
 // Shared cards retain D&D5e's native save and damage workflow.
+function cardOrigin(card) {
+    const origin=card?.system?.origin;
+    return typeof origin==="string"?game.messages?.get(origin):origin;
+}
+export function linkedHpCards(roll) {
+    if(isDamageOrHealingCard(roll))return [roll];
+    const origin=cardOrigin(roll);
+    if(!origin)return [];
+    const cards=Array.from(game.messages??[]).filter(card=>isDamageOrHealingCard(card)&&cardOrigin(card)?.id===origin.id);
+    if(roll.type!=="attack")return cards;
+    const attacks=Array.from(origin.getAssociatedRolls?.("attack")??[]);
+    return cards.filter(card=>{
+        const explicit=card.getFlag?.("region-spell-automation","damageAttackId");
+        if(explicit)return explicit===roll.id;
+        const preceding=attacks.filter(attack=>attack.timestamp<=card.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
+        return preceding?.id===roll.id;
+    });
+}
+export function isRollAdjustmentLocked(roll) {
+    return linkedHpCards(roll).some(card=>!card.getFlag?.("region-spell-automation","masteryGrazeUndone")&&
+        (card.getFlag?.("region-spell-automation","hpApplicationRecorded")===true||card.getFlag?.("region-spell-automation","damageUndoHistory")?.length>0));
+}
+Hooks.once("ready",()=>{
+    Hooks.on("updateChatMessage",(card,changes)=>{
+        if(!isDamageOrHealingCard(card)||!changes.flags?.["region-spell-automation"])return;
+        const origin=cardOrigin(card);
+        const related=[...(origin?.getAssociatedRolls?.("attack")??[]),...(origin?.getAssociatedRolls?.("save")??[])];
+        for(const roll of related)ui.chat?.updateMessage?.(roll);
+        if(origin)ui.chat?.updateMessage?.(origin);
+    });
+});
 export function isDamageOrHealingCard(message) {return ["damage","healing"].includes(message?.type);}
 export function isHealingCard(message) {
     if(message?.type==="healing"||message?.system?.isHealing===true||message?.getAssociatedActivity?.()?.type==="heal")return true;

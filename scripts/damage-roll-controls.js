@@ -1,20 +1,59 @@
-import {createEventQueue} from "./shared-activity-card.js";
+import {createEventQueue,isRollAdjustmentLocked} from "./shared-activity-card.js";
 const MODULE_ID="region-spell-automation";
 const enqueue=createEventQueue();
 export function isAttackDamage(message) {
     if (message?.type !== "damage" || message.getFlag?.("region-spell-automation","masteryGraze")) return false;
     const activity=message.getAssociatedActivity?.();
-    return activity?.type === "attack";
+    return activity?.type === "attack" ||
+        (activity?.type === "damage" && activity.damage?.critical?.allow === true);
 }
 
 export function canAdjustDamage(message,user) {
-    return isAttackDamage(message) && Boolean(user?.isGM || message.author?.id === user?.id ||
+    return !isRollAdjustmentLocked(message) && isAttackDamage(message) && Boolean(user?.isGM || message.author?.id === user?.id ||
         message.getAssociatedActor?.()?.testUserPermission?.(user,"OWNER"));
 }
 function snapshot(roll) {
     const data=foundry.utils.deepClone(roll.toJSON());
     delete data.options.rsaDamageModes;
     return data;
+}
+async function convertSavage(roll,critical) {
+    const {PoolTerm,OperatorTerm,NumericTerm}=foundry.dice.terms;
+    const pool=roll.terms[0],policy=roll.options.critical??{};
+    if(!(pool instanceof PoolTerm)||pool.rolls.length!==2)throw Error("Cannot identify Savage Attacker's two weapon dice sets.");
+    const synthetic=terms=>{
+        const data=snapshot(roll);delete data.options.rsaSavageAttacker;
+        data.terms=terms.map(term=>term.toJSON());
+        const copy=roll.constructor.fromData(data);copy.resetFormula();copy._total=copy._evaluateTotal();return copy;
+    };
+    let remainder=roll.terms.slice(1),flat=[];
+    if(policy.powerfulCritical&&roll.options.isCritical) {
+        const die=pool.rolls[0].terms[0];
+        const maximum=die.number*die.faces*(Math.max(1,(policy.multiplier??2)-1)+(policy.bonusDice??0));
+        if(!(remainder[0] instanceof OperatorTerm)||remainder[0].operator!=="+"||!(remainder[1] instanceof NumericTerm)||remainder[1].number!==maximum)
+            throw Error("Cannot identify Savage Attacker's maximized critical bonus safely.");
+        flat=remainder.slice(0,2);remainder=remainder.slice(2);
+    }
+    const branches=[];const extra=[];let weaponRemainder=[];
+    for(const branch of pool.rolls) {
+        const converted=await changeDamageCritical(synthetic([...branch.terms,...flat]),critical);
+        branches.push(Roll.fromTerms([converted.terms[0]]));
+        weaponRemainder=converted.terms.slice(1);
+        extra.push(...converted._rsaExtraDamageDice??[]);
+    }
+    const replacement=PoolTerm.fromRolls(branches);
+    replacement.modifiers=["kh"];
+    replacement.keep("kh");
+    // A zero prefix keeps critical bonusDice attached only to weapon dice.
+    const zero=new NumericTerm({number:0});await zero.evaluate();
+    const rest=await changeDamageCritical(synthetic([zero,...remainder]),critical);
+    extra.push(...rest._rsaExtraDamageDice??[]);
+    const adjusted=roll.constructor.fromData(snapshot(roll));
+    adjusted.terms=[replacement,...weaponRemainder,...rest.terms.slice(1)];
+    adjusted.options.isCritical=critical;
+    adjusted.resetFormula();adjusted._total=adjusted._evaluateTotal();
+    adjusted._rsaExtraDamageDice=extra;
+    return adjusted;
 }
 export async function changeDamageCritical(roll,critical) {
     if (!(roll instanceof CONFIG.Dice.DamageRoll) || !roll._evaluated) throw Error("Expected an evaluated native damage roll.");
@@ -26,6 +65,9 @@ export async function changeDamageCritical(roll,critical) {
     cache[previous]=snapshot(roll);
     if (cache[mode]) {
         const restored=roll.constructor.fromData(foundry.utils.deepClone(cache[mode]));restored.options.rsaDamageModes=cache;return restored;
+    }
+    if(roll.options.rsaSavageAttacker) {
+        const adjusted=await convertSavage(roll,critical);adjusted.options.rsaDamageModes=cache;return adjusted;
     }
     const adjusted=roll.constructor.fromData(snapshot(roll));
     const multiplier=policy.multiplier ?? 2;
@@ -95,6 +137,7 @@ export async function updateDamageCritical(message,critical,user=game.user) {
         if (!(roll instanceof CONFIG.Dice.DamageRoll)) {rolls.push(roll);continue;}
         const adjusted=await changeDamageCritical(roll,critical);rolls.push(adjusted);dice.push(...adjusted._rsaExtraDamageDice ?? []);
     }
+    if(!canAdjustDamage(message,user))return;
     await message.update({rolls});
     if (dice.length && game.dice3d?.showForRoll) {
         const visual=Roll.fromTerms(dice.flatMap((die,index)=>index?[new foundry.dice.terms.OperatorTerm({operator:"+"}),die]:[die]));
@@ -113,6 +156,12 @@ export function addDamageModeControls(message,html) {
         if(card?.type==="damage"&&!summary.hidden)entries.push({message:card,root:summary});
     }
     for(const entry of entries) {
+        if(isRollAdjustmentLocked(entry.message)) {
+            for(const menu of entry.root.querySelectorAll("[data-rsa-damage-modes]"))menu.remove();
+            entry.root.classList.remove("rsa-save-mode-host");
+            entry.root.querySelector(".dice-roll")?.parentElement?.classList.remove("rsa-save-mode-host");
+            continue;
+        }
         if(!entry.message.isContentVisible||!canAdjustDamage(entry.message,game.user)||entry.root.querySelector("[data-rsa-damage-modes]"))continue;
         const roll=entry.message.rolls?.find(roll=>roll instanceof CONFIG.Dice.DamageRoll);
         const dice=entry.root.querySelector(".dice-roll");if(!roll||!dice)continue;
@@ -134,7 +183,7 @@ export function addDamageModeControls(message,html) {
     }
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"adjustDamageCritical",{
-    name:"Adjust Damage Normal / Critical",hint:"Show Normal/Critical damage controls on hover. Reuses original dice, rolls extra critical dice once, and does not undo applied damage. Attack activity damage only; standard dice and powerful criticals supported.",
+    name:"Adjust Damage Normal / Critical",hint:"Show Normal/Critical damage controls on hover. Reuses original dice, rolls extra critical dice once, and does not undo applied damage. Supports attacks and damage activities explicitly configured to allow criticals, such as Divine Smite; standard dice and powerful criticals supported.",
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
 }));
 Hooks.once("ready",()=>{

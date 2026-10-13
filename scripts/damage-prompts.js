@@ -1,4 +1,5 @@
 import {describeTarget} from "./shared-activity-card.js";
+import {selectSaveUser} from "./save-prompts.js";
 const MODULE_ID = "region-spell-automation";
 const opened = new Set();
 const queued = new Set();
@@ -12,14 +13,22 @@ export function configurePromptDialog(kind, dialog = {}) {
     let PositionedDialog = dialogClasses.get(kind);
     if (!PositionedDialog) {
         PositionedDialog = class extends base {
+            _finalizeRolls(action) {
+                const rolls=super._finalizeRolls(action);
+                if(kind === "damage")return globalThis.RegionSpellAutomationSavage?.finalizeSavage(this,rolls)??rolls;
+                return kind === "attack" ? globalThis.RegionSpellAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
+            }
             async _prepareButtonsContext(context, options) {
                 const prepared=await super._prepareButtonsContext(context,options);
                 if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.prepareAttackButtons(this,prepared);
+                if(kind === "attack") globalThis.RegionSpellAutomationReckless?.prepareRecklessButtons(this,prepared);
                 return prepared;
             }
             _onRender(context,options) {
                 super._onRender(context,options);
                 if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.focusMasteryAttackButtons(this);
+                if(kind === "attack") globalThis.RegionSpellAutomationReckless?.addRecklessButton(this);
+                if(kind === "damage") globalThis.RegionSpellAutomationSavage?.addSavageToggle(this);
             }
             _onPosition(position) {
                 super._onPosition(position);
@@ -37,6 +46,7 @@ export function configurePromptDialog(kind, dialog = {}) {
                 }).catch(err => console.error("Region Spell Automation | Could not save prompt position:",err));
             }
             async close(options) {
+                if(kind === "damage")await globalThis.RegionSpellAutomationSavage?.commitSavage(this,options);
                 clearTimeout(this.positionTimer);
                 this.rememberPosition();
                 return super.close(options);
@@ -82,7 +92,9 @@ export async function waitForAttackAnimation(message) {
 export async function promptDamage(activity, message, kind = "save", attack = null) {
     const setting = kind === "attack" ? "promptDamageOnHit" : "promptDamageOnSave";
     if (game.settings.get(MODULE_ID, setting) !== true || !activity?.damage?.parts?.length || !message?.id) return;
-    if (message.author?.id !== game.user.id || !activity.item?.isOwner) return;
+    const region=message.getFlag?.(MODULE_ID,"regionTriggered")===true;
+    const recipient=region?selectSaveUser(activity.actor??activity.item?.actor,game.users,game.users.activeGM):message.author;
+    if (recipient?.id !== game.user.id || !activity.item?.isOwner) return;
     if (message.getFlag?.(MODULE_ID,"targetsConfirmationPending") || message.getFlag?.(MODULE_ID,"targetsConfirmationCanceled")) return;
     if (kind === "save" && (activity.type !== "save" || (!message.getFlag?.(MODULE_ID,"regionTriggered") && turnOnlyAura(activity)))) return;
     const key = `${kind}:${attack?.id ?? message.id}`;
@@ -145,6 +157,14 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
     globalThis.RegionSpellAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation};
+    // Region activity execution retains its original authority. Only the
+    // damage dialog is routed to a connected owner of the casting actor.
+    const promptRegionDamage=message=>{
+        if(message.getFlag?.(MODULE_ID,"regionTriggered")!==true)return;
+        setTimeout(()=>promptDamage(message.getAssociatedActivity?.(),message).catch(report),0);
+    };
+    Hooks.on("createChatMessage",promptRegionDamage);
+    Hooks.on("updateChatMessage",promptRegionDamage);
     // Heal activities already open their native roll after use. Reuse that
     // dialog rather than opening a second one, with recorded/self targets.
     Hooks.on("dnd5e.preRollDamageV2",(config,dialog,message)=>{

@@ -1,6 +1,6 @@
 // ============================================================
 // Region Spell Automation
-// v0.6.0
+// v0.6.1
 // Foundry VTT v14 / D&D5e 6.0.5+ (tested with 6.0.6)
 //
 // Features:
@@ -36,7 +36,7 @@ const oncePerTurnHistory =
 
 
 console.log(
-    "Region Spell Automation | v0.6.0 JS loaded"
+    "Region Spell Automation | v0.6.1 JS loaded"
 );
 
 
@@ -863,7 +863,7 @@ Hooks.once("ready", () => {
         }).catch(err => console.error("Region Spell Automation | Confirmed target registration failed:", err));
     });
 
-    console.log("Region Spell Automation | Installing v0.6.0 Region hook");
+    console.log("Region Spell Automation | Installing v0.6.1 Region hook");
 
 
     // ========================================================
@@ -1098,6 +1098,7 @@ Hooks.once("ready", () => {
                     if (
                         alreadyAttached
                     ) {
+                        if(!alreadyAttached.getFlag(MODULE_ID,"managedRegionEffect"))await alreadyAttached.setFlag(MODULE_ID,"managedRegionEffect",true);
                         continue;
                     }
 
@@ -1385,6 +1386,8 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                                     type:
                                         "dnd5e.applyActiveEffect",
 
+                                    flags: { [MODULE_ID]: { managedRegionEffect: true } },
+
                                     system: {
                                         effects: [
                                             effect.uuid
@@ -1459,6 +1462,6 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         }
     });
     console.log(
-        "Region Spell Automation | v0.6.0 Ready"
+        "Region Spell Automation | v0.6.1 Ready"
     );
 });

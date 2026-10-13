@@ -1,7 +1,7 @@
 const MODULE_ID = "region-spell-automation";
 import { isEligibleTarget, createEventQueue } from "./shared-activity-card.js";
 export { isEligibleTarget };
-const prompted = new Set();
+const prompted = new Map();
 const recordPendingSave=createEventQueue();
 let magicResistanceBridge=false;
 export function hasMagicResistance(actor) {
@@ -70,7 +70,9 @@ export async function receiveSavePrompt(packet) {
         console.warn("Region Spell Automation | Save prompt skipped: target actor is unavailable or not owned.", packet.tokenUuid);
         return;
     }
-    const user = selectSaveUser(actor, game.users, game.users.activeGM, source.isGM ? source : null);
+    const takeover=packet.retry===true&&packet.userId===packet.sourceId&&
+        (source.isGM||actor.testUserPermission(source,"OWNER"));
+    const user = takeover?source:selectSaveUser(actor, game.users, game.users.activeGM, source.isGM ? source : null);
     if (user?.id !== game.user.id) return;
     const activity = message.getAssociatedActivity?.();
     if (activity?.type !== "save") return;
@@ -84,14 +86,14 @@ export async function receiveSavePrompt(packet) {
     }
     const key = JSON.stringify([message.id, token.uuid]);
     if (prompted.has(key)) return;
-    prompted.add(key);
+    const session=Symbol(key);prompted.set(key,session);
     // Mirror D&D5e's card Save action, including activity bonus and origin.
     const bonus = CONFIG.Dice.BasicRoll.replaceFormulaData(activity.save.bonus ?? "", activity.getRollData(), { missing: 0 });
     const bonusData = CONFIG.Dice.BasicRoll.constructParts({ activityBonus: bonus });
     const config = { ability, target: dc };
     if (bonusData.parts.length) config.rolls = [bonusData];
     try {
-        const auto=globalThis.RegionSpellAutomationNpcDamage?.shouldAutoRollNpc(actor)===true;
+        const auto=!takeover&&globalThis.RegionSpellAutomationNpcDamage?.shouldAutoRollNpc(actor)===true;
         if(auto)config.rsaAutoNpcSave=true;
         const dialog = { configure: !auto, options: { id: `rsa-save-${message.id}-${token.id ?? token.uuid}` } };
         const positioned = auto?dialog:(globalThis.RegionSpellAutomationDamage?.configurePromptDialog("save",dialog) ?? dialog);
@@ -101,24 +103,37 @@ export async function receiveSavePrompt(packet) {
         } });
         // Canceling a native dialog returns no rolls. Release the duplicate
         // guard so an explicit pending-button retry can reopen it.
-        if(!rolls?.length)prompted.delete(key);
+        if(!rolls?.length&&prompted.get(key)===session)prompted.delete(key);
     } catch (err) {
-        prompted.delete(key);
+        if(prompted.get(key)===session)prompted.delete(key);
         throw err;
     }
+}
+
+export async function cancelPendingSavePrompt(packet) {
+    const message=game.messages.get(packet.messageId),source=game.users.get(packet.sourceId);
+    if(!message||!source?.active||!message.getFlag?.(MODULE_ID,"requestedSaveTargets")?.includes(packet.tokenUuid)||message.system.outcomes?.has(packet.tokenUuid))return;
+    const token=await fromUuid(packet.tokenUuid);
+    if(!token?.actor||(!source.isGM&&!token.actor.testUserPermission(source,"OWNER")))return;
+    const key=JSON.stringify([message.id,token.uuid]);
+    const id=`rsa-save-${message.id}-${token.id??token.uuid}`;
+    const instances=globalThis.foundry?.applications?.instances;
+    const apps=instances?Array.from(instances.values()):Object.values(ui.windows??{});
+    for(const app of apps)if(app.options?.id===id||app.id===id)await app.close();
+    prompted.delete(key);
 }
 
 export async function repromptTargetSave(message,tokenUuid) {
     const token=await fromUuid(tokenUuid);
     if(!isEligibleTarget(token)||message.system.outcomes?.has(tokenUuid)||
         !message.getFlag?.(MODULE_ID,"requestedSaveTargets")?.includes(tokenUuid))return;
-    if(!game.user.isGM&&message.author?.id!==game.user.id&&!token.actor.testUserPermission(game.user,"OWNER"))return;
-    const user=selectSaveUser(token.actor,game.users,game.users.activeGM,game.user.isGM?game.user:null);
-    if(!user){ui.notifications.warn("No connected owner or GM can receive this saving throw prompt.");return;}
+    if(!game.user.isGM&&!token.actor.testUserPermission(game.user,"OWNER"))return;
+    const user=game.user;
     const packet={action:message.getFlag(MODULE_ID,"regionTriggered")?"promptRegionSave":"promptSpellSave",
         messageId:message.id,tokenUuid,sourceId:game.user.id,userId:user.id,retry:true};
-    if(user.id===game.user.id)await receiveSavePrompt(packet);
-    else game.socket.emit(`module.${MODULE_ID}`,packet);
+    await cancelPendingSavePrompt(packet);
+    game.socket.emit(`module.${MODULE_ID}`,{...packet,action:"cancelPendingSavePrompt"});
+    await receiveSavePrompt(packet);
 }
 
 export async function promptTargetSave(message, token, trigger) {
@@ -161,6 +176,7 @@ export function registerSavePromptHooks() {
     Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerMagicResistanceBridge(usageRules));
     Hooks.on("dnd5e.preRollSavingThrowV2",magicResistanceSaveDefaults);
     game.socket?.on(`module.${MODULE_ID}`, packet => {
+        if(packet?.action==="cancelPendingSavePrompt"&&packet.sourceId!==game.user.id)cancelPendingSavePrompt(packet).catch(reportError);
         if (["promptRegionSave", "promptSpellSave"].includes(packet?.action)) receiveSavePrompt(packet).catch(reportError);
     });
 }

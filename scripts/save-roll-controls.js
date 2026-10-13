@@ -1,4 +1,4 @@
-import { createEventQueue } from "./shared-activity-card.js";
+import { createEventQueue, isRollAdjustmentLocked } from "./shared-activity-card.js";
 const MODULE_ID = "region-spell-automation";
 const channel = `module.${MODULE_ID}`;
 const enqueue = createEventQueue();
@@ -28,7 +28,7 @@ export async function waitForTrackedRollAnimation(message) {
 }
 
 export function canAdjustSave(message, user) {
-    return ["save", "attack"].includes(message?.type) && Boolean(user?.isGM || message.author?.id === user?.id ||
+    return !isRollAdjustmentLocked(message) && ["save", "attack"].includes(message?.type) && Boolean(user?.isGM || message.author?.id === user?.id ||
         message.getAssociatedActor?.()?.testUserPermission?.(user, "OWNER"));
 }
 
@@ -83,6 +83,7 @@ export async function updateSaveMode(message, mode, index, user = game.user) {
     if(adjusted._rsaNewD20Results?.length&&game.dice3d?.showForRoll&&game.user.isGM) {
         await globalThis.RegionSpellAutomationNpcDamage?.waitForWorkflowAnimations?.(message);
     }
+    if(!canAdjustSave(message,user))return;
     await message.update({ rolls, flavor });
 }
 
@@ -150,6 +151,12 @@ export function addSaveControls(message, html) {
         if (["save","attack"].includes(save?.type) && !summary.hidden) entries.push({ message: save, root: summary });
     }
     for (const entry of entries) {
+        if(isRollAdjustmentLocked(entry.message)) {
+            for(const menu of entry.root.querySelectorAll("[data-rsa-save-modes]"))menu.remove();
+            entry.root.classList.remove("rsa-save-mode-host");
+            entry.root.querySelector(".dice-roll")?.parentElement?.classList.remove("rsa-save-mode-host");
+            continue;
+        }
         if (!adjustmentEnabled(entry.message) || !canAdjustSave(entry.message, game.user) || !entry.message.isContentVisible) continue;
         const index = entry.message.rolls?.findIndex(roll => roll instanceof CONFIG.Dice.D20Roll) ?? -1;
         if (index < 0 || entry.root.querySelector("[data-rsa-save-modes]")) continue;

@@ -6,7 +6,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 ## Compatibility
 
-- Module version: **0.6.0 — in development, unreleased**.
+- Module version: **0.6.1 — in development, unreleased**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
@@ -25,6 +25,13 @@ players do not need GM permissions for this setup.
 
 ## Features
 
+- Reckless Attack assistance splits the attack dialog's Advantage area into
+  **Adv** and **Reckless** for owned attackers with that feature. Reckless applies
+  the feature's configured effect and submits the Strength attack; the effect
+  expires at the barbarian's next turn start. Subsequent Strength attacks and
+  attacks against the Reckless creature recommend advantage, combining with
+  Automated Conditions and opposing disadvantage. Ordinary Adv stays separate.
+  Enable/disable this under **Weapon Mastery & Attack Properties**.
 - Character Inventory and Spells Add Item buttons open the compendium browser on
   the matching tab. Spells preselect available lists for the character's classes;
   multiclass lists are combined and filters remain editable. Configure this under
