@@ -2,10 +2,10 @@ const MODULE_ID="region-spell-automation";
 export const SETTINGS_GROUPS=[
     {id:"regions",name:"Regions",icon:"fa-draw-polygon",keys:["promptForSaveOnRegionTriggers","regionPlacementControls","autoAttachSelfEmanations","cleanupTargetingRegions"]},
     {id:"targeting",name:"Targeting",icon:"fa-bullseye",keys:["confirmAreaTargets","retargetActivityCards"]},
-    {id:"rolls",name:"Rolls & Damage",icon:"fa-dice",keys:["promptForSaveOnSpellCasts","promptDamageOnSave","promptDamageOnHit","adjustSavingThrowAdvantage","adjustAttackRollAdvantage","adjustDamageCritical"]},
+    {id:"rolls",name:"Rolls & Damage / Healing",icon:"fa-dice",keys:["promptForSaveOnSpellCasts","promptDamageOnSave","promptDamageOnHit","adjustSavingThrowAdvantage","adjustAttackRollAdvantage","adjustDamageCritical"]},
     {id:"effects",name:"Effects",icon:"fa-wand-magic-sparkles",keys:["autoApplyBuffEffects","showShieldReaction","showConcentrationHud"]},
     {id:"masteries",name:"Weapon Mastery & Attack Properties",icon:"fa-sword",keys:["weaponMasteryAutomation","masteryGraze","masterySap","masterySlow","masteryTopple","masteryVex"]},
-    {id:"npcdamage",name:"GM NPC & Damage",icon:"fa-skull",keys:["autoRollNpcSaves","magicResistanceSaves","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"]},
+    {id:"npcdamage",name:"GM NPC & Damage / Healing",icon:"fa-skull",keys:["autoRollNpcSaves","magicResistanceSaves","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"]},
     {id:"chat",name:"Chat",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen"]}
 ];
 export class ModuleSettingsApp extends foundry.applications.api.ApplicationV2 {

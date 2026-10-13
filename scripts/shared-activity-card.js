@@ -1,4 +1,15 @@
 // Shared cards retain D&D5e's native save and damage workflow.
+export function isDamageOrHealingCard(message) {return ["damage","healing"].includes(message?.type);}
+export function isHealingCard(message) {
+    if(message?.type==="healing"||message?.system?.isHealing===true||message?.getAssociatedActivity?.()?.type==="heal")return true;
+    if(message?.type!=="damage")return false;
+    const types=(message.rolls??[]).flatMap(roll=>roll.options?.type?[roll.options.type]:roll.options?.types??[]);
+    return types.length>0&&types.every(type=>["healing","temphp"].includes(type));
+}
+export function isEligibleHealingTarget(token) {
+    const document=token?.document??token;
+    return !!document?.actor&&document.hidden!==true;
+}
 function effectSources(effect) {
     return new Set([effect?.uuid,effect?._stats?.duplicateSource,effect?._stats?.compendiumSource].filter(Boolean));
 }

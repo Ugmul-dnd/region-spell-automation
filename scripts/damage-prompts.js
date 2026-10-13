@@ -1,3 +1,4 @@
+import {describeTarget} from "./shared-activity-card.js";
 const MODULE_ID = "region-spell-automation";
 const opened = new Set();
 const queued = new Set();
@@ -96,7 +97,8 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
         // A user or another module may already have rolled damage while the
         // attack animation played. Avoid opening a redundant dialog.
         const existingDamage = message.getAssociatedRolls?.("damage") ?? [];
-        if (existingDamage.some(damage => !attack || (damage.timestamp ?? Infinity) >= (attack.timestamp ?? 0))) return;
+        if (existingDamage.some(damage => !damage.getFlag?.(MODULE_ID,"masteryGrazeUndone")&&
+            (!attack || (damage.timestamp ?? Infinity) >= (attack.timestamp ?? 0)))) return;
         opened.add(key);
         const {ability, ammunitionItem: ammunition, mode: attackMode} = attack?.system ?? {};
         const isCritical = attack?.rolls?.[0]?.isCritical === true;
@@ -136,13 +138,35 @@ function report(err) {
 Hooks.once("init", () => {
     game.settings.register(MODULE_ID,"promptDialogPositions",{scope:"client",config:false,type:Object,default:{}});
     for (const [key,name,hint] of [
-        ["promptDamageOnSave","Prompt Damage for Save Activities","Open the caster's native damage dialog for Save activities with damage, after area targets are confirmed."],
+        ["promptDamageOnSave","Damage and Healing Roll Prompts","Open save-activity damage prompts after targets are confirmed. Native healing prompts share remembered damage/healing dialog positions and recorded targets."],
         ["promptDamageOnHit","Prompt Damage after an Attack Hit","Open the attacker's native damage dialog after a hit, waiting for Dice So Nice to finish. No prompt on a miss or without confirmed target results."]
     ]) game.settings.register(MODULE_ID,key,{name,hint,scope:"world",config:true,type:Boolean,default:true});
 });
 
 Hooks.once("ready", () => {
     globalThis.RegionSpellAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation};
+    // Heal activities already open their native roll after use. Reuse that
+    // dialog rather than opening a second one, with recorded/self targets.
+    Hooks.on("dnd5e.preRollDamageV2",(config,dialog,message)=>{
+        const activity=config.subject;
+        if(activity?.type!=="heal")return;
+        const prompt=game.settings.get(MODULE_ID,"promptDamageOnSave")===true;
+        if(!prompt&&game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true)return;
+        if(prompt) {
+            const configure=dialog.configure;
+            Object.assign(dialog,configurePromptDialog("damage",dialog));
+            if(configure===false)dialog.configure=false;
+        }
+        message.data??={};message.data.system??={};
+        const origin=message.data.system.origin;
+        const usage=typeof origin==="string"?game.messages.get(origin):origin;
+        if(usage?.system.targets?.length)message.data.system.targets=usage.system.targets;
+        if(activity.target?.affects?.type==="self") {
+            const token=activity.getUsageToken?.()??usage?.getAssociatedToken?.();
+            const document=token?.document??token;
+            if(document?.actor&&document.uuid)message.data.system.targets=[describeTarget(document)];
+        }
+    });
     Hooks.on("dnd5e.preRollAttackV2", (config, dialog) => {
         const configure = dialog.configure;
         Object.assign(dialog, configurePromptDialog("attack",dialog));

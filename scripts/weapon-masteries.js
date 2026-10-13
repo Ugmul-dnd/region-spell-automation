@@ -1,4 +1,4 @@
-import {createEventQueue,describeTarget} from "./shared-activity-card.js";
+import {createEventQueue,describeTarget,isEligibleTarget} from "./shared-activity-card.js";
 const MODULE_ID="region-spell-automation";
 const enqueue=createEventQueue();
 const supported=new Set(["graze","sap","slow","topple","vex"]);
@@ -137,6 +137,19 @@ export async function syncSap(attack) {
     }
     if(mastery==="sap")await attack.setFlag(MODULE_ID,"sapHandled",[...handled]);
 }
+export async function syncGraze(attack) {
+    if(!authoritative()||masteryForAttack(attack)!=="graze")return;
+    const handled=new Set(attack.getFlag(MODULE_ID,"masteryActions")??[]);
+    if(!(attack.system.evaluatedTargets??[]).some(target=>target.isMiss===true&&!handled.has(target.token)))return;
+    await globalThis.RegionSpellAutomationNpcDamage?.waitForWorkflowAnimations?.(attack);
+    // Re-read results after animation/reactions; corrections can turn a miss
+    // into a hit while this work is waiting.
+    for(const target of attack.system.evaluatedTargets??[]) {
+        if(target.isMiss!==true)continue;
+        const token=await fromUuid(target.token);
+        if(isEligibleTarget(token))await performMastery(attack,target.token);
+    }
+}
 function attackForDamage(damage) {
     const direct=damage?.getFlag?.(MODULE_ID,"damageAttackId");if(direct)return game.messages.get(direct);
     const origin=damage?.system?.origin;const usage=typeof origin==="string"?game.messages.get(origin):origin;
@@ -161,6 +174,7 @@ export async function performMastery(attack,tokenUuid,requestUser=game.user) {
     const mastery=masteryForAttack(attack),target=attack.system.evaluatedTargets?.find(target=>target.token===tokenUuid);
     if(!target||((mastery==="graze")!==target.isMiss))return;
     const token=await fromUuid(tokenUuid);if(!token?.actor)return;
+    if(mastery==="graze"&&!isEligibleTarget(token))return;
     const appliedDamage=(attack.getFlag(MODULE_ID,"masteryDamageTargets")??[]).includes(tokenUuid);
     if(["slow","vex"].includes(mastery)&&!appliedDamage)return;
     if(["sap","slow","vex"].includes(mastery)) {
@@ -178,7 +192,7 @@ export async function performMastery(attack,tokenUuid,requestUser=game.user) {
         await roll.toMessage({type:"damage",speaker:attack.speaker,flavor:`${item.name} — Graze Damage`,
             system:{...activity.messageSources,activity:{...activity.messageSources.activity,name:"Graze"},
                 targets:[describeTarget(token)],origin:origin?.id??origin},
-            flags:{[MODULE_ID]:{damageAttackId:attack.id,masteryGraze:true}}});
+            flags:{[MODULE_ID]:{damageAttackId:attack.id,masteryGraze:true,masteryGrazeTarget:tokenUuid}}});
     } else if(mastery==="topple") {
         const dc=8+abilityModifier(attack)+attack.getAssociatedActor().system.attributes.prof;
         const owners=Array.from(game.users).filter(user=>user.active&&!user.isGM&&token.actor.testUserPermission(user,"OWNER"));
@@ -282,7 +296,9 @@ export function addMasteryButtons(message,html) {
             button.dataset.tooltip=`${game.i18n.localize(CONFIG.DND5E.weaponMasteries[mastery].label)} — ${token?.name??target.name}`;
             if((entry.message.system.evaluatedTargets??[]).length>1)button.textContent+=` — ${token?.name??target.name}`;
             const dealt=(entry.message.getFlag(MODULE_ID,"masteryDamageTargets")??[]).includes(uuid);
-            button.disabled=["vex","slow"].includes(mastery)?!dealt:(entry.message.getFlag(MODULE_ID,"masteryActions")??[]).includes(uuid);
+            const used=(entry.message.getFlag(MODULE_ID,"masteryActions")??[]).includes(uuid);
+            if(mastery==="graze"&&used)continue;
+            button.disabled=["vex","slow"].includes(mastery)?!dealt:used;
             button.addEventListener("click",event=>{
                 event.preventDefault();event.stopPropagation();button.disabled=true;
                 const packet={action:"masteryAction",attackId:entry.message.id,tokenUuid:uuid,userId:game.user.id,gmId:game.users.activeGM?.id};
@@ -295,7 +311,7 @@ export function addMasteryButtons(message,html) {
 }
 function report(err){console.error("Region Spell Automation | Mastery automation failed:",err);ui.notifications.error("Could not apply mastery. Check the console.");}
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"weaponMasteryAutomation",{
-    name:"Effect Automation: Weapon Masteries",hint:"Graze miss damage, Sap/Vex automatic effects, and manual Slow/Topple actions for unlocked weapon masteries. Push, Nick and Cleave are excluded. Requires an active GM.",
+    name:"Effect Automation: Weapon Masteries",hint:"Automatic Graze damage cards on misses, Sap/Vex effects, Slow after damage, and Topple actions for unlocked weapon masteries. Push, Nick and Cleave are excluded. Requires an active GM.",
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
 }));
 Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerConditionBridge(usageRules));
@@ -322,11 +338,11 @@ Hooks.once("ready",()=>{
     });
     Hooks.on("createChatMessage",message=>{
         if(!authoritative()||!enabled())return;
-        enqueue(async()=>{if(message.type==="attack"){await consumeNextAttack(message);await syncSap(message);}else if(message.type==="save")await resolveTopple(message);}).catch(report);
+        enqueue(async()=>{if(message.type==="attack"){await consumeNextAttack(message);await syncSap(message);await syncGraze(message);}else if(message.type==="save")await resolveTopple(message);}).catch(report);
     });
     Hooks.on("updateChatMessage",(message,changes)=>{
         if(authoritative()&&enabled()&&message.type==="save"&&toppleSaveContext(message).attackId)enqueue(()=>resolveTopple(message)).catch(report);
-        if(authoritative()&&enabled()&&message.type==="attack"&&(changes.rolls||changes["system.targets"]||changes.system?.targets))enqueue(()=>syncSap(message)).catch(report);
+        if(authoritative()&&enabled()&&message.type==="attack"&&(changes.rolls||changes["system.targets"]||changes.system?.targets))enqueue(async()=>{await syncSap(message);await syncGraze(message);}).catch(report);
     });
     Hooks.on("dnd5e.applyDamage",(actor,amount,options)=>{
         const origin=options.origin??options.originatingMessage;

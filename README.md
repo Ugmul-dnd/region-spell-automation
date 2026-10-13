@@ -564,8 +564,12 @@ D&D5e's native Weapon Mastery configuration, and the attack must use that master
   can change the next roll's mode. These effects are consumed when the relevant
   attack is rolled, not when its dialog is merely opened. Native source-turn expiry
   also applies: Sap at the source's next turn start, Vex at its next turn end.
-- **Graze:** miss-only action creates a flat damage card for the attack's ability
-  modifier, of the weapon's damage type. It does not apply HP damage automatically.
+- **Graze:** automatically creates a flat damage card after a missed attack's
+  dice finish, using the attack's ability modifier and the weapon's damage type.
+  Auto Apply Damage applies it through the native damage tray when enabled.
+  Undo Damage restores HP, hides that Graze card, and makes the linked attack's
+  Damage and Graze actions available again for retroactive corrections. The
+  canceled card is retained as history and cannot apply damage again.
 - **Slow:** automatically applies after damage is dealt; its button toggles a non-stacking
   10-foot speed reduction until the source's next turn starts.
 - **Topple:** hit-only action prompts the defender's owner (GM for NPCs) for a
@@ -594,12 +598,15 @@ The **GM NPC & Damage** options tab has independent settings for:
   owners use native fast-forward rolls. Player-owned NPCs and PCs retain manual
   save prompts. Native D&D5e/Automated Conditions advantage and disadvantage
   calculation remains in use, including on Topple saves.
-- **Auto Apply Damage:** applies for all casters and attackers,
+- **Auto Apply Damage and Healing:** applies for all casters and attackers,
   through the native damage tray. Save-based damage waits until every eligible
   recorded target has a success/failure result; mixed NPC/PC groups wait together.
   Attack damage applies only to confirmed hit targets. Graze and other non-save,
   non-attack damage use their recorded targets. Unidentified attack links remain
   manual. Each target is applied once, including shared Region cards gaining targets.
+  Healing and temporary HP rolls also apply after visible client dice animations
+  finish. Healing uses native HP caps, and temporary HP uses native replacement
+  rather than stacking. Healing targeting retains unconscious creatures at 0 HP.
 - **Magic Resistance Saving Throws:** recognizes a Magic Resistance feature by
   its name or standard identifier, even without an Active Effect. Saves against
   spells and features marked Magical recommend advantage. Ordinary nonmagical
@@ -633,6 +640,13 @@ state of an effect that was refreshed, without undoing HP changes. Applications
 superseded by a later cast are preserved. Undo clears its history and reopens the
 source card's effect tray for manual use. Effects-only activities show the button
 on their source card. This records new automatic applications after the update.
+Healing cards show **Undo Healing** for the GM. It reverses actual HP or temporary
+HP changes, hides its button, and reopens the native Apply tray. Manual reapplication
+records fresh undo entries for the recipients actually applied to, including newly
+selected recipients after retargeting. A completed manual Apply always restores
+the Undo action, even when HP caps prevent any change. Later damage and stronger temporary HP grants are
+preserved using the same delta rules as Undo Damage. Native healing dialogs share
+the damage dialog's remembered position; the module does not open a duplicate.
 Using Apply Effect after an undo records the new application and brings Undo
 Effect back, including when a player-owned target receives the manual application.
 The first manual application is also tracked, including after a retroactive save

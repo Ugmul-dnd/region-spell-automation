@@ -11,12 +11,13 @@ export function attackCardProgress(message) {
 export function styleActivityCard(message,html) {
     const root=html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
+    hideUndoneGraze(message,root);
     root.classList.add("rsa-action-colors");
     showPendingSaves(message,root);
-    if (["attack","save","damage"].includes(message.type)) root.classList.add(`rsa-roll-${message.type}`);
+    if (["attack","save","damage","healing"].includes(message.type)) root.classList.add(`rsa-roll-${message.type}`);
     for (const summary of root.querySelectorAll(".card-summary[data-message-id]")) {
         const roll=game.messages.get(summary.dataset.messageId);
-        if (["attack","save","damage"].includes(roll?.type)) summary.classList.add(`rsa-roll-${roll.type}`);
+        if (["attack","save","damage","healing"].includes(roll?.type)) summary.classList.add(`rsa-roll-${roll.type}`);
     }
     if (game.settings.get(MODULE_ID,"simplifyAttackCards") !== true) return;
     const progress=attackCardProgress(message);
@@ -47,6 +48,15 @@ export function styleActivityCard(message,html) {
             root.classList.add("rsa-processed-attack");
             root.style.display="none";
         }
+    }
+}
+export function hideUndoneGraze(message,root) {
+    const entries=message.type==="damage"?[{message,root}]:[];
+    for(const summary of root.querySelectorAll(".card-summary[data-message-id]")) {
+        const card=game.messages.get(summary.dataset.messageId);if(card)entries.push({message:card,root:summary});
+    }
+    for(const entry of entries)if(entry.message.getFlag?.(MODULE_ID,"masteryGrazeUndone")) {
+        entry.root.hidden=true;entry.root.style.display="none";entry.root.classList.add("rsa-graze-undone");
     }
 }
 
@@ -98,6 +108,7 @@ export function linkedAttackDamage(attack) {
     const usage=typeof origin === "string" ? game.messages.get(origin) : origin;
     const attacks=usage?.getAssociatedRolls?.("attack") ?? [attack];
     return (usage?.getAssociatedRolls?.("damage") ?? []).filter(damage=>{
+        if(damage.getFlag?.(MODULE_ID,"masteryGrazeUndone"))return false;
         const id=damage.getFlag?.(MODULE_ID,"damageAttackId");
         if (id) return id === attack.id;
         const preceding=[...attacks].filter(roll=>roll.timestamp <= damage.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
@@ -177,8 +188,35 @@ export function followRollMenuExpansion(host,menu) {
     host.addEventListener("mouseenter",start);
     host.addEventListener("focusin",start);
 }
+const chatChangeFollowers=new WeakMap();
+export function followChatCardChanges(host) {
+    const scroller=host.closest(".chat-scroll")??host.closest(".chat-log");
+    if(!scroller||scroller.scrollHeight-scroller.clientHeight-scroller.scrollTop>40)return ()=>{};
+    chatChangeFollowers.get(scroller)?.();
+    let stopped=false,frame,timer;
+    const stop=()=>{
+        if(stopped)return;stopped=true;cancelAnimationFrame(frame);clearTimeout(timer);
+        for(const event of ["wheel","pointerdown","keydown"])scroller.removeEventListener(event,stop);
+        if(chatChangeFollowers.get(scroller)===stop)chatChangeFollowers.delete(scroller);
+    };
+    const follow=()=>{
+        if(stopped)return;
+        if(scroller.isConnected===false){stop();return;}
+        // Follow the current log, not the old card element: Foundry replaces
+        // that element while undo flags and application trays rerender.
+        if(scroller.clientHeight>0)scroller.scrollTop=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+        frame=requestAnimationFrame(follow);
+    };
+    chatChangeFollowers.set(scroller,stop);
+    for(const event of ["wheel","pointerdown","keydown"])scroller.addEventListener(event,stop,{passive:true});
+    timer=setTimeout(stop,10000);frame=requestAnimationFrame(follow);
+    return ()=>{
+        if(stopped)return;
+        clearTimeout(timer);timer=setTimeout(stop,800); // Include the tray's CSS expansion.
+    };
+}
 function refreshOrigin(message) {
-    if (!["attack","save","damage"].includes(message?.type)) return;
+    if (!["attack","save","damage","healing"].includes(message?.type)) return;
     const origin=message.system?.origin;
     const card=typeof origin === "string" ? game.messages.get(origin) : origin;
     if (card?.type === "usage") setTimeout(()=>{
@@ -193,6 +231,7 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"simplifyAttackCards",{
 }));
 Hooks.once("ready",()=>{
     globalThis.RegionSpellAutomationFollowRollMenu=followRollMenuExpansion;
+    globalThis.RegionSpellAutomationFollowChatChanges=followChatCardChanges;
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
     Hooks.on("diceSoNiceRollComplete",id=>{
         // DSN clears its animating flag after notifying listeners.

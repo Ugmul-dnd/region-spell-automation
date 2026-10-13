@@ -26,6 +26,7 @@ This revision expands the module's configurable region, combat-card, weapon mast
 
 - GM-run NPC saves can roll automatically using recommended advantage/disadvantage. PCs and player-owned NPCs keep their prompts.
 - Separate options control Auto Apply Damage, Auto Apply Saved Effects, and Autoapply Status on Hit.
+- Auto Apply Damage and Healing also handles healing and temporary HP after dice animations, using native HP caps and temporary-HP replacement. GM Undo Healing restores the recorded changes and reopens the Apply controls; healing supports unconscious targets at 0 HP.
 - Automatic damage waits for all required save results and visible damage/save dice animations on connected clients. The GM window can remain in the background.
 - Pending save buttons remain visible until dice finish and can reopen accidentally canceled prompts without stopping automation.
 - Save effects respect each assigned effect's On Save setting. Attack effects apply only to hit targets. Effects can resolve independently when automatic damage is disabled.
@@ -40,6 +41,7 @@ This revision expands the module's configurable region, combat-card, weapon mast
 - Sap applies on hit. Vex and Slow apply after damage is dealt, with manual correction controls.
 - Vex tracks the affected creature for the next matching attack. Sap and Vex combine with Automated Conditions advantage/disadvantage rules.
 - Topple posts a save request immediately, then fills in the defender's roll and result. Graze damage is clearly labeled separately from a standard attack damage roll.
+- Graze automatically creates a damage card on misses and uses the damage automation setting. Undoing it restores HP, hides the card, and restores the linked attack's Damage/Graze controls for corrections.
 - Push, Nick, and Cleave remain outside the module's mastery automation.
 
 ## Options and compatibility

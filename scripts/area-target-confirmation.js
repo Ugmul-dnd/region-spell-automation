@@ -1,4 +1,4 @@
-import { describeTarget, isEligibleTarget } from "./shared-activity-card.js";
+import { describeTarget, isEligibleTarget, isEligibleHealingTarget } from "./shared-activity-card.js";
 const MODULE_ID = "region-spell-automation";
 const DIAGNOSTIC_REVISION = "2026-10-08-confirmation-3";
 const handled = new Set();
@@ -26,8 +26,8 @@ export function allowsAutomaticTarget(token, caster, mode) {
     return true;
 }
 
-export function collectAreaTargets(tokens, regions, caster, mode) {
-    return Array.from(tokens).filter(token => isEligibleTarget(token) && token.object?.isVisible !== false &&
+export function collectAreaTargets(tokens, regions, caster, mode, healing=false) {
+    return Array.from(tokens).filter(token => (healing?isEligibleHealingTarget(token):isEligibleTarget(token)) && token.object?.isVisible !== false &&
         allowsAutomaticTarget(token, caster, mode) && regions.some(region => token.testInsideRegion(region)));
 }
 
@@ -126,7 +126,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
     eligibleTargets() {
         const targets = [];
         for (const token of Array.from(game.user.targets)) {
-            if (isEligibleTarget(token)) targets.push(token);
+            if ((this.message.getAssociatedActivity?.()?.type==="heal"?isEligibleHealingTarget(token):isEligibleTarget(token))) targets.push(token);
             else token.setTarget(false, { user: game.user, releaseOthers: false });
         }
         return targets;
@@ -180,7 +180,7 @@ export async function confirmCastTargets(activity, usage, results) {
     const caster = origin ? await fromUuid(origin) : activity.getUsageToken?.();
     const config = game.settings.get(MODULE_ID, "spellTable")?.[activity.item.name];
     const mode = automaticTargetMode(activity, config);
-    const targets = collectAreaTargets(canvas.tokens.placeables.map(token => token.document), results.templates, caster?.document ?? caster, mode);
+    const targets = collectAreaTargets(canvas.tokens.placeables.map(token => token.document), results.templates, caster?.document ?? caster, mode,activity.type==="heal");
     console.log("Region Spell Automation | Opening target confirmation", {
         user: game.user.name ?? game.user.id, activity: activity.name, targets: targets.length
     });
@@ -206,7 +206,7 @@ export async function finishConfirmedCast(activity, message, targets) {
     const eligible = [];
     for (const descriptor of targets) {
         const token = await fromUuid(descriptor.token);
-        if (token && isEligibleTarget(token)) eligible.push(descriptor);
+        if (token && (activity.type==="heal"?isEligibleHealingTarget(token):isEligibleTarget(token))) eligible.push(descriptor);
     }
     targets = eligible;
     if (message._targetState) { message._targetState.mode = "targeted"; message._targetState.checked?.clear?.(); }
@@ -215,11 +215,12 @@ export async function finishConfirmedCast(activity, message, targets) {
         [`flags.${MODULE_ID}.targetsConfirmationCanceled`]: false });
     pendingCards.delete(message.id);
     Hooks.callAll("regionSpellAutomation.targetsConfirmed", message);
-    if (message.getFlag?.(MODULE_ID, "resumeAreaDamage") !== false && targets.length && activity.damage?.parts?.length && typeof activity.rollDamage === "function") {
+    const hasRoll=activity.type==="heal"?!!activity.healing?.formula:!!activity.damage?.parts?.length;
+    if (message.getFlag?.(MODULE_ID, "resumeAreaDamage") !== false && targets.length && hasRoll && typeof activity.rollDamage === "function") {
         if (activity.type === "save" && globalThis.RegionSpellAutomationDamage) {
             await globalThis.RegionSpellAutomationDamage.promptDamage(activity, message);
         } else {
-        await activity.rollDamage({}, { configure: true }, { data: { system: { origin: message.id, targets } } });
+            await activity.rollDamage({}, globalThis.RegionSpellAutomationDamage?.configurePromptDialog("damage",{configure:true})??{configure:true}, { data: { system: { origin: message.id, targets } } });
         }
     }
 }

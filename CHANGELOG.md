@@ -4,6 +4,8 @@
 
 ### Added
 
+- Healing and temporary HP cards share Auto Apply Damage and Healing, with client dice-animation waits, native healing caps and temporary-HP replacement, unconscious-target support, and a GM Undo Healing action. Native healing prompts reuse recorded/self targets and remembered damage/healing dialog positions; healing areas resume their roll after confirmation.
+
 - Module compatibility reference records the Fragment of the Fallen test world's enabled modules and installed versions, distinguishing confirmed integrations from modules merely present during testing.
 
 - The first manual Apply Effect also records Undo Effect history, including effects applied after a retroactive save correction with no previous undo.
@@ -59,6 +61,8 @@
 
 ### Changed
 
+- Graze automatically creates its damage card on a confirmed miss and uses the existing Auto Apply Damage setting. Undo Damage restores HP, hides the Graze card, and resets the linked attack's Damage/Graze actions; canceled cards cannot be applied again.
+
 - Slow automatically applies after damage is dealt, like Vex; its apply/remove button remains available for corrections.
 
 - Topple immediately posts a native saving-throw request card, which populates with the defender result when the save is processed.
@@ -75,6 +79,10 @@
   their Region turn events.
 
 ### Fixed
+
+- Manual damage/healing applications always restore their Undo action, including retargeted mass healing after an undo. Native Apply records the actual recipients, refreshes linked cards, resets stale button state, and retains a harmless Undo/reopen action when HP caps prevent any change.
+
+- Undo Damage, Undo Healing, and Undo Effect preserve the chat bottom while cards rerender and their trays expand. Reading older messages is preserved, and manual scrolling cancels the following behavior.
 
 - Attack/save Advantage and Disadvantage corrections retain the old total until newly added dice finish animating, including player clients and Dice So Nice's immediate-chat mode. Cached dice switches stay immediate.
 

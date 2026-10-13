@@ -1,4 +1,4 @@
-import {createEventQueue,isEligibleTarget,hasEquivalentActiveEffect,regionOwnsEffect} from "./shared-activity-card.js";
+import {createEventQueue,isEligibleTarget,hasEquivalentActiveEffect,regionOwnsEffect,isDamageOrHealingCard,isHealingCard,isEligibleHealingTarget} from "./shared-activity-card.js";
 const MODULE_ID="region-spell-automation";
 const enqueue=createEventQueue();
 const queued=new Set();
@@ -36,15 +36,16 @@ function attackForDamage(message) {
     return [...(origin?.getAssociatedRolls?.("attack")??[])].filter(roll=>roll.timestamp<=message.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
 }
 export async function readyDamageTargets(message) {
-    if(message?.type!=="damage")return null;
+    if(!isDamageOrHealingCard(message))return null;
+    if(message.getFlag(MODULE_ID,"masteryGrazeUndone"))return null;
     if(isManual(message))return waiting(message,"Manual card interaction stopped this workflow.");
-    if(message.getFlag(MODULE_ID,"damageUndoHistory")?.length&&!message.getFlag(MODULE_ID,"automaticDamageDone"))return waiting(message,"Damage was already applied manually.");
+    if(message.getFlag(MODULE_ID,"damageUndoHistory")?.length&&!message.getFlag(MODULE_ID,"automaticDamageDone"))return waiting(message,"HP changes were already applied manually.");
     const origin=originOf(message);
     if(origin?.getFlag?.(MODULE_ID,"targetsConfirmationPending")||origin?.getFlag?.(MODULE_ID,"targetsConfirmationCanceled"))return null;
     const targets=[];
     for(const descriptor of message.system.targets??[]) {
         const token=descriptor.token?await fromUuid(descriptor.token):null;
-        if(!token?.actor||!isEligibleTarget(token))continue;
+        if(!token?.actor||!(isHealingCard(message)?isEligibleHealingTarget(token):isEligibleTarget(token)))continue;
         targets.push(descriptor);
     }
     if(!targets.length)return null;
@@ -59,7 +60,7 @@ export async function readyDamageTargets(message) {
         waitingReasons.delete(message.id);
         return remaining(targets);
     }
-    if(activity?.type==="attack"&&!message.getFlag(MODULE_ID,"masteryGraze")) {
+    if(activity?.type==="attack"&&!isHealingCard(message)&&!message.getFlag(MODULE_ID,"masteryGraze")) {
         const attack=attackForDamage(message);if(!attack)return null;
         const hits=new Set((attack.system.evaluatedTargets??[]).filter(target=>target.isMiss===false).map(target=>target.token));
         return remaining(targets.filter(target=>hits.has(target.token)));
@@ -101,7 +102,7 @@ export async function applyAutomaticDamage(message) {
         // Claim before applying so rerenders/save updates cannot apply twice.
         await message.setFlag(MODULE_ID,"automaticDamageDone",true);
         if(isManual(message))return;
-        console.log("Region Spell Automation | Applying automatic damage",{card:message.id,targets:targets.length});
+        console.log(`Region Spell Automation | Applying automatic ${isHealingCard(message)?"healing":"damage"}`,{card:message.id,targets:targets.length});
         await tray._onApplyDamage({preventDefault(){}});
         const completed=appliedNow.get(message.id);
         await message.setFlag(MODULE_ID,"automaticDamageTargets",[...new Set([...(message.getFlag(MODULE_ID,"automaticDamageTargets")??[]),...completed])]);
@@ -113,7 +114,7 @@ export async function applyAutomaticDamage(message) {
         cancelled.add(manualKey(message).id);
         await message.setFlag(MODULE_ID,"manualDamageWorkflow",true);
         console.error("Region Spell Automation | Automatic damage application failed:",err);
-        ui.notifications.error("Automatic damage stopped. Check the card and apply any remaining damage manually.");
+        ui.notifications.error("Automatic damage/healing stopped. Check the card and apply any remaining amounts manually.");
     } finally {holder?.remove();running.delete(message.id);appliedNow.delete(message.id);}
 }
 export async function waitForDamageAnimation(message,extraAnimation) {
@@ -137,7 +138,7 @@ export async function waitForDamageAnimation(message,extraAnimation) {
 export async function waitForWorkflowAnimations(message) {
     const origin=originOf(message);
     const usage=origin??message;
-    const rolls=[...(message.type==="usage"?(message.getAssociatedRolls?.("damage")??[]):[message]),...(usage.getAssociatedRolls?.("save")??[])];
+    const rolls=[...(message.type==="usage"?[...(message.getAssociatedRolls?.("damage")??[]),...(message.getAssociatedRolls?.("healing")??[])]:[message]),...(usage.getAssociatedRolls?.("save")??[])];
     const rollIds=[...new Set(rolls.map(roll=>roll.id))];
     const others=Array.from(game.users).filter(user=>user.active&&user.id!==game.user.id);
     let requestId;
@@ -241,7 +242,7 @@ async function receiveAnimationRequest(packet) {
     game.socket.emit(`module.${MODULE_ID}`,{action:"damageAnimationsComplete",requestId:packet.requestId,gmId:packet.gmId,userId:game.user.id});
 }
 function schedule(message) {
-    if(!authority()||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true||message?.type!=="damage"||queued.has(message.id))return;
+    if(!authority()||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true||!isDamageOrHealingCard(message)||queued.has(message.id))return;
     queued.add(message.id);
     setTimeout(()=>{
         queued.delete(message.id);
@@ -258,7 +259,7 @@ Hooks.once("init",()=>{
     for(const [key,name,hint]of [
         ["autoRollNpcSaves","Automatically Roll GM NPC Saves","Resolve prompted saves for GM-run NPCs with native recommended advantage/disadvantage. Player-owned NPCs remain manual."],
         ["magicResistanceSaves","Magic Resistance Saving Throws","Recognize the Magic Resistance feature and recommend advantage against spells or features marked Magical. Combines with other advantage/disadvantage sources, including Automated Conditions."],
-        ["autoApplyCardDamage","Auto Apply Damage","Apply damage for all casters/attackers after all recorded saves resolve. Non-save attacks apply to hit targets only. Manual card interaction stops automation."],
+        ["autoApplyCardDamage","Auto Apply Damage and Healing","Apply damage after all required saves resolve, and apply healing/temporary HP after the healing roll and dice animations finish. Non-save attacks apply to hit targets only. Manual card interaction stops automation."],
         ["autoApplySavedEffects","Auto Apply Saved Effects","After every required save and dice animation finishes, apply assigned activity effects on failed saves, and effects marked On Save on successful saves. Runs with automatic damage when enabled, or independently when damage is manual."],
         ["autoApplyHitEffects","Autoapply Status on Hit","Apply configured attack activity effects to hit targets after the attack dice finish. Misses remain unaffected. Uses native effect durations and concentration."]
     ])game.settings.register(MODULE_ID,key,{name,hint,scope:"world",config:true,type:Boolean,default:true});
@@ -268,9 +269,10 @@ Hooks.once("ready",()=>{
 
     Hooks.on("dnd5e.preRollD20TestV2",(config,dialog)=>{if(config.rsaAutoNpcSave)dialog.configure=false;});
     for(const event of ["createChatMessage","updateChatMessage"])Hooks.on(event,(message)=>{
-        if(message.type==="damage")schedule(message);
+        if(isDamageOrHealingCard(message))schedule(message);
         const origin=originOf(message);
-        for(const damage of origin?.getAssociatedRolls?.("damage")??message.getAssociatedRolls?.("damage")??[])schedule(damage);
+        const source=origin??message;
+        for(const type of ["damage","healing"])for(const result of source.getAssociatedRolls?.(type)??[])schedule(result);
         const usage=message.type==="usage"?message:originOf(message);
         // Rendering chat history alone must not apply old spell conditions.
         if(event==="createChatMessage"&&usage)liveEffectUsages.add(usage.id);
@@ -278,7 +280,7 @@ Hooks.once("ready",()=>{
     });
     // Save completion refreshes native damage HTML without updating the document.
     Hooks.on("renderChatMessageHTML",message=>{
-        if(message.type==="damage")schedule(message);
+        if(isDamageOrHealingCard(message))schedule(message);
         const usage=message.type==="usage"?message:originOf(message);
         if(usage&&liveEffectUsages.has(usage.id))scheduleEffects(message);
     });
@@ -288,7 +290,7 @@ Hooks.once("ready",()=>{
     });
     Hooks.on("dnd5e.preApplyDamage",(actor,amount,updates,options)=>{
         const message=options.origin??options.originatingMessage;
-        if(message?.type!=="damage")return;
+        if(!isDamageOrHealingCard(message))return;
         if(options.rsaAutomaticDamage) {if(isManual(message)||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true)return false;}
         else stopAutomaticDamage(message).catch(console.error);
     });

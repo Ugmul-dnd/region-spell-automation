@@ -16,7 +16,9 @@
 .rsa-roll-attack { border-left: 3px solid #43b76b !important; }
 .rsa-roll-save { border-left: 3px solid #57a8ed !important; }
 .rsa-roll-damage { border-left: 3px solid #ed6262 !important; }
-.card-summary:is(.rsa-roll-attack,.rsa-roll-save,.rsa-roll-damage) { padding-left: 5px; }
+.rsa-roll-healing { border-left: 3px solid #43b76b !important; }
+.rsa-action-colors :is([data-action="rollHealing"],[data-forward-action="rollHealing"]) { color: #43b76b; }
+.card-summary:is(.rsa-roll-attack,.rsa-roll-save,.rsa-roll-damage,.rsa-roll-healing) { padding-left: 5px; }
 .rsa-action-colors :is([data-action="rollAttack"],[data-forward-action="rollAttack"],
     [data-action="rollDamage"],[data-forward-action="rollDamage"],
     [data-action="rollSave"],[data-forward-action="rollSave"]) i { color: inherit; }

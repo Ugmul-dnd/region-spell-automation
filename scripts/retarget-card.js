@@ -1,4 +1,4 @@
-import { describeTarget, isEligibleTarget } from "./shared-activity-card.js";
+import { describeTarget, isEligibleTarget, isEligibleHealingTarget, isHealingCard } from "./shared-activity-card.js";
 const pendingCards = new WeakSet();
 
 function supportsRetarget(message) {
@@ -10,7 +10,7 @@ function supportsRetarget(message) {
 export async function retargetSpellCard(message, targets = game.user.targets) {
     if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
     if (!supportsRetarget(message) || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
-    const descriptors = [...new Map(Array.from(targets).filter(isEligibleTarget).map(target => {
+    const descriptors = [...new Map(Array.from(targets).filter(isHealingCard(message)?isEligibleHealingTarget:isEligibleTarget).map(target => {
         const token = target.document ?? target;
         return [token.uuid, describeTarget(token)];
     })).values()];
@@ -22,6 +22,7 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
             const usage=typeof origin === "string" ? game.messages.get(origin) : origin;
             const attacks=usage?.getAssociatedRolls?.("attack") ?? [message];
             const damage=(usage?.getAssociatedRolls?.("damage") ?? message.getAssociatedRolls?.("damage") ?? []).filter(card=>{
+                if(card.getFlag?.("region-spell-automation","masteryGrazeUndone"))return false;
                 const source=card.getFlag?.("region-spell-automation","damageAttackId");
                 if (source) return source === message.id;
                 // Native/manual damage may lack our explicit attack flag.
@@ -34,7 +35,8 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
             cards=[message, ...damage];
         } else {
             cards=[message, ...(message.getAssociatedRolls?.("attack") ?? []),
-                ...(message.getAssociatedRolls?.("damage") ?? [])];
+                ...(message.getAssociatedRolls?.("damage") ?? []).filter(card=>!card.getFlag?.("region-spell-automation","masteryGrazeUndone")),
+                ...(message.getAssociatedRolls?.("healing") ?? [])];
         }
         cards=[...new Set(cards)];
         let skipped = false;
