@@ -6,7 +6,7 @@ export const SETTINGS_GROUPS=[
     {id:"effects",name:"Effects",icon:"fa-wand-magic-sparkles",keys:["autoApplyBuffEffects","showShieldReaction","showConcentrationHud"]},
     {id:"masteries",name:"Weapon Mastery & Attack Properties",icon:"fa-sword",keys:["weaponMasteryAutomation","masteryGraze","masterySap","masterySlow","masteryTopple","masteryVex"]},
     {id:"npcdamage",name:"GM NPC & Damage / Healing",icon:"fa-skull",keys:["autoRollNpcSaves","magicResistanceSaves","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"]},
-    {id:"chat",name:"Chat",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen"]}
+    {id:"chat",name:"Chat & Sheets",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen","sheetAddCompendiumBrowser"]}
 ];
 export class ModuleSettingsApp extends foundry.applications.api.ApplicationV2 {
     static DEFAULT_OPTIONS={id:"rsa-module-options",window:{title:"Region Spell Automation — Options"},position:{width:780,height:650}};

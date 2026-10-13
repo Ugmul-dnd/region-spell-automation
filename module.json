@@ -59,7 +59,8 @@
     "scripts/concentration-cleanup.js",
     "scripts/concentration-hud.js",
     "scripts/spell-manager.js",
-    "scripts/module-settings.js"
+    "scripts/module-settings.js",
+    "scripts/sheet-compendium-browser.js"
   ],
   "styles": ["styles/save-roll-controls.css", "styles/card-presentation.css", "styles/module-settings.css"]
 }

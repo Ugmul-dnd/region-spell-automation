@@ -25,6 +25,11 @@ players do not need GM permissions for this setup.
 
 ## Features
 
+- Character Inventory and Spells Add Item buttons open the compendium browser on
+  the matching tab. Spells preselect available lists for the character's classes;
+  multiclass lists are combined and filters remain editable. Configure this under
+  **Chat & Sheets → Open Compendium Browser from Add Item**. Supports Tidy 5e
+  Sheets' Add Item buttons and matching native sheet controls.
 - Multiple activity triggers per spell and multiple events per trigger.
 - Per-trigger targeting and optional Once Per Turn limiting.
 - Existing Active Effects attached as native D&D5e Region Effects.
