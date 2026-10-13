@@ -1,8 +1,8 @@
 # Changelog
 
-## v0.6.1 — Unreleased
+## v0.6.1
 
-Development revision on the `v0.6.1dev` branch. Based on v0.6.0; future changes will be recorded in this section.
+Release prepared from the three development commits on `v0.6.1dev` since v0.6.0.
 
 ### Added
 

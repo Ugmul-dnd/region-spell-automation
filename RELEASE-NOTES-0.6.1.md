@@ -1,12 +1,17 @@
 # Region Spell Automation v0.6.1
 
-**Development draft — unreleased.**
-
-Development is on the `v0.6.1dev` branch, starting from the v0.6.0 codebase.
+Attack assistance, bonus damage riders, and repeat-attack controls, with easier correction of automated damage.
 
 ## Added
 
-- Conjure Minor Elementals rider: attacks against a target inside your active spell Region include an optional scaled Bonus Attack Damage component and elemental type choice. Uses existing critical, application and undo controls without a custom target effect.
+- **Eldritch Blast and Scorching Ray:** a Pending Attacks window counts remaining shots by character or cast level. Choose targets between attacks without spending another slot. Canceling does not consume a shot; the window closes at zero.
+- **Sneak Attack:** a damage checkbox defaults on after Advantage, remains manually selectable otherwise, and uses the feature's configured damage. Its once-per-turn marker resets at the end of the current combat turn, permitting use on later reaction attacks.
+- **Reaction tracking:** manual off-turn spell, weapon and feature uses apply Reaction - used. Further uses are blocked until the effect is disabled/deleted or expires at next turn start. Saves, linked damage and automated Region triggers remain available.
+- **Damage correction:** applied damage locks retroactive attack/save ADV/Normal/DIS and damage Normal/Critical controls. Undo Damage unlocks them; applying again relocks them.
+- **Pending save takeover:** the clicking GM or token owner gets the saving throw prompt; the previous module popup closes on connected clients when still open.
+- **Savage Attacker:** an optional weapon damage checkbox rolls two complete dice sets and keeps the higher total, showing both in roll details. A used marker prevents reuse until next turn start. Normal/Critical conversion supports standard and maximized criticals, preserves previous results and recalculates the winning set.
+
+- Conjure Minor Elementals rider: attacks against a target inside your active concentrated spell Region include an optional scaled Bonus Attack Damage component and Acid/Cold/Fire/Lightning choice. Remembers each user's last elemental type. Uses existing critical, application and undo controls without a custom target effect.
 
 - Hex and Hunter's Mark: caster-specific marked-target bonus damage in attack damage dialogs, with checked options, critical support, and existing Apply/Undo Damage. Requires active concentration and a single target. Configure each spell under Bonus Damage Riders.
 
@@ -17,13 +22,23 @@ Development is on the `v0.6.1dev` branch, starting from the v0.6.0 codebase.
   and normal advantage/disadvantage cancellation. Includes an independent setting
   under Weapon Mastery & Attack Properties.
 
+## Fixes
+
+- Managed Region effects add/remove through the active GM, including player aura cancellation affecting NPCs. Recurring Region damage prompts select a connected caster owner with GM fallback.
+- Manual interaction with one attack's damage no longer stops later rays in the same cast from applying automatically. Each shot's damage uses its own attack target.
+- Divine Smite and other critical-enabled Damage activities receive retroactive Normal/Critical controls; save spells and Graze remain excluded.
+- Hunter's Mark's configured effect can auto-apply to its single hostile target through the GM. Hex keeps manual effect selection.
+- Player riders resolve linked cast targets and native Region geometry, avoiding local membership-cache differences.
+- Reckless Attack works on its first roll with Automated Conditions, using real disadvantage-source counts instead of Normal-mode flags.
+
+## Options and limits
+
+New settings are grouped under Bonus Damage Riders, Weapon Mastery & Attack Properties, and Effects. Hex, Hunter's Mark and Conjure Minor Elementals riders currently support single-target damage cards. Bonus damage uses existing critical, Apply Damage and Undo Damage controls.
+
 ## Compatibility
 
 - Foundry VTT: v14; existing verification on build 369.
 - D&D5e: minimum 6.0.5; existing verification with 6.0.6.
 
-Finalize these notes and the v0.6.1 changelog section before publishing.
-# Savage Attacker
-
-Weapon damage dialogs offer Savage Attacker for characters with the feat: keep the higher of two weapon dice sets, with both sets recorded in native roll details. Savage Used expires at next turn start. Enable it under Weapon Mastery & Attack Properties. Undo Damage, adjust Normal/Critical, and reapply; both standard and maximized criticals are supported, with the winning dice set recalculated.
+After updating, restart Foundry and hard-refresh connected browsers to load the new scripts.
 

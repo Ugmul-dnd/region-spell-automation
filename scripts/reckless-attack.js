@@ -3,17 +3,6 @@ const enabled=()=>game.settings.get(MODULE_ID,"recklessAttackAutomation")===true
 const activating=new Map();
 let conditionBridge=false;
 const recklessSubmissions=new WeakMap();
-function traceReckless(stage,config,rolls=config?.rolls,extra={}) {
-    const rows=Array.from(rolls??[],roll=>({mode:roll.options?.advantageMode,
-        advantage:roll.options?.advantage,disadvantage:roll.options?.disadvantage,
-        dieCount:roll.d20?.number,modifiers:Array.from(roll.d20?.modifiers??[]),
-        submission:roll.options?.rsaRecklessSubmission,
-        conditions:roll.options?.["automated-conditions-5e"]?.modeCounts}));
-    const entry={stage,...extra,advantage:config?.advantage,disadvantage:config?.disadvantage,
-        conditions:config?.["automated-conditions-5e"]?.modeCounts,rolls:rows};
-    // Snapshot values now: console object previews otherwise show later mutations.
-    console.log("Region Spell Automation | Reckless trace",JSON.stringify(entry));
-}
 export function syncRecklessConditionChoice(config,mode) {
     const key="automated-conditions-5e",action=mode===0?"normal":"advantage";
     const options=[config.options,...Array.from(config.rolls??[],roll=>roll.options)].filter(Boolean);
@@ -38,7 +27,6 @@ export function finalizeRecklessRolls(app,rolls) {
     const mode=recklessSubmissions.get(app);
     recklessSubmissions.delete(app);
     if(mode===undefined)return rolls;
-    traceReckless("dialog finalized",app.config,rolls,{selectedMode:mode});
     // The native dialog rebuilds from its original configuration on submit.
     // Apply the explicit Reckless choice after condition hooks finish, before evaluation.
     for(const roll of rolls??[]) {
@@ -50,7 +38,6 @@ export function finalizeRecklessRolls(app,rolls) {
         syncRecklessConditionChoice({rolls:[roll]},mode);
         roll.configureModifiers();
     }
-    traceReckless("dialog corrected",app.config,rolls,{selectedMode:mode});
     return rolls;
 }
 export function completeRecklessConfiguration(rolls,config) {
@@ -58,7 +45,6 @@ export function completeRecklessConfiguration(rolls,config) {
     for(const roll of rolls??[]) {
         const mode=roll.options?.rsaRecklessSubmission;
         if(mode===undefined||roll.evaluated)continue;
-        traceReckless("post configuration",config,[roll],{selectedMode:mode});
         // Automated Conditions can reconcile the original, pre-Reckless state
         // after the dialog closes. Restore this submission's explicit choice
         // at the last configuration hook, immediately before evaluation.
@@ -67,7 +53,6 @@ export function completeRecklessConfiguration(rolls,config) {
         roll.options.disadvantage=mode===0;
         roll.options.advantageMode=mode;
         roll.configureModifiers();
-        traceReckless("post configuration corrected",config,[roll],{selectedMode:mode});
     }
 }
 export function recklessFeature(actor) {
@@ -175,7 +160,6 @@ export function addRecklessButton(app) {
             await activateReckless(actor);
             if(!app.rendered)return;
             const config={...app.config,rolls:app.rolls??app.config.rolls};
-            traceReckless("clicked",config,config.rolls,{dialogClass:app.constructor.name});
             const selected=recklessDefaults(config,{options:{}},app.message,true)??"advantage";
             const mode=selected==="normal"?0:1;
             recklessSubmissions.set(app,mode);

@@ -1098,7 +1098,6 @@ Hooks.once("ready", () => {
                     if (
                         alreadyAttached
                     ) {
-                        if(!alreadyAttached.getFlag(MODULE_ID,"managedRegionEffect"))await alreadyAttached.setFlag(MODULE_ID,"managedRegionEffect",true);
                         continue;
                     }
 
@@ -1357,6 +1356,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     if (
                         alreadyAttached
                     ) {
+                        if(!alreadyAttached.getFlag(MODULE_ID,"managedRegionEffect"))await alreadyAttached.setFlag(MODULE_ID,"managedRegionEffect",true);
                         if(effectDispositions!==null) {
                             const previous=[...(alreadyAttached.system.dispositions??[])].sort();
                             if(JSON.stringify(previous)!==JSON.stringify([...effectDispositions].sort()))

@@ -6,7 +6,7 @@ Configure a spell once, then cast it normally. The module attaches configured be
 
 ## Compatibility
 
-- Module version: **0.6.1 — in development, unreleased**.
+- Module version: **0.6.1**.
 - Foundry VTT: **v14**.
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
