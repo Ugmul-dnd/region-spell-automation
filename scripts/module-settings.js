@@ -4,7 +4,7 @@ export const SETTINGS_GROUPS=[
     {id:"targeting",name:"Targeting",icon:"fa-bullseye",keys:["confirmAreaTargets","retargetActivityCards"]},
     {id:"rolls",name:"Rolls & Damage / Healing",icon:"fa-dice",keys:["promptForSaveOnSpellCasts","promptDamageOnSave","promptDamageOnHit","adjustSavingThrowAdvantage","adjustAttackRollAdvantage","adjustDamageCritical"]},
     {id:"effects",name:"Effects",icon:"fa-wand-magic-sparkles",keys:["autoApplyBuffEffects","showShieldReaction","showConcentrationHud","reactionTracker"]},
-    {id:"riders",name:"Bonus Damage Riders",icon:"fa-dice-d6",keys:["riderHex","riderHuntersMark","sneakAttackAutomation"]},
+    {id:"riders",name:"Bonus Damage Riders",icon:"fa-dice-d6",keys:["riderHex","riderHuntersMark","riderMinorElementals","sneakAttackAutomation","multiShotAttacks"]},
     {id:"masteries",name:"Weapon Mastery & Attack Properties",icon:"fa-sword",keys:["recklessAttackAutomation","savageAttackerAutomation","weaponMasteryAutomation","masteryGraze","masterySap","masterySlow","masteryTopple","masteryVex"]},
     {id:"npcdamage",name:"GM NPC & Damage / Healing",icon:"fa-skull",keys:["autoRollNpcSaves","magicResistanceSaves","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"]},
     {id:"chat",name:"Chat & Sheets",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen","sheetAddCompendiumBrowser"]}

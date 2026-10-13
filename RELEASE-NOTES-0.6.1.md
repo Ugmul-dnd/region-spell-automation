@@ -6,6 +6,8 @@ Development is on the `v0.6.1dev` branch, starting from the v0.6.0 codebase.
 
 ## Added
 
+- Conjure Minor Elementals rider: attacks against a target inside your active spell Region include an optional scaled Bonus Attack Damage component and elemental type choice. Uses existing critical, application and undo controls without a custom target effect.
+
 - Hex and Hunter's Mark: caster-specific marked-target bonus damage in attack damage dialogs, with checked options, critical support, and existing Apply/Undo Damage. Requires active concentration and a single target. Configure each spell under Bonus Damage Riders.
 
 - Reckless Attack assistance: a split Adv/Reckless control uses the character's

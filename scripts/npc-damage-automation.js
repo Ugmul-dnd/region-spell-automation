@@ -25,10 +25,15 @@ export function shouldAutoRollNpc(actor) {
     return game.settings.get(MODULE_ID,"autoRollNpcSaves")===true&&game.user.isGM&&actor?.type==="npc"&&
         !Array.from(game.users).some(user=>!user.isGM&&actor.testUserPermission(user,"OWNER"));
 }
-function manualKey(message){return originOf(message)??message;}
+export function manualKey(message) {
+    if(message?.type==="attack")return message;
+    if(message?.type==="damage"&&message.getAssociatedActivity?.()?.type==="attack")return attackForDamage(message)??message;
+    return originOf(message)??message;
+}
 function isManual(message) {
     const origin=manualKey(message);
-    return cancelled.has(origin?.id)||origin?.getFlag?.(MODULE_ID,"manualDamageWorkflow")||message.getFlag?.(MODULE_ID,"manualDamageWorkflow");
+    return cancelled.has(origin?.id)||origin?.getFlag?.(MODULE_ID,"manualDamageWorkflow")||message.getFlag?.(MODULE_ID,"manualDamageWorkflow")||
+        originOf(message)?.getFlag?.(MODULE_ID,"manualDamageWorkflow");
 }
 function attackForDamage(message) {
     const explicit=message.getFlag(MODULE_ID,"damageAttackId");if(explicit)return game.messages.get(explicit);

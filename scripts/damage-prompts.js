@@ -52,6 +52,7 @@ export function configurePromptDialog(kind, dialog = {}) {
                 }).catch(err => console.error("Region Spell Automation | Could not save prompt position:",err));
             }
             async close(options) {
+                if(kind === "attack")globalThis.RegionSpellAutomationMultiShot?.settleFirstShot(this,options);
                 if(kind === "damage")await globalThis.RegionSpellAutomationSavage?.commitSavage(this,options);
                 if(kind === "damage")await globalThis.RegionSpellAutomationSneak?.commitSneak(this,options);
                 clearTimeout(this.positionTimer);
@@ -130,7 +131,7 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
                 if (damageMessage) {
                     damageMessage.data ??= {};damageMessage.data.system ??= {};
                     damageMessage.data.system.origin = message.id;
-                    damageMessage.data.system.targets = message.system.targets;
+                    damageMessage.data.system.targets = attack?.system?.targets??message.system.targets;
                 }
                 if (attack && damageMessage) {
                     damageMessage.data ??= {};damageMessage.data.flags ??= {};
@@ -144,7 +145,7 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
         } else {
             await activity.rollDamage({ability, ammunition, attackMode, isCritical},
                 configurePromptDialog("damage", {configure:true, ...(isCritical ? {options:{defaultButton:"critical"}} : {})}),
-                {data:{system:{origin:message.id,targets:message.system.targets}}});
+                {data:{system:{origin:message.id,targets:attack?.system?.targets??message.system.targets}}});
         }
     } finally { queued.delete(key); }
 }
