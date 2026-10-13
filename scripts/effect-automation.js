@@ -2,6 +2,11 @@ import {hasEquivalentActiveEffect,regionOwnsEffect} from "./shared-activity-card
 const MODULE_ID="region-spell-automation";
 const completed=new Set();
 const pending=new Set();
+export function isHuntersMarkActivity(activity) {
+    const item=activity?.item;
+    return item?.type==="spell"&&(item.identifier==="hunters-mark"||item.system?.identifier==="hunters-mark"||
+        /^hunter['’]?s mark$/i.test(item.name?.trim()??""));
+}
 
 export function eligibleBuffActivity(activity) {
     // Utility activities have no attack/save or damage/healing roll to resolve.
@@ -18,6 +23,8 @@ export async function applyBuffEffects(message) {
     const effects=await activity.getApplicableEffects?.() ?? [];
     if (!effects.length) return;
     const caster=message.getAssociatedActor?.();
+    const mark=isHuntersMarkActivity(activity);
+    if(mark&&message.system.targets?.length!==1)return;
     const actors=new Map();
     const type=activity.target?.affects?.type;
     if (type === "self") {
@@ -33,7 +40,7 @@ export async function applyBuffEffects(message) {
             if (!actor) continue;
             // Do not infer a no-save offensive effect as a buff. Self, explicit
             // allies, and friendly-disposition recipients are eligible.
-            if (actor.uuid === caster?.uuid || type === "ally" ||
+            if (mark || actor.uuid === caster?.uuid || type === "ally" ||
                 (type === "creature" && casterDoc && token && token.disposition === casterDoc.disposition)) actors.set(actor.uuid,actor);
         }
     }
@@ -91,7 +98,7 @@ async function requestBuffs(message) {
 
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"autoApplyBuffEffects",{
     name:"Effect Automation: Automatically Apply Buffs",
-    hint:"Apply configured effects from non-rolling Utility spells/features to Self, Allies, or friendly targeted creatures. Save and attack effects use their separate GM NPC & Damage options.",
+    hint:"Apply configured effects from non-rolling Utility spells/features to Self, Allies, or friendly targeted creatures. Hunter's Mark also applies to its single marked target. Save and attack effects use their separate GM NPC & Damage options.",
     scope:"world",config:true,type:Boolean,default:true
 }));
 Hooks.once("ready",()=>{

@@ -671,3 +671,6 @@ that activity's automatic damage workflow. Manual damage application also stops 
 Save/damage dialog submission itself does not count as manual card interaction.
 After takeover, use the card normally; the workflow does not automatically resume.
 Previously applied damage is not reversed by a later save correction.
+# Bonus damage riders
+
+Hex and 2024 Hunter's Mark can add checked bonus-damage options to attack damage dialogs. Cast with one targeted token while concentrating; the association belongs to that caster and concentration instance. Hex adds 1d6 Necrotic and Hunter's Mark adds 1d6 Force as labeled components on the same damage card, supporting criticals and existing damage application/undo. Uncheck an option to omit it. Retarget the mark's usage card or use the spell's transfer activity with the new target to update the association. Cards with multiple targets are excluded. Enable each spell under **Bonus Damage Riders** in module options.

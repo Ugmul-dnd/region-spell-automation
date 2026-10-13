@@ -15,7 +15,11 @@ export function configurePromptDialog(kind, dialog = {}) {
         PositionedDialog = class extends base {
             _finalizeRolls(action) {
                 const rolls=super._finalizeRolls(action);
-                if(kind === "damage")return globalThis.RegionSpellAutomationSavage?.finalizeSavage(this,rolls)??rolls;
+                if(kind === "damage") {
+                    const weaponRolls=globalThis.RegionSpellAutomationSavage?.finalizeSavage(this,rolls)??rolls;
+                    const riders=globalThis.RegionSpellAutomationRiders?.finalizeRiders(this,weaponRolls)??weaponRolls;
+                    return globalThis.RegionSpellAutomationSneak?.finalizeSneak(this,riders)??riders;
+                }
                 return kind === "attack" ? globalThis.RegionSpellAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
             }
             async _prepareButtonsContext(context, options) {
@@ -29,6 +33,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.focusMasteryAttackButtons(this);
                 if(kind === "attack") globalThis.RegionSpellAutomationReckless?.addRecklessButton(this);
                 if(kind === "damage") globalThis.RegionSpellAutomationSavage?.addSavageToggle(this);
+                if(kind === "damage") globalThis.RegionSpellAutomationRiders?.addRiderChoices(this);
+                if(kind === "damage") globalThis.RegionSpellAutomationSneak?.addSneakChoice(this);
             }
             _onPosition(position) {
                 super._onPosition(position);
@@ -47,6 +53,7 @@ export function configurePromptDialog(kind, dialog = {}) {
             }
             async close(options) {
                 if(kind === "damage")await globalThis.RegionSpellAutomationSavage?.commitSavage(this,options);
+                if(kind === "damage")await globalThis.RegionSpellAutomationSneak?.commitSneak(this,options);
                 clearTimeout(this.positionTimer);
                 this.rememberPosition();
                 return super.close(options);
