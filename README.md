@@ -11,12 +11,6 @@ Configure a spell once, then cast it normally. The module attaches configured be
 - D&D5e system: **6.0.5+**; tested with **6.0.6**, with no issues reported so far. Later versions need testing.
 - No additional module dependencies are declared.
 
-See [Module Compatibility and Test Setup](COMPATIBLE-MODULES.md) for the
-Fragment of the Fallen test world's enabled modules and installed versions,
-confirmed Dice So Nice and Automated Conditions integrations, and overlap notes.
-An enabled module in that snapshot is not automatically a certified compatible
-module; the document distinguishes specific test evidence from coexistence.
-
 An active GM must be connected when spells create Regions. The module uses the
 active GM's client to attach Region behaviors and track movement damage,
 including for player casts. Normal activity triggers run on the connected
