@@ -1,4 +1,4 @@
-const ID="region-spell-automation",selected=new WeakMap(),pending=new WeakMap(),reserved=new Map();
+const ID="ugmuls-5-5e-automation",selected=new WeakMap(),pending=new WeakMap(),reserved=new Map();
 const enabled=()=>game.settings.get(ID,"sneakAttackAutomation")===true;
 export const sneakFeature=actor=>Array.from(actor?.items??[]).find(item=>item.type==="feat"&&
     (item.identifier==="sneak-attack"||item.system?.identifier==="sneak-attack"||/^sneak attack$/i.test(item.name?.trim()??"")));
@@ -60,6 +60,6 @@ export async function resetSneakTurn(combat,changes) {
 }
 Hooks.once("init",()=>game.settings.register(ID,"sneakAttackAutomation",{name:"Sneak Attack Assistance",hint:"Offer Sneak Attack on weapon damage dialogs. Advantage checks it by default; other qualifying cases can be selected manually. Resets after each combat turn.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationSneak={addSneakChoice,finalizeSneak,commitSneak};
-    Hooks.on("updateCombat",(combat,changes)=>resetSneakTurn(combat,changes).catch(err=>console.error("Region Spell Automation | Sneak Attack reset failed:",err)));
+    globalThis.Ugmuls55eAutomationSneak={addSneakChoice,finalizeSneak,commitSneak};
+    Hooks.on("updateCombat",(combat,changes)=>resetSneakTurn(combat,changes).catch(err=>console.error("Ugmuls 5.5e Automation | Sneak Attack reset failed:",err)));
 });

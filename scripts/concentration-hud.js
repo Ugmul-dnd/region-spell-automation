@@ -6,7 +6,7 @@ export function canEndConcentration(actor) {
 }
 
 export async function endTokenConcentration(actor) {
-    if (!game.settings.get("region-spell-automation", "showConcentrationHud")) return;
+    if (!game.settings.get("ugmuls-5-5e-automation", "showConcentrationHud")) return;
     if (!canEndConcentration(actor) || pendingActors.has(actor)) return;
     pendingActors.add(actor);
     try {
@@ -18,7 +18,7 @@ export async function endTokenConcentration(actor) {
 }
 
 export function addConcentrationControl(hud, html) {
-    if (!game.settings.get("region-spell-automation", "showConcentrationHud")) return;
+    if (!game.settings.get("ugmuls-5-5e-automation", "showConcentrationHud")) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     const actor = hud.actor ?? hud.document?.actor;
     if (!root || !canEndConcentration(actor)) return;
@@ -51,7 +51,7 @@ export function addConcentrationControl(hud, html) {
             await endTokenConcentration(actor);
             if (hud.rendered && (hud.actor ?? hud.document?.actor) === actor) hud.render({ force: true });
         } catch (err) {
-            console.error("Region Spell Automation | Could not end concentration:", err);
+            console.error("Ugmuls 5.5e Automation | Could not end concentration:", err);
             ui.notifications.error("Could not end concentration. Check F12 console.");
         } finally {
             button.disabled = false;
@@ -60,7 +60,7 @@ export function addConcentrationControl(hud, html) {
     column.append(button);
 }
 
-Hooks.once("init", () => game.settings.register("region-spell-automation", "showConcentrationHud", {
+Hooks.once("init", () => game.settings.register("ugmuls-5-5e-automation", "showConcentrationHud", {
     name: "Show End Concentration on Token HUD",
     hint: "Show the concentration-ending control when a GM or owner right-clicks a concentrating token.",
     scope: "world", config: true, type: Boolean, default: true,

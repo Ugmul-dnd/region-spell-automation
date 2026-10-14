@@ -8,7 +8,7 @@ function supportsRetarget(message) {
 }
 
 export async function retargetSpellCard(message, targets = game.user.targets) {
-    if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
+    if (!game.settings.get("ugmuls-5-5e-automation", "retargetActivityCards")) return;
     if (!supportsRetarget(message) || (!game.user.isGM && !message.isOwner) || pendingCards.has(message)) return;
     const descriptors = [...new Map(Array.from(targets).filter(isHealingCard(message)?isEligibleHealingTarget:isEligibleTarget).map(target => {
         const token = target.document ?? target;
@@ -22,8 +22,8 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
             const usage=typeof origin === "string" ? game.messages.get(origin) : origin;
             const attacks=usage?.getAssociatedRolls?.("attack") ?? [message];
             const damage=(usage?.getAssociatedRolls?.("damage") ?? message.getAssociatedRolls?.("damage") ?? []).filter(card=>{
-                if(card.getFlag?.("region-spell-automation","masteryGrazeUndone"))return false;
-                const source=card.getFlag?.("region-spell-automation","damageAttackId");
+                if(card.getFlag?.("ugmuls-5-5e-automation","masteryGrazeUndone"))return false;
+                const source=card.getFlag?.("ugmuls-5-5e-automation","damageAttackId");
                 if (source) return source === message.id;
                 // Native/manual damage may lack our explicit attack flag.
                 // Use the most recent attack preceding that damage roll.
@@ -35,7 +35,7 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
             cards=[message, ...damage];
         } else {
             cards=[message, ...(message.getAssociatedRolls?.("attack") ?? []),
-                ...(message.getAssociatedRolls?.("damage") ?? []).filter(card=>!card.getFlag?.("region-spell-automation","masteryGrazeUndone")),
+                ...(message.getAssociatedRolls?.("damage") ?? []).filter(card=>!card.getFlag?.("ugmuls-5-5e-automation","masteryGrazeUndone")),
                 ...(message.getAssociatedRolls?.("healing") ?? [])];
         }
         cards=[...new Set(cards)];
@@ -49,7 +49,7 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
             // Only replace target descriptors. Keep rolls, save outcomes,
             // resource use, and damage-application records intact.
             await card.update({ "system.targets": descriptors,
-                "flags.region-spell-automation.retargeted": true }, { rsaRetarget: true });
+                "flags.ugmuls-5-5e-automation.retargeted": true }, { rsaRetarget: true });
         }
         if (skipped) ui.notifications.warn("Card retargeted. A linked roll belongs to another user; ask the GM to refresh it too.");
     } finally { pendingCards.delete(message); }
@@ -57,10 +57,10 @@ export async function retargetSpellCard(message, targets = game.user.targets) {
 
 export function addRetargetButton(message, html) {
     hideRemovedTargetSummaries(message, html);
-    if (!game.settings.get("region-spell-automation", "retargetActivityCards")) return;
+    if (!game.settings.get("ugmuls-5-5e-automation", "retargetActivityCards")) return;
     if (!supportsRetarget(message) || (!game.user.isGM && !message.isOwner)) return;
     if (message.type === "usage" && message.getAssociatedActivity?.()?.type === "attack" &&
-        game.settings.get("region-spell-automation","simplifyAttackCards") === true) return;
+        game.settings.get("ugmuls-5-5e-automation","simplifyAttackCards") === true) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
     const existingButton=root.querySelector("[data-rsa-retarget]");
@@ -96,7 +96,7 @@ export function addRetargetButton(message, html) {
         button.disabled = true;
         try { await retargetSpellCard(message); }
         catch (err) {
-            console.error("Region Spell Automation | Could not retarget spell card:", err);
+            console.error("Ugmuls 5.5e Automation | Could not retarget spell card:", err);
             ui.notifications.error("Could not retarget the spell card. Check F12 console.");
         } finally { button.disabled = false; }
     });
@@ -108,7 +108,7 @@ export function addRetargetButton(message, html) {
 }
 
 export function hideRemovedTargetSummaries(message, html) {
-    if (!message.getFlag?.("region-spell-automation", "retargeted")) return;
+    if (!message.getFlag?.("ugmuls-5-5e-automation", "retargeted")) return;
     const root = html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
     const targets = new Set((message.system.targets ?? []).map(target => target.token).filter(Boolean));
@@ -122,7 +122,7 @@ export function hideRemovedTargetSummaries(message, html) {
 
 // Core renderChatMessageHTML fires before D&D5e injects its usage-card template.
 // Use the system's completed-card hook so the action row exists.
-Hooks.once("init", () => game.settings.register("region-spell-automation", "retargetActivityCards", {
+Hooks.once("init", () => game.settings.register("ugmuls-5-5e-automation", "retargetActivityCards", {
     name: "Show Retarget on Spell, Feature and Attack Cards",
     hint: "Allow GMs and card owners to replace an activity card's targets with their current map targets. Attack results refresh against current AC; previous dice rolls remain unchanged.",
     scope: "world", config: true, type: Boolean, default: true,

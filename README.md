@@ -1,4 +1,4 @@
-# Region Spell Automation
+# Ugmuls 5.5e Automation
 
 Configurable spell regions and combat assistance for D&D5e in Foundry Virtual Tabletop. Automate routine steps while keeping chat-card controls available for manual decisions and corrections.
 
@@ -49,16 +49,16 @@ No additional module dependencies are declared. See [Module Compatibility and Te
 Install through Foundry's module browser, or paste this manifest URL into **Install Module → Manifest URL**:
 
 ```text
-https://github.com/Ugmul-dnd/region-spell-automation/releases/latest/download/module.json
+https://github.com/Ugmul-dnd/ugmuls-5-5e-automation/releases/latest/download/module.json
 ```
 
-Enable **Region Spell Automation** in your D&D5e world's **Manage Modules**, then configure its options in Module Settings.
+Enable **Ugmuls 5.5e Automation** in your D&D5e world's **Manage Modules**, then configure its options in Module Settings.
 
 After updating, **restart Foundry and hard-refresh connected browsers** to load the current scripts.
 
 ## Help and release history
 
 - [Module information and features](https://ugmul-dnd.com/foundry)
-- [Report a bug](https://github.com/Ugmul-dnd/region-spell-automation/issues)
+- [Report a bug](https://github.com/Ugmul-dnd/ugmuls-5-5e-automation/issues)
 - [Changelog](CHANGELOG.md)
 - [Starter spell configurations](STARTER-SPELLS.md)

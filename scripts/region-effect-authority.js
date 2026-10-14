@@ -1,4 +1,4 @@
-const ID="region-spell-automation";
+const ID="ugmuls-5-5e-automation";
 const authority=()=>game.user.isGM&&(!game.users.activeGM||game.users.activeGM.id===game.user.id);
 export function managedRegionEffect(model) {
     const behavior=model.behavior;

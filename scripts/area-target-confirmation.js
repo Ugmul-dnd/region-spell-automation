@@ -1,5 +1,5 @@
 import { describeTarget, isEligibleTarget, isEligibleHealingTarget } from "./shared-activity-card.js";
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const DIAGNOSTIC_REVISION = "2026-10-08-confirmation-3";
 const handled = new Set();
 const pendingCards = new Set();
@@ -86,7 +86,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
             if (Date.now() < this.confirmAfter) return;
             event?.preventDefault?.(); event?.stopPropagation?.();
             this.confirmed = true;
-            console.log("Region Spell Automation | Targets confirmed", { user: game.user.id, card: this.message.id });
+            console.log("Ugmuls 5.5e Automation | Targets confirmed", { user: game.user.id, card: this.message.id });
             this.finish(this.eligibleTargets().map(token => describeTarget(token.document ?? token)));
             await this.close();
         });
@@ -97,7 +97,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
         if (this.targetHook) Hooks.off("targetToken", this.targetHook);
         for (const [name, id] of this.statusHooks ?? []) Hooks.off(name, id);
         if (!this.confirmed) this.finish?.(null);
-        console.log("Region Spell Automation | Target confirmation closed", { user: game.user.id, card: this.message.id, confirmed: Boolean(this.confirmed) });
+        console.log("Ugmuls 5.5e Automation | Target confirmation closed", { user: game.user.id, card: this.message.id, confirmed: Boolean(this.confirmed) });
         return super.close(options);
     }
     async choose() {
@@ -111,7 +111,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
             Promise.resolve(this.render({ force: true })).then(() => {
                 this.bringToFront?.();
                 const bounds = this.element?.getBoundingClientRect?.();
-                console.log("Region Spell Automation | Target confirmation rendered", {
+                console.log("Ugmuls 5.5e Automation | Target confirmation rendered", {
                     user: game.user.id, card: this.message.id,
                     connected: this.element?.isConnected,
                     bounds: bounds ? { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height } : null
@@ -135,7 +135,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
 
 export function prepareAreaConfirmation(activity, usage, dialog, message) {
     if (["spell", "feat"].includes(activity.item?.type)) {
-        console.info("Region Spell Automation | Area targeting pre-use", JSON.stringify({
+        console.info("Ugmuls 5.5e Automation | Area targeting pre-use", JSON.stringify({
             revision: DIAGNOSTIC_REVISION, user: game.user.id, activity: activity.name,
             enabled: game.settings.get(MODULE_ID, "confirmAreaTargets"), shape: activity.target?.template?.type ?? null,
             createRegion: usage.create?.measuredTemplate ?? null,
@@ -154,7 +154,7 @@ export function prepareAreaConfirmation(activity, usage, dialog, message) {
 
 export async function confirmCastTargets(activity, usage, results) {
     const message = results?.message;
-    console.info("Region Spell Automation | Area targeting post-use", JSON.stringify({
+    console.info("Ugmuls 5.5e Automation | Area targeting post-use", JSON.stringify({
         revision: DIAGNOSTIC_REVISION, user: game.user.id, activity: activity.name,
         card: message?.id ?? null, author: message?.author?.id ?? null,
         regions: results?.templates?.length ?? 0,
@@ -181,7 +181,7 @@ export async function confirmCastTargets(activity, usage, results) {
     const config = game.settings.get(MODULE_ID, "spellTable")?.[activity.item.name];
     const mode = automaticTargetMode(activity, config);
     const targets = collectAreaTargets(canvas.tokens.placeables.map(token => token.document), results.templates, caster?.document ?? caster, mode,activity.type==="heal");
-    console.log("Region Spell Automation | Opening target confirmation", {
+    console.log("Ugmuls 5.5e Automation | Opening target confirmation", {
         user: game.user.name ?? game.user.id, activity: activity.name, targets: targets.length
     });
     canvas.tokens.setTargets(targets.map(token => token.id));
@@ -214,13 +214,13 @@ export async function finishConfirmedCast(activity, message, targets) {
         [`flags.${MODULE_ID}.targetsConfirmationPending`]: false,
         [`flags.${MODULE_ID}.targetsConfirmationCanceled`]: false });
     pendingCards.delete(message.id);
-    Hooks.callAll("regionSpellAutomation.targetsConfirmed", message);
+    Hooks.callAll("ugmuls55eAutomation.targetsConfirmed", message);
     const hasRoll=activity.type==="heal"?!!activity.healing?.formula:!!activity.damage?.parts?.length;
     if (message.getFlag?.(MODULE_ID, "resumeAreaDamage") !== false && targets.length && hasRoll && typeof activity.rollDamage === "function") {
-        if (activity.type === "save" && globalThis.RegionSpellAutomationDamage) {
-            await globalThis.RegionSpellAutomationDamage.promptDamage(activity, message);
+        if (activity.type === "save" && globalThis.Ugmuls55eAutomationDamage) {
+            await globalThis.Ugmuls55eAutomationDamage.promptDamage(activity, message);
         } else {
-            await activity.rollDamage({}, globalThis.RegionSpellAutomationDamage?.configurePromptDialog("damage",{configure:true})??{configure:true}, { data: { system: { origin: message.id, targets } } });
+            await activity.rollDamage({}, globalThis.Ugmuls55eAutomationDamage?.configurePromptDialog("damage",{configure:true})??{configure:true}, { data: { system: { origin: message.id, targets } } });
         }
     }
 }
@@ -232,7 +232,7 @@ Hooks.once("init", () => game.settings.register(MODULE_ID, "confirmAreaTargets",
 }));
 
 Hooks.once("ready", () => {
-    console.info("Region Spell Automation | Area targeting ready", JSON.stringify({
+    console.info("Ugmuls 5.5e Automation | Area targeting ready", JSON.stringify({
         revision: DIAGNOSTIC_REVISION, user: game.user.id, world: game.world?.id ?? null,
         version: game.modules?.get?.(MODULE_ID)?.version ?? null,
         enabled: game.settings.get(MODULE_ID, "confirmAreaTargets"),
@@ -248,7 +248,7 @@ Hooks.once("ready", () => {
     Hooks.on("dnd5e.postUseActivity", (activity, usage, results) => {
         confirmCastTargets(activity, usage, results).catch(err => {
             pendingCards.delete(results?.message?.id);
-            console.error("Region Spell Automation | Target confirmation failed:", err);
+            console.error("Ugmuls 5.5e Automation | Target confirmation failed:", err);
             ui.notifications.error("Could not confirm area targets. Use Retarget and the card's Save/Damage buttons.");
         });
     });

@@ -1,4 +1,4 @@
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 export const SETTINGS_GROUPS=[
     {id:"regions",name:"Regions",icon:"fa-draw-polygon",keys:["promptForSaveOnRegionTriggers","regionPlacementControls","autoAttachSelfEmanations","cleanupTargetingRegions"]},
     {id:"targeting",name:"Targeting",icon:"fa-bullseye",keys:["confirmAreaTargets","retargetActivityCards"]},
@@ -10,7 +10,7 @@ export const SETTINGS_GROUPS=[
     {id:"chat",name:"Chat & Sheets",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen","sheetAddCompendiumBrowser"]}
 ];
 export class ModuleSettingsApp extends foundry.applications.api.ApplicationV2 {
-    static DEFAULT_OPTIONS={id:"rsa-module-options",window:{title:"Region Spell Automation — Options"},position:{width:780,height:650}};
+    static DEFAULT_OPTIONS={id:"rsa-module-options",window:{title:"Ugmuls 5.5e Automation — Options"},position:{width:780,height:650}};
     activeTab="regions";
     draft=new Map();
     initialValues=new Map();
@@ -69,7 +69,7 @@ export class ModuleSettingsApp extends foundry.applications.api.ApplicationV2 {
         this.element.querySelector("[data-rsa-save]").addEventListener("click",async event=>{
             if(this.saving)return;event.currentTarget.disabled=true;this.saving=true;
             try{await this.saveDraft();await this.close();}
-            catch(err){console.error("Region Spell Automation | Options save failed:",err);ui.notifications.error("Could not save all options. Check the console and retry.");}
+            catch(err){console.error("Ugmuls 5.5e Automation | Options save failed:",err);ui.notifications.error("Could not save all options. Check the console and retry.");}
             finally{this.saving=false;event.currentTarget.disabled=false;}
         });
     }

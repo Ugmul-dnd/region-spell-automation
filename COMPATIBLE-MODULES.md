@@ -1,5 +1,7 @@
 # Module Compatibility and Test Setup
 
+The module is now named **Ugmuls 5.5e Automation** (`ugmuls-5-5e-automation`). This historical testing snapshot retains its previous name and ID as recorded in the world at that time.
+
 This reference records Region Spell Automation v0.6.0 development testing in **Fragment of the Fallen**.
 
 - Snapshot date: **2026-10-12**.

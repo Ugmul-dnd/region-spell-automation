@@ -1,5 +1,9 @@
 # Changelog
 
+## Module rename
+
+Renamed to **Ugmuls 5.5e Automation**, with repository, module ID, installation folder and release ZIP named `ugmuls-5-5e-automation`. This is a clean installation identity; settings and stored world references from the previous ID are not migrated. Starter spells can be added through the manager.
+
 ## v0.6.1
 
 Release prepared from the three development commits on `v0.6.1dev` since v0.6.0.

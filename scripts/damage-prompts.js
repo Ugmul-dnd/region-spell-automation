@@ -1,6 +1,6 @@
 import {describeTarget} from "./shared-activity-card.js";
 import {selectSaveUser} from "./save-prompts.js";
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const opened = new Set();
 const queued = new Set();
 
@@ -16,25 +16,25 @@ export function configurePromptDialog(kind, dialog = {}) {
             _finalizeRolls(action) {
                 const rolls=super._finalizeRolls(action);
                 if(kind === "damage") {
-                    const weaponRolls=globalThis.RegionSpellAutomationSavage?.finalizeSavage(this,rolls)??rolls;
-                    const riders=globalThis.RegionSpellAutomationRiders?.finalizeRiders(this,weaponRolls)??weaponRolls;
-                    return globalThis.RegionSpellAutomationSneak?.finalizeSneak(this,riders)??riders;
+                    const weaponRolls=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls)??rolls;
+                    const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,weaponRolls)??weaponRolls;
+                    return globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders)??riders;
                 }
-                return kind === "attack" ? globalThis.RegionSpellAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
+                return kind === "attack" ? globalThis.Ugmuls55eAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
             }
             async _prepareButtonsContext(context, options) {
                 const prepared=await super._prepareButtonsContext(context,options);
-                if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.prepareAttackButtons(this,prepared);
-                if(kind === "attack") globalThis.RegionSpellAutomationReckless?.prepareRecklessButtons(this,prepared);
+                if(kind === "attack") globalThis.Ugmuls55eAutomationMasteries?.prepareAttackButtons(this,prepared);
+                if(kind === "attack") globalThis.Ugmuls55eAutomationReckless?.prepareRecklessButtons(this,prepared);
                 return prepared;
             }
             _onRender(context,options) {
                 super._onRender(context,options);
-                if(kind === "attack") globalThis.RegionSpellAutomationMasteries?.focusMasteryAttackButtons(this);
-                if(kind === "attack") globalThis.RegionSpellAutomationReckless?.addRecklessButton(this);
-                if(kind === "damage") globalThis.RegionSpellAutomationSavage?.addSavageToggle(this);
-                if(kind === "damage") globalThis.RegionSpellAutomationRiders?.addRiderChoices(this);
-                if(kind === "damage") globalThis.RegionSpellAutomationSneak?.addSneakChoice(this);
+                if(kind === "attack") globalThis.Ugmuls55eAutomationMasteries?.focusMasteryAttackButtons(this);
+                if(kind === "attack") globalThis.Ugmuls55eAutomationReckless?.addRecklessButton(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationSavage?.addSavageToggle(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationRiders?.addRiderChoices(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationSneak?.addSneakChoice(this);
             }
             _onPosition(position) {
                 super._onPosition(position);
@@ -49,12 +49,12 @@ export function configurePromptDialog(kind, dialog = {}) {
                     const saved = {...(game.settings.get(MODULE_ID,"promptDialogPositions") ?? {})};
                     saved[kind] = {left,top};
                     return game.settings.set(MODULE_ID,"promptDialogPositions",saved);
-                }).catch(err => console.error("Region Spell Automation | Could not save prompt position:",err));
+                }).catch(err => console.error("Ugmuls 5.5e Automation | Could not save prompt position:",err));
             }
             async close(options) {
-                if(kind === "attack")globalThis.RegionSpellAutomationMultiShot?.settleFirstShot(this,options);
-                if(kind === "damage")await globalThis.RegionSpellAutomationSavage?.commitSavage(this,options);
-                if(kind === "damage")await globalThis.RegionSpellAutomationSneak?.commitSneak(this,options);
+                if(kind === "attack")globalThis.Ugmuls55eAutomationMultiShot?.settleFirstShot(this,options);
+                if(kind === "damage")await globalThis.Ugmuls55eAutomationSavage?.commitSavage(this,options);
+                if(kind === "damage")await globalThis.Ugmuls55eAutomationSneak?.commitSneak(this,options);
                 clearTimeout(this.positionTimer);
                 this.rememberPosition();
                 return super.close(options);
@@ -151,7 +151,7 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
 }
 
 function report(err) {
-    console.error("Region Spell Automation | Automatic damage prompt failed:",err);
+    console.error("Ugmuls 5.5e Automation | Automatic damage prompt failed:",err);
     ui.notifications.error("Could not open damage. Use the card's Damage button.");
 }
 
@@ -164,7 +164,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-    globalThis.RegionSpellAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation};
+    globalThis.Ugmuls55eAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation};
     // Region activity execution retains its original authority. Only the
     // damage dialog is routed to a connected owner of the casting actor.
     const promptRegionDamage=message=>{

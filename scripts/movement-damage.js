@@ -1,5 +1,5 @@
 import { describeTarget } from "./shared-activity-card.js";
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const SOCKET = `module.${MODULE_ID}`;
 const pendingRequests = new Map();
 
@@ -263,7 +263,7 @@ export function registerMovementDamageHooks(enqueue) {
                 adjustment.disabled = true;
                 enqueue(() => adjustPendingMovementDamage(message, Number(adjustment.dataset.rsaAdjustMovement)))
                     .catch(err => {
-                        console.error("Region Spell Automation | Movement damage adjustment failed:", err);
+                        console.error("Ugmuls 5.5e Automation | Movement damage adjustment failed:", err);
                         ui.notifications.error("Could not adjust movement damage. Check F12 console.");
                     }).finally(() => {
                         adjustment.disabled = adjustment.dataset.rsaAdjustMovement === "-1" &&
@@ -279,7 +279,7 @@ export function registerMovementDamageHooks(enqueue) {
         button.addEventListener("click", () => {
             button.disabled = true;
             enqueue(() => rollPendingMovementDamage(message)).catch(err => {
-                console.error("Region Spell Automation | Movement damage roll failed:", err);
+                console.error("Ugmuls 5.5e Automation | Movement damage roll failed:", err);
                 ui.notifications.error("Movement damage roll failed. Check F12 console.");
             }).finally(() => {
                 button.disabled = pendingSteps(message.getFlag(MODULE_ID, "movementDamage")) === 0;

@@ -1,5 +1,5 @@
 import {describeTarget} from "./shared-activity-card.js";
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const busy=new Set();
 
 export function shieldActivity(actor) {
@@ -101,7 +101,7 @@ export function addShieldButtons(message, html) {
                     const results=await current.use({}, {}, {data:{flags:{[MODULE_ID]:{shieldReactionAttack:entry.message.id}}}});
                     if (results?.message) await refreshShieldAttack(entry.message);
                 } catch(err) {
-                    console.error("Region Spell Automation | Shield reaction failed:",err);
+                    console.error("Ugmuls 5.5e Automation | Shield reaction failed:",err);
                     ui.notifications.error("Could not cast Shield. Use the actor's spell sheet.");
                 } finally {busy.delete(key);button.disabled=false;}
             });
@@ -118,7 +118,7 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"showShieldReaction",{
 Hooks.once("ready",()=>{
     Hooks.on("dnd5e.renderChatMessage",(message,html)=>{
         hideShieldMissDamage(message,html);
-        try {addShieldButtons(message,html);} catch(err) {console.error("Region Spell Automation | Shield controls failed:",err);}
+        try {addShieldButtons(message,html);} catch(err) {console.error("Ugmuls 5.5e Automation | Shield controls failed:",err);}
     });
     Hooks.on("updateChatMessage",(message,changes)=>{
         if (message.type !== "attack" || !message.getFlag?.(MODULE_ID,"shieldRechecked")) return;
@@ -128,7 +128,7 @@ Hooks.once("ready",()=>{
         for (const damage of card?.getAssociatedRolls?.("damage") ?? []) ui.chat?.updateMessage(damage);
         if (card) ui.chat?.updateMessage(card);
     });
-    Hooks.on("regionSpellAutomation.buffEffectsApplied",(cast)=>{
+    Hooks.on("ugmuls55eAutomation.buffEffectsApplied",(cast)=>{
         const id=cast.getFlag(MODULE_ID,"shieldReactionAttack");
         if (id) refreshShieldAttack(game.messages.get(id)).catch(console.error);
     });

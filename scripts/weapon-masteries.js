@@ -1,5 +1,5 @@
 import {createEventQueue,describeTarget,isEligibleTarget} from "./shared-activity-card.js";
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const enqueue=createEventQueue();
 const supported=new Set(["graze","sap","slow","topple","vex"]);
 const authoritative=()=>game.user.isGM&&game.users.activeGM?.id===game.user.id;
@@ -73,7 +73,7 @@ export function registerConditionBridge(api=globalThis.ac5e?.usageRules) {
             }});
         const vex=register("vex","advantage"),sap=register("sap","disadvantage");
         ac5eBridge=Boolean(vex&&sap);
-    } catch(err){ac5eBridge=false;console.warn("Region Spell Automation | Automated Conditions mastery integration unavailable:",err);}
+    } catch(err){ac5eBridge=false;console.warn("Ugmuls 5.5e Automation | Automated Conditions mastery integration unavailable:",err);}
     return ac5eBridge;
 }
 export function masteryRollDefaults(activity,config,dialog,targets=game.user.targets,recordedTargets=null) {
@@ -141,7 +141,7 @@ export async function syncGraze(attack) {
     if(!authoritative()||masteryForAttack(attack)!=="graze")return;
     const handled=new Set(attack.getFlag(MODULE_ID,"masteryActions")??[]);
     if(!(attack.system.evaluatedTargets??[]).some(target=>target.isMiss===true&&!handled.has(target.token)))return;
-    await globalThis.RegionSpellAutomationNpcDamage?.waitForWorkflowAnimations?.(attack);
+    await globalThis.Ugmuls55eAutomationNpcDamage?.waitForWorkflowAnimations?.(attack);
     // Re-read results after animation/reactions; corrections can turn a miss
     // into a hit while this work is waiting.
     for(const target of attack.system.evaluatedTargets??[]) {
@@ -214,9 +214,9 @@ export async function receiveTopple(packet) {
     if(!token?.actor?.isOwner||masteryForAttack(attack)!=="topple"||!attack.system.evaluatedTargets.some(target=>target.token===token.uuid&&!target.isMiss))return;
     const dc=8+abilityModifier(attack)+attack.getAssociatedActor().system.attributes.prof;
     const dialog={configure:true,options:{id:`rsa-topple-${attack.id}-${token.id??token.uuid}`}};
-    const auto=globalThis.RegionSpellAutomationNpcDamage?.shouldAutoRollNpc(token.actor)===true;
+    const auto=globalThis.Ugmuls55eAutomationNpcDamage?.shouldAutoRollNpc(token.actor)===true;
     if(auto)dialog.configure=false;
-    const positioned=auto?dialog:(globalThis.RegionSpellAutomationDamage?.configurePromptDialog("save",dialog)??dialog);
+    const positioned=auto?dialog:(globalThis.Ugmuls55eAutomationDamage?.configurePromptDialog("save",dialog)??dialog);
     await token.actor.rollSavingThrow({ability:"con",target:dc,...(auto?{rsaAutoNpcSave:true}:{})},positioned, {data:{flavor:"Topple — Constitution Save",speaker:ChatMessage.getSpeaker({actor:token.actor,token,scene:token.parent}),
         flags:{[MODULE_ID]:{toppleAttack:attack.id,toppleToken:token.uuid},
             ...(packet.requestId?{dnd5e:{requestResult:{actorUuid:token.actor.uuid,requestId:packet.requestId}}}: {})},system:{origin:null}}});
@@ -309,7 +309,7 @@ export function addMasteryButtons(message,html) {
         }
     }
 }
-function report(err){console.error("Region Spell Automation | Mastery automation failed:",err);ui.notifications.error("Could not apply mastery. Check the console.");}
+function report(err){console.error("Ugmuls 5.5e Automation | Mastery automation failed:",err);ui.notifications.error("Could not apply mastery. Check the console.");}
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"weaponMasteryAutomation",{
     name:"Effect Automation: Weapon Masteries",hint:"Automatic Graze damage cards on misses, Sap/Vex effects, Slow after damage, and Topple actions for unlocked weapon masteries. Push, Nick and Cleave are excluded. Requires an active GM.",
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
@@ -326,7 +326,7 @@ Hooks.once("init",()=>{
 });
 Hooks.once("ready",()=>{
     registerConditionBridge();
-    globalThis.RegionSpellAutomationMasteries={prepareAttackButtons,focusMasteryAttackButtons};
+    globalThis.Ugmuls55eAutomationMasteries={prepareAttackButtons,focusMasteryAttackButtons};
     Hooks.on("dnd5e.renderChatMessage",addMasteryButtons);
     Hooks.on("dnd5e.preRollAttackV2",(config,dialog,message)=>
         masteryRollDefaults(config.subject,config,dialog,game.user.targets,message?.data?.system?.targets));

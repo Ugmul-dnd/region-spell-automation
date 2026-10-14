@@ -1,4 +1,4 @@
-const ID="region-spell-automation",windows=new Map();
+const ID="ugmuls-5-5e-automation",windows=new Map();
 export function shotCount(activity,message) {
     const item=activity?.item;
     const name=(item?.identifier??item?.system?.identifier??item?.name??"").toLowerCase().replace(/\s+/g,"-");
@@ -39,7 +39,7 @@ export class MultiShotWindow extends foundry.applications.api.ApplicationV2 {
             <p>Select your next target on the map.</p><button type="button" data-rsa-next-shot ${state.busy||state.firstPending||!state.remaining?"disabled":""}>${state.busy?"Rolling…":"Attack"}</button></div>`;
     }
     _replaceHTML(result,content){content.innerHTML=result;}
-    _onRender(context,options){super._onRender(context,options);this.element.querySelector("[data-rsa-next-shot]")?.addEventListener("click",()=>fireNextShot(this.shotState).catch(err=>{console.error("Region Spell Automation | Additional spell attack failed:",err);ui.notifications.error("Could not roll the next spell attack.");}));}
+    _onRender(context,options){super._onRender(context,options);this.element.querySelector("[data-rsa-next-shot]")?.addEventListener("click",()=>fireNextShot(this.shotState).catch(err=>{console.error("Ugmuls 5.5e Automation | Additional spell attack failed:",err);ui.notifications.error("Could not roll the next spell attack.");}));}
     async close(options){windows.delete(this.shotState.message.id);return super.close(options);}
 }
 export function settleFirstShot(app,options) {
@@ -52,7 +52,7 @@ export function settleFirstShot(app,options) {
 }
 Hooks.once("init",()=>game.settings.register(ID,"multiShotAttacks",{name:"Additional Spell Attacks",hint:"Show a remaining-attacks window for Eldritch Blast and Scorching Ray. Choose targets between attacks; reuse the original cast without spending more slots.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationMultiShot={settleFirstShot};
+    globalThis.Ugmuls55eAutomationMultiShot={settleFirstShot};
     Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>{
         const message=results?.message;
         if(game.settings.get(ID,"multiShotAttacks")!==true||!message||message.author?.id!==game.user.id||!activity.item?.isOwner||usage.subsequentActions===false)return;

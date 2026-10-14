@@ -1,8 +1,8 @@
 import {createEventQueue,isRollAdjustmentLocked} from "./shared-activity-card.js";
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const enqueue=createEventQueue();
 export function isAttackDamage(message) {
-    if (message?.type !== "damage" || message.getFlag?.("region-spell-automation","masteryGraze")) return false;
+    if (message?.type !== "damage" || message.getFlag?.("ugmuls-5-5e-automation","masteryGraze")) return false;
     const activity=message.getAssociatedActivity?.();
     return activity?.type === "attack" ||
         (activity?.type === "damage" && activity.damage?.critical?.allow === true);
@@ -146,7 +146,7 @@ export async function updateDamageCritical(message,critical,user=game.user) {
     const origin=message.system?.origin;
     if (origin) {await origin.system?.onDescendentRefresh?.(message);await ui.chat?.updateMessage(origin);}
 }
-function report(err){console.error("Region Spell Automation | Damage mode adjustment failed:",err);ui.notifications.error(err.message);}
+function report(err){console.error("Ugmuls 5.5e Automation | Damage mode adjustment failed:",err);ui.notifications.error(err.message);}
 export function addDamageModeControls(message,html) {
     if (!game.settings.get(MODULE_ID,"adjustDamageCritical")) return;
     const root=html instanceof HTMLElement?html:html?.[0];if(!root)return;
@@ -179,7 +179,7 @@ export function addDamageModeControls(message,html) {
                 else enqueue(()=>updateDamageCritical(entry.message,critical)).catch(report);
             });menu.append(button);
         }host.append(menu);
-        globalThis.RegionSpellAutomationFollowRollMenu?.(host,menu);
+        globalThis.Ugmuls55eAutomationFollowRollMenu?.(host,menu);
     }
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"adjustDamageCritical",{

@@ -1,4 +1,4 @@
-const ID="region-spell-automation";
+const ID="ugmuls-5-5e-automation";
 const definitions={hex:{name:"Hex",type:"necrotic",setting:"riderHex"},"hunters-mark":{name:"Hunter's Mark",type:"force",setting:"riderHuntersMark"}};
 const choices=new WeakMap();
 const elementalKey="conjure-minor-elementals";
@@ -96,7 +96,7 @@ export function addRiderChoices(app) {
             select.addEventListener("change",()=>{
                 if(!elementalTypes.includes(select.value))return;
                 state.set(`${rider.key}:type`,select.value);
-                game.settings.set(ID,"lastMinorElementalsType",select.value).catch(err=>console.warn("Region Spell Automation | Could not remember elemental damage type:",err));
+                game.settings.set(ID,"lastMinorElementalsType",select.value).catch(err=>console.warn("Ugmuls 5.5e Automation | Could not remember elemental damage type:",err));
             });label.append(select);
         }
         buttons.before(label);
@@ -128,8 +128,8 @@ Hooks.once("init",()=>{
         hint:`Add the spell's 1d6 to attack damage against this caster's marked target while concentrating. Single-target damage cards only.`,scope:"world",config:true,type:Boolean,default:true});
 });
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationRiders={addRiderChoices,finalizeRiders};
-    const report=err=>console.error("Region Spell Automation | Bonus damage rider:",err);
+    globalThis.Ugmuls55eAutomationRiders={addRiderChoices,finalizeRiders};
+    const report=err=>console.error("Ugmuls 5.5e Automation | Bonus damage rider:",err);
     Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>recordRiderTarget(activity,results?.message).catch(report));
     Hooks.on("updateChatMessage",(message,changes)=>{
         if(changes.system?.targets&&message.type==="usage"&&message.author?.id===game.user.id)
@@ -138,7 +138,7 @@ Hooks.once("ready",()=>{
     Hooks.on("dnd5e.preRollDamageV2",(config,dialog)=>{
         if(config.subject?.type!=="attack")return;
         const configure=dialog.configure;
-        Object.assign(dialog,globalThis.RegionSpellAutomationDamage.configurePromptDialog("damage",dialog));
+        Object.assign(dialog,globalThis.Ugmuls55eAutomationDamage.configurePromptDialog("damage",dialog));
         if(configure===false)dialog.configure=false;
     });
     Hooks.on("dnd5e.postDamageRollConfiguration",(rolls,config,dialog,message)=>{

@@ -1,4 +1,4 @@
-# Region Spell Automation v0.5.7
+# Ugmuls 5.5e Automation v0.5.7
 
 Adds area target confirmation, automatic saving throw prompts, Region conditions,
 and a simpler spell manager.

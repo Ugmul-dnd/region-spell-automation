@@ -1,4 +1,4 @@
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const createSelector='.item-create,[data-action="addDocument"],[data-action="create"],[data-action="createItem"],[data-action="addItem"],[data-action="createDocument"][data-document-class="Item"]';
 
 export function sheetBrowserOptions(actor,tab,spellLists=globalThis.dnd5e?.registry?.spellLists) {
@@ -40,6 +40,6 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"sheetAddCompendiumBrowse
     scope:"world",config:true,type:Boolean,default:true
 }));
 Hooks.once("ready",()=>document.addEventListener("click",event=>{
-    try {Promise.resolve(handleSheetAdd(event)).catch(err=>console.error("Region Spell Automation | Sheet compendium browser failed:",err));}
-    catch(err){console.error("Region Spell Automation | Sheet compendium browser failed:",err);}
+    try {Promise.resolve(handleSheetAdd(event)).catch(err=>console.error("Ugmuls 5.5e Automation | Sheet compendium browser failed:",err));}
+    catch(err){console.error("Ugmuls 5.5e Automation | Sheet compendium browser failed:",err);}
 },{capture:true}));

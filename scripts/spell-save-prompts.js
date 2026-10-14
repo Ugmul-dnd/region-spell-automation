@@ -1,5 +1,5 @@
 import { sendSavePrompt, isEligibleTarget } from "./save-prompts.js";
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const casts = new Map();
 const sentTargets = new Map();
 
@@ -30,7 +30,7 @@ export async function promptCastSaves(activity, results) {
             }
         }
         if (!token?.actor || !token.uuid) {
-            console.warn("Region Spell Automation | Could not resolve spell target to a unique token.", descriptor.name ?? descriptor.actor);
+            console.warn("Ugmuls 5.5e Automation | Could not resolve spell target to a unique token.", descriptor.name ?? descriptor.actor);
             continue;
         }
         if (!isEligibleTarget(token)) {
@@ -65,7 +65,7 @@ export function scheduleCastSaves(activity, results) {
 }
 
 function reportError(err) {
-    console.error("Region Spell Automation | Spell-cast save prompts failed:", err);
+    console.error("Ugmuls 5.5e Automation | Spell-cast save prompts failed:", err);
     ui.notifications.error("Could not prompt spell targets. Use the cast card's Save button.");
 }
 
@@ -81,7 +81,7 @@ Hooks.once("ready", () => {
     Hooks.on("dnd5e.postUseActivity", (activity, usage, results) => {
         scheduleCastSaves(activity, results);
     });
-    Hooks.on("regionSpellAutomation.targetsConfirmed", message => {
+    Hooks.on("ugmuls55eAutomation.targetsConfirmed", message => {
         // Confirmation can finish after the post-use timer has already skipped
         // the pending card. Resume explicitly, even without a cached cast.
         const activity = casts.get(message.id)?.activity ?? message.getAssociatedActivity?.();

@@ -1,4 +1,4 @@
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const enabled=()=>game.settings.get(MODULE_ID,"recklessAttackAutomation")===true;
 const activating=new Map();
 let conditionBridge=false;
@@ -133,7 +133,7 @@ export function registerRecklessConditions(api=globalThis.ac5e?.usageRules) {
         const incoming=api.register({key:"rsaRecklessTarget",scope:"universal",hook:"attack",target:"subject",mode:"advantage",name:"Reckless target",persistent:false,
             evaluate:sandbox=>enabled()&&!!sandbox.opponentActorUuid&&recklessEffects(fromUuidSync(sandbox.opponentActorUuid,{strict:false})).length>0});
         conditionBridge=!!(own&&incoming);
-    } catch(err){conditionBridge=false;console.warn("Region Spell Automation | Reckless condition integration failed:",err);}
+    } catch(err){conditionBridge=false;console.warn("Ugmuls 5.5e Automation | Reckless condition integration failed:",err);}
     return conditionBridge;
 }
 export function prepareRecklessButtons(app,context) {
@@ -166,7 +166,7 @@ export function addRecklessButton(app) {
             syncRecklessConditionChoice(app.config,mode);
             syncRecklessConditionChoice(config,mode);
             app.element.querySelector(`.dialog-buttons button[data-action="${selected}"]`)?.click();
-        } catch(err){button.disabled=false;console.error("Region Spell Automation | Reckless Attack failed:",err);ui.notifications.error("Could not activate Reckless Attack.");}
+        } catch(err){button.disabled=false;console.error("Ugmuls 5.5e Automation | Reckless Attack failed:",err);ui.notifications.error("Could not activate Reckless Attack.");}
     });wrapper.append(button);
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"recklessAttackAutomation",{
@@ -175,7 +175,7 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"recklessAttackAutomation
 Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerRecklessConditions(usageRules));
 Hooks.once("ready",()=>{
     registerRecklessConditions();
-    globalThis.RegionSpellAutomationReckless={prepareRecklessButtons,addRecklessButton,finalizeRecklessRolls};
+    globalThis.Ugmuls55eAutomationReckless={prepareRecklessButtons,addRecklessButton,finalizeRecklessRolls};
     Hooks.on("dnd5e.preRollAttackV2",recklessDefaults);
     Hooks.on("dnd5e.postRollConfiguration",completeRecklessConfiguration);
     Hooks.on("dnd5e.buildRollConfig",(app,config)=>{

@@ -1,5 +1,5 @@
 import {createEventQueue,isDamageOrHealingCard,isHealingCard} from "./shared-activity-card.js";
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const enqueue=createEventQueue();
 const hpKeys=["value","temp","tempmax"];
 const history=message=>message.getFlag(MODULE_ID,"damageUndoHistory")??[];
@@ -88,7 +88,7 @@ export function addEffectUndoButton(message,html) {
         button.innerHTML='<i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Undo Effect';
         button.addEventListener("click",event=>{
             event.preventDefault();event.stopPropagation();if(button.disabled)return;button.disabled=true;
-            const finishScroll=globalThis.RegionSpellAutomationFollowChatChanges?.(button)??(()=>{});
+            const finishScroll=globalThis.Ugmuls55eAutomationFollowChatChanges?.(button)??(()=>{});
             const gm=game.users.activeGM;
             if(gm&&gm.id!==game.user.id)game.socket.emit(`module.${MODULE_ID}`,{action:"undoCardEffects",messageId:entry.message.id,userId:game.user.id,gmId:gm.id});
             else enqueue(()=>undoCardEffects(entry.message)).catch(report).finally(finishScroll);
@@ -279,16 +279,16 @@ export function addDamageUndoButton(message,html) {
         button.innerHTML=`<i class="fa-solid fa-rotate-left" aria-hidden="true"></i> ${isHealingCard(entry.message)?"Undo Healing":"Undo Damage"}`;
         button.addEventListener("click",event=>{
             event.preventDefault();event.stopPropagation();if(button.disabled)return;button.disabled=true;
-            const finishScroll=globalThis.RegionSpellAutomationFollowChatChanges?.(button)??(()=>{});
+            const finishScroll=globalThis.Ugmuls55eAutomationFollowChatChanges?.(button)??(()=>{});
             const gm=game.users.activeGM;
             if(gm&&gm.id!==game.user.id)game.socket.emit(`module.${MODULE_ID}`,{action:"undoCardDamage",messageId:entry.message.id,userId:game.user.id,gmId:gm.id});
             else enqueue(()=>undoCardDamage(entry.message)).catch(report).finally(finishScroll);
         });controls.append(button);
     }
 }
-function report(err){console.error("Region Spell Automation | Damage undo failed:",err);ui.notifications.error("Could not undo damage. Check the console.");}
+function report(err){console.error("Ugmuls 5.5e Automation | Damage undo failed:",err);ui.notifications.error("Could not undo damage. Check the console.");}
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationEffectUndo={apply:applyEffectWithUndo};
+    globalThis.Ugmuls55eAutomationEffectUndo={apply:applyEffectWithUndo};
     const prototype=customElements.get("effect-application")?.prototype;
     if(prototype&&typeof prototype._onApplyEffects==="function"&&!prototype.rsaUndoReapplication) {
         const original=prototype._onApplyEffects;

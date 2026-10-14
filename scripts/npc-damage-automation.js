@@ -1,5 +1,5 @@
 import {createEventQueue,isEligibleTarget,hasEquivalentActiveEffect,regionOwnsEffect,isDamageOrHealingCard,isHealingCard,isEligibleHealingTarget} from "./shared-activity-card.js";
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const enqueue=createEventQueue();
 const queued=new Set();
 const running=new Set();
@@ -14,7 +14,7 @@ let animationRequestId=0;
 function waiting(message,reason) {
     if(waitingReasons.get(message.id)!==reason) {
         waitingReasons.set(message.id,reason);
-        console.log("Region Spell Automation | Automatic damage waiting",{card:message.id,reason});
+        console.log("Ugmuls 5.5e Automation | Automatic damage waiting",{card:message.id,reason});
     }
     return null;
 }
@@ -107,18 +107,18 @@ export async function applyAutomaticDamage(message) {
         // Claim before applying so rerenders/save updates cannot apply twice.
         await message.setFlag(MODULE_ID,"automaticDamageDone",true);
         if(isManual(message))return;
-        console.log(`Region Spell Automation | Applying automatic ${isHealingCard(message)?"healing":"damage"}`,{card:message.id,targets:targets.length});
+        console.log(`Ugmuls 5.5e Automation | Applying automatic ${isHealingCard(message)?"healing":"damage"}`,{card:message.id,targets:targets.length});
         await tray._onApplyDamage({preventDefault(){}});
         const completed=appliedNow.get(message.id);
         await message.setFlag(MODULE_ID,"automaticDamageTargets",[...new Set([...(message.getFlag(MODULE_ID,"automaticDamageTargets")??[]),...completed])]);
         if(completed.size<targets.length && !isManual(message)) {
-            console.warn("Region Spell Automation | Automatic damage stopped before all targets were applied",{card:message.id,expected:targets.length,applied:completed.size});
+            console.warn("Ugmuls 5.5e Automation | Automatic damage stopped before all targets were applied",{card:message.id,expected:targets.length,applied:completed.size});
             await stopAutomaticDamage(message);
         }
     } catch(err) {
         cancelled.add(manualKey(message).id);
         await message.setFlag(MODULE_ID,"manualDamageWorkflow",true);
-        console.error("Region Spell Automation | Automatic damage application failed:",err);
+        console.error("Ugmuls 5.5e Automation | Automatic damage application failed:",err);
         ui.notifications.error("Automatic damage/healing stopped. Check the card and apply any remaining amounts manually.");
     } finally {holder?.remove();running.delete(message.id);appliedNow.delete(message.id);}
 }
@@ -134,8 +134,8 @@ export async function waitForDamageAnimation(message,extraAnimation) {
     });
     try {
         const animation=(async()=>{
-            await Promise.all([extraAnimation,globalThis.RegionSpellAutomationRollVisualWait?.(message)]);
-            await globalThis.RegionSpellAutomationDamage?.waitForAttackAnimation?.(message);
+            await Promise.all([extraAnimation,globalThis.Ugmuls55eAutomationRollVisualWait?.(message)]);
+            await globalThis.Ugmuls55eAutomationDamage?.waitForAttackAnimation?.(message);
         })();
         await Promise.race([hidden,animation]);
     } finally {document.removeEventListener("visibilitychange",onVisibility);}
@@ -213,7 +213,7 @@ export async function applyOutcomeEffects(card) {
                 const token=await fromUuid(descriptor.token);
                 const existing=hasEquivalentActiveEffect(actor,effect)||regionOwnsEffect(token,effect);
                 if(!existing) {
-                    const undo=globalThis.RegionSpellAutomationEffectUndo;
+                    const undo=globalThis.Ugmuls55eAutomationEffectUndo;
                     if(undo)await undo.apply(card,usage,effect,actor,tray);
                     else await tray._applyEffectToActor(effect,actor);
                 }
@@ -223,7 +223,7 @@ export async function applyOutcomeEffects(card) {
         if(ledger.size&&!usage.getFlag(MODULE_ID,"outcomeEffectsApplied"))await usage.setFlag(MODULE_ID,"outcomeEffectsApplied",true);
     } catch(err) {
         await stopAutomaticDamage(card);
-        console.error("Region Spell Automation | Automatic outcome effects failed:",err);
+        console.error("Ugmuls 5.5e Automation | Automatic outcome effects failed:",err);
         ui.notifications.error("Automatic effects stopped. Use the card's Apply Effect control for any remaining effects.");
     } finally {runningEffects.delete(card.id);}
 }
@@ -270,7 +270,7 @@ Hooks.once("init",()=>{
     ])game.settings.register(MODULE_ID,key,{name,hint,scope:"world",config:true,type:Boolean,default:true});
 });
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationNpcDamage={shouldAutoRollNpc,waitForWorkflowAnimations,waitForDamageAnimation};
+    globalThis.Ugmuls55eAutomationNpcDamage={shouldAutoRollNpc,waitForWorkflowAnimations,waitForDamageAnimation};
 
     Hooks.on("dnd5e.preRollD20TestV2",(config,dialog)=>{if(config.rsaAutoNpcSave)dialog.configure=false;});
     for(const event of ["createChatMessage","updateChatMessage"])Hooks.on(event,(message)=>{

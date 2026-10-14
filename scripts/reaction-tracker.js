@@ -1,4 +1,4 @@
-const ID="region-spell-automation",creating=new Set();
+const ID="ugmuls-5-5e-automation",creating=new Set();
 const enabled=()=>game.settings.get(ID,"reactionTracker")===true;
 export function reactionUsed(actor) {
     return Array.from(actor?.effects??[]).find(effect=>!effect.disabled&&effect.active!==false&&!effect.duration?.expired&&effect.system?.expired!==true&&
@@ -44,6 +44,6 @@ Hooks.once("init",()=>game.settings.register(ID,"reactionTracker",{name:"Off-Tur
     hint:"Manual spell, weapon and feature uses outside your combat turn mark Reaction - used and block further uses. Disable/delete to override; expires at your turn start. Saves and automated Region triggers remain available.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
     Hooks.on("dnd5e.preUseActivity",allowReactionUse);
-    Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>recordReactionUse(activity,usage,results).catch(err=>console.error("Region Spell Automation | Reaction tracking failed:",err)));
+    Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>recordReactionUse(activity,usage,results).catch(err=>console.error("Ugmuls 5.5e Automation | Reaction tracking failed:",err)));
     Hooks.on("dnd5e.preRollAttackV2",allowReactionAttack);
 });

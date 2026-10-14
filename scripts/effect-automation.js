@@ -1,5 +1,5 @@
 import {hasEquivalentActiveEffect,regionOwnsEffect} from "./shared-activity-card.js";
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const completed=new Set();
 const pending=new Set();
 export function isHuntersMarkActivity(activity) {
@@ -62,13 +62,13 @@ export async function applyBuffEffects(message) {
             const tokens=await Promise.all((message.system.targets??[]).filter(target=>target.actor===actor.uuid||actors.size===1)
                 .map(target=>target.token?fromUuid(target.token):null));
             if(tokens.some(token=>token?.actor?.uuid===actor.uuid&&regionOwnsEffect(token,effect)))continue;
-            const undo=globalThis.RegionSpellAutomationEffectUndo;
+            const undo=globalThis.Ugmuls55eAutomationEffectUndo;
             if(undo)await undo.apply(message,message,effect,actor,tray);
             else await tray._applyEffectToActor(effect,actor);
         }
         completed.add(message.id);
         await message.update({[`flags.${MODULE_ID}.buffAutoApplied`]:true});
-        Hooks.callAll("regionSpellAutomation.buffEffectsApplied",message);
+        Hooks.callAll("ugmuls55eAutomation.buffEffectsApplied",message);
     } finally {pending.delete(message.id);}
 }
 
@@ -84,7 +84,7 @@ export function collapseAppliedBuffTray(message, html) {
     for (const tray of root.querySelectorAll("effect-application")) tray.open=false;
 }
 function report(err) {
-    console.error("Region Spell Automation | Buff automation failed:",err);
+    console.error("Ugmuls 5.5e Automation | Buff automation failed:",err);
     ui.notifications.error("Could not automatically apply buffs. Use the card's Apply Effect control.");
 }
 
@@ -106,7 +106,7 @@ Hooks.once("ready",()=>{
     Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>{
         if (eligibleBuffActivity(activity)) setTimeout(()=>requestBuffs(results?.message).catch(report),0);
     });
-    Hooks.on("regionSpellAutomation.targetsConfirmed",message=>requestBuffs(message).catch(report));
+    Hooks.on("ugmuls55eAutomation.targetsConfirmed",message=>requestBuffs(message).catch(report));
     Hooks.on("deleteChatMessage",message=>completed.delete(message.id));
     game.socket.on(`module.${MODULE_ID}`,packet=>{
         if (packet?.action !== "applyBuffEffects" || !game.user.isGM || packet.gmId !== game.user.id || game.users.activeGM?.id !== game.user.id) return;

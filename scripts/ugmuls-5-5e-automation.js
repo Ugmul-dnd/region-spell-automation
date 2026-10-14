@@ -1,5 +1,5 @@
 // ============================================================
-// Region Spell Automation
+// Ugmuls 5.5e Automation
 // v0.6.1
 // Foundry VTT v14 / D&D5e 6.0.5+ (tested with 6.0.6)
 //
@@ -13,7 +13,7 @@
 // - Skip all activity triggers for hidden/dead/defeated/0 HP tokens
 // ============================================================
 
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const SETTING_KEY = "spellTable";
 
 import { appendSharedTarget, createEventQueue, describeTarget, getSharedCardKey, mergeTargets, isEligibleTarget, regionEffectDispositions, resolveRegionCaster }
@@ -36,7 +36,7 @@ const oncePerTurnHistory =
 
 
 console.log(
-    "Region Spell Automation | v0.6.1 JS loaded"
+    "Ugmuls 5.5e Automation | v0.6.1 JS loaded"
 );
 
 
@@ -59,10 +59,10 @@ Hooks.once("init", () => {
         SETTING_KEY,
         {
             name:
-                "Region Spell Automation - Spell Table",
+                "Ugmuls 5.5e Automation - Spell Table",
 
             hint:
-                "Configured spells used by Region Spell Automation.",
+                "Configured spells used by Ugmuls 5.5e Automation.",
 
             scope:
                 "world",
@@ -80,7 +80,7 @@ Hooks.once("init", () => {
 
 
     console.log(
-        "Region Spell Automation | Settings registered"
+        "Ugmuls 5.5e Automation | Settings registered"
     );
 });
 
@@ -215,7 +215,7 @@ function passesTargeting(
         default:
 
             console.warn(
-                "Region Spell Automation | Unknown targeting mode:",
+                "Ugmuls 5.5e Automation | Unknown targeting mode:",
                 targeting
             );
 
@@ -264,7 +264,7 @@ async function executeRegionEvent({
     if (!targetDoc) {
 
         console.warn(
-            "Region Spell Automation | Region event had no token.",
+            "Ugmuls 5.5e Automation | Region event had no token.",
             event
         );
 
@@ -279,7 +279,7 @@ async function executeRegionEvent({
     if (!targetToken) {
 
         console.warn(
-            "Region Spell Automation | Triggering TokenDocument had no canvas Token."
+            "Ugmuls 5.5e Automation | Triggering TokenDocument had no canvas Token."
         );
 
         return;
@@ -295,7 +295,7 @@ async function executeRegionEvent({
     ) {
 
         console.log(
-            `Region Spell Automation | Skipping ${event.name} for hidden/dead/defeated/0 HP token "${targetToken.name}".`
+            `Ugmuls 5.5e Automation | Skipping ${event.name} for hidden/dead/defeated/0 HP token "${targetToken.name}".`
         );
 
         return;
@@ -313,7 +313,7 @@ async function executeRegionEvent({
     if (!itemUUID) {
 
         console.warn(
-            "Region Spell Automation | Region has no dnd5e.item UUID."
+            "Ugmuls 5.5e Automation | Region has no dnd5e.item UUID."
         );
 
         return;
@@ -329,7 +329,7 @@ async function executeRegionEvent({
     if (!spell) {
 
         console.warn(
-            "Region Spell Automation | Could not resolve originating spell:",
+            "Ugmuls 5.5e Automation | Could not resolve originating spell:",
             itemUUID
         );
 
@@ -390,7 +390,7 @@ async function executeRegionEvent({
     if (!trigger) {
 
         console.warn(
-            `Region Spell Automation | Could not find trigger "${triggerId}" for "${spell.name}".`
+            `Ugmuls 5.5e Automation | Could not find trigger "${triggerId}" for "${spell.name}".`
         );
 
         return;
@@ -447,7 +447,7 @@ async function executeRegionEvent({
         catch (err) {
 
             console.warn(
-                "Region Spell Automation | Failed resolving caster token:",
+                "Ugmuls 5.5e Automation | Failed resolving caster token:",
                 casterUUID,
                 err
             );
@@ -504,7 +504,7 @@ async function executeRegionEvent({
         ) {
 
             console.log(
-                `Region Spell Automation | Once Per Turn blocked "${spell.name}" → "${trigger.name}" for ${targetToken.name}.`,
+                `Ugmuls 5.5e Automation | Once Per Turn blocked "${spell.name}" → "${trigger.name}" for ${targetToken.name}.`,
                 {
                     event:
                         event.name,
@@ -534,7 +534,7 @@ async function executeRegionEvent({
     if (!activity) {
 
         console.warn(
-            `Region Spell Automation | Activity "${trigger.activity}" not found on "${spell.name}".`
+            `Ugmuls 5.5e Automation | Activity "${trigger.activity}" not found on "${spell.name}".`
         );
 
 
@@ -556,7 +556,7 @@ async function executeRegionEvent({
             if (!game.user.isGM || (activeGM && activeGM.id !== game.user.id)) return;
             await recordMovementDamage({ trigger, spell, region, event, activity });
         } catch (err) {
-            console.error("Region Spell Automation | Movement damage tracking failed:", err);
+            console.error("Ugmuls 5.5e Automation | Movement damage tracking failed:", err);
             ui.notifications.error(`${spell.name}: ${err.message}`);
         }
         return;
@@ -576,9 +576,9 @@ async function executeRegionEvent({
             await appendSharedTarget(sharedMessage, describeTarget(targetDoc));
             if (isNewTarget) await promptTargetSave(sharedMessage, targetDoc, trigger);
             if (turnKey) oncePerTurnHistory.add(turnKey);
-            console.log(`Region Spell Automation | Added "${targetToken.name}" to this turn's shared card for "${spell.name}".`);
+            console.log(`Ugmuls 5.5e Automation | Added "${targetToken.name}" to this turn's shared card for "${spell.name}".`);
         } catch (err) {
-            console.error("Region Spell Automation | Could not add shared-card target:", err);
+            console.error("Ugmuls 5.5e Automation | Could not add shared-card target:", err);
             ui.notifications.error(`${spell.name}: could not add target to shared card. Check F12 console.`);
         }
         return;
@@ -632,7 +632,7 @@ async function executeRegionEvent({
 
 
         console.log(
-            `Region Spell Automation | Running "${trigger.activity}" for "${spell.name}" → "${trigger.name}" on ${targetToken.name}.`,
+            `Ugmuls 5.5e Automation | Running "${trigger.activity}" for "${spell.name}" → "${trigger.name}" on ${targetToken.name}.`,
             {
                 event:
                     event.name,
@@ -701,7 +701,7 @@ async function executeRegionEvent({
             } else {
                 // Canceled or prevented usage must be allowed to retry.
                 if (turnKey) oncePerTurnHistory.delete(turnKey);
-                console.warn("Region Spell Automation | Shared activity use produced no chat card; no allowance recorded.");
+                console.warn("Ugmuls 5.5e Automation | Shared activity use produced no chat card; no allowance recorded.");
             }
         }
 
@@ -720,7 +720,7 @@ async function executeRegionEvent({
 
 
         console.error(
-            `Region Spell Automation | "${spell.name}" / "${trigger.name}" failed:`,
+            `Ugmuls 5.5e Automation | "${spell.name}" / "${trigger.name}" failed:`,
             err
         );
 
@@ -772,7 +772,7 @@ async function executeRegionEvent({
 // EXPOSE API
 // ============================================================
 
-globalThis.RegionSpellAutomation = {
+globalThis.Ugmuls55eAutomation = {
     handleRegionEvent
 };
 
@@ -841,12 +841,12 @@ Hooks.once("ready", () => {
                 }
             }
         }).catch(err => {
-            console.error("Region Spell Automation | Initial shared-card registration failed:", err);
+            console.error("Ugmuls 5.5e Automation | Initial shared-card registration failed:", err);
             ui.notifications.error("Could not register the initial spell card for sharing. Check F12 console.");
         });
     });
 
-    Hooks.on("regionSpellAutomation.targetsConfirmed", message => {
+    Hooks.on("ugmuls55eAutomation.targetsConfirmed", message => {
         const pending = pendingCastAllowances.get(message.id);
         if (!pending) return;
         pendingCastAllowances.delete(message.id);
@@ -860,10 +860,10 @@ Hooks.once("ready", () => {
                     if (key) oncePerTurnHistory.add(key);
                 }
             }
-        }).catch(err => console.error("Region Spell Automation | Confirmed target registration failed:", err));
+        }).catch(err => console.error("Ugmuls 5.5e Automation | Confirmed target registration failed:", err));
     });
 
-    console.log("Region Spell Automation | Installing v0.6.1 Region hook");
+    console.log("Ugmuls 5.5e Automation | Installing v0.6.1 Region hook");
 
 
     // ========================================================
@@ -881,7 +881,7 @@ Hooks.once("ready", () => {
 
 
             console.log(
-                "Region Spell Automation | Once Per Turn history cleared."
+                "Ugmuls 5.5e Automation | Once Per Turn history cleared."
             );
         }
     );
@@ -971,7 +971,7 @@ Hooks.once("ready", () => {
             ) {
 
                 console.warn(
-                    `Region Spell Automation | "${item.name}" has no triggers or Region Effects.`
+                    `Ugmuls 5.5e Automation | "${item.name}" has no triggers or Region Effects.`
                 );
 
                 return;
@@ -990,7 +990,7 @@ Hooks.once("ready", () => {
             ) {
 
                 console.warn(
-                    `Region Spell Automation | "${item.name}" created no Regions.`
+                    `Ugmuls 5.5e Automation | "${item.name}" created no Regions.`
                 );
 
                 return;
@@ -1035,7 +1035,7 @@ Hooks.once("ready", () => {
                     ) {
 
                         console.warn(
-                            `Region Spell Automation | "${item.name}" contains a trigger with no ID.`,
+                            `Ugmuls 5.5e Automation | "${item.name}" contains a trigger with no ID.`,
                             trigger
                         );
 
@@ -1048,7 +1048,7 @@ Hooks.once("ready", () => {
                     ) {
 
                         console.warn(
-                            `Region Spell Automation | "${item.name}" contains an unnamed trigger.`
+                            `Ugmuls 5.5e Automation | "${item.name}" contains an unnamed trigger.`
                         );
 
                         continue;
@@ -1125,7 +1125,7 @@ Hooks.once("ready", () => {
                     // ----------------------------------------
 
                     const source = `
-await globalThis.RegionSpellAutomation.handleRegionEvent({
+await globalThis.Ugmuls55eAutomation.handleRegionEvent({
     event,
     region,
     scene,
@@ -1190,7 +1190,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     catch (err) {
 
                         console.error(
-                            `Region Spell Automation | Failed creating activity behaviors for "${item.name}":`,
+                            `Ugmuls 5.5e Automation | Failed creating activity behaviors for "${item.name}":`,
                             err
                         );
 
@@ -1268,7 +1268,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                             catch (err) {
 
                                 console.error(
-                                    `Region Spell Automation | Failed applying tokenEnter updates for "${item.name}":`,
+                                    `Ugmuls 5.5e Automation | Failed applying tokenEnter updates for "${item.name}":`,
                                     err
                                 );
                             }
@@ -1312,7 +1312,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     catch (err) {
 
                         console.warn(
-                            `Region Spell Automation | Failed resolving Region Effect "${regionEffect.name}".`,
+                            `Ugmuls 5.5e Automation | Failed resolving Region Effect "${regionEffect.name}".`,
                             err
                         );
                     }
@@ -1365,7 +1365,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                         continue;
                     }
                     if(effectDispositions===null) {
-                        console.warn("Region Spell Automation | Region effect targeting needs a unique caster token.",region.uuid);
+                        console.warn("Ugmuls 5.5e Automation | Region effect targeting needs a unique caster token.",region.uuid);
                         continue;
                     }
 
@@ -1408,7 +1408,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
 
 
                         console.log(
-                            `Region Spell Automation | Attached Region Effect "${regionEffect.name}" to "${item.name}".`
+                            `Ugmuls 5.5e Automation | Attached Region Effect "${regionEffect.name}" to "${item.name}".`
                         );
 
                     }
@@ -1416,7 +1416,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                     catch (err) {
 
                         console.error(
-                            `Region Spell Automation | Failed attaching Region Effect "${regionEffect.name}" to "${item.name}":`,
+                            `Ugmuls 5.5e Automation | Failed attaching Region Effect "${regionEffect.name}" to "${item.name}":`,
                             err
                         );
 
@@ -1437,7 +1437,7 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
         for(const region of canvas.scene?.regions??[]) {
             const uuid=region.flags?.dnd5e?.item;if(!uuid)continue;
             try {const item=await fromUuid(uuid);if(item)await attachSpellRegions({item},[region]);}
-            catch(err){console.error("Region Spell Automation | Region targeting refresh failed:",err);}
+            catch(err){console.error("Ugmuls 5.5e Automation | Region targeting refresh failed:",err);}
         }
     });
     // D&D5e's local post-template hook ran on the caster and cannot write
@@ -1457,11 +1457,11 @@ await globalThis.RegionSpellAutomation.handleRegionEvent({
                 await attachSpellRegions({ item }, [region]);
             }
         } catch (err) {
-            console.error("Region Spell Automation | GM Region setup failed:", err);
+            console.error("Ugmuls 5.5e Automation | GM Region setup failed:", err);
             ui.notifications.error("Could not configure spell Region automation. Check F12 console.");
         }
     });
     console.log(
-        "Region Spell Automation | v0.6.1 Ready"
+        "Ugmuls 5.5e Automation | v0.6.1 Ready"
     );
 });

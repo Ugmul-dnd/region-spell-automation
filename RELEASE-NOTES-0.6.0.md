@@ -1,4 +1,4 @@
-# Region Spell Automation v0.6.0
+# Ugmuls 5.5e Automation v0.6.0
 
 This revision expands the module's configurable region, combat-card, weapon mastery, damage, and effect automation. Each optional gameplay feature can be controlled through the Module Options window.
 

@@ -1,4 +1,4 @@
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 
 export function shouldCleanInstantRegion(item, config, activity = null) {
     const duration = item?.type === "feat" || activity?.duration?.override
@@ -56,13 +56,13 @@ export async function cleanupInstantRegions(combat, changes, options = {}) {
         }
         if (ids.length) {
             await scene.deleteEmbeddedDocuments("Region", ids);
-            console.log(`Region Spell Automation | Removed ${ids.length} instantaneous spell Region(s) after the caster's turn.`);
+            console.log(`Ugmuls 5.5e Automation | Removed ${ids.length} instantaneous spell Region(s) after the caster's turn.`);
         }
     }
 }
 
 function reportError(err) {
-    console.error("Region Spell Automation | Instantaneous Region cleanup failed:", err);
+    console.error("Ugmuls 5.5e Automation | Instantaneous Region cleanup failed:", err);
     ui.notifications.error("Could not clean up an instantaneous spell Region. Check F12 console.");
 }
 

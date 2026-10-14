@@ -1,4 +1,4 @@
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 const installed=new WeakSet();
 let activePlacement=null;
 

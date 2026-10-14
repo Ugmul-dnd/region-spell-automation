@@ -1,4 +1,4 @@
-const ID="region-spell-automation";
+const ID="ugmuls-5-5e-automation";
 const selected=new WeakSet(),pending=new WeakMap(),reserved=new Set();
 const enabled=()=>game.settings.get(ID,"savageAttackerAutomation")===true;
 export const savageFeature=actor=>Array.from(actor?.items??[]).find(item=>item.type==="feat"&&
@@ -48,11 +48,11 @@ Hooks.once("init",()=>game.settings.register(ID,"savageAttackerAutomation",{name
     hint:"Offer Savage Attacker on weapon damage rolls. Keep the higher weapon dice set and mark it used until next turn start.",
     scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationSavage={addSavageToggle,finalizeSavage,commitSavage};
+    globalThis.Ugmuls55eAutomationSavage={addSavageToggle,finalizeSavage,commitSavage};
     Hooks.on("dnd5e.preRollDamageV2",(config,dialog)=>{
         if(!enabled()||config.subject?.type!=="attack"||config.subject.item?.type!=="weapon")return;
         const configure=dialog.configure;
-        Object.assign(dialog,globalThis.RegionSpellAutomationDamage.configurePromptDialog("damage",dialog));
+        Object.assign(dialog,globalThis.Ugmuls55eAutomationDamage.configurePromptDialog("damage",dialog));
         if(configure===false)dialog.configure=false;
     });
 });

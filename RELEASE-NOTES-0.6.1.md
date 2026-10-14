@@ -1,4 +1,4 @@
-# Region Spell Automation v0.6.1
+# Ugmuls 5.5e Automation v0.6.1
 
 Attack assistance, bonus damage riders, and repeat-attack controls, with easier correction of automated damage.
 

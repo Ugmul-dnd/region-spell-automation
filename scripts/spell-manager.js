@@ -1,5 +1,5 @@
 // ============================================================
-// Region Spell Automation
+// Ugmuls 5.5e Automation
 // Spell Manager
 // v0.6.1
 //
@@ -11,7 +11,7 @@
 // - Live spell search/filter
 // ============================================================
 
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const SETTING_KEY = "spellTable";
 import { addStartingSpells } from "./starter-spells.js";
 
@@ -846,7 +846,7 @@ class RegionSpellManager
                     await game.settings.set(MODULE_ID, SETTING_KEY, table);
                 } catch (err) {
                     checkbox.checked = game.settings.get(MODULE_ID, SETTING_KEY)?.[name]?.hideRegionFromPlayers === true;
-                    console.error("Region Spell Automation | Could not save Region visibility:", err);
+                    console.error("Ugmuls 5.5e Automation | Could not save Region visibility:", err);
                     ui.notifications.error("Could not save Region visibility. Check F12 console.");
                 } finally { checkbox.disabled = false; }
             });
@@ -903,7 +903,7 @@ class RegionSpellManager
                     await game.settings.set(MODULE_ID, SETTING_KEY, table);
                     this.render({ force: true });
                 } catch (err) {
-                    console.error("Region Spell Automation | Bulk enable/disable failed:", err);
+                    console.error("Ugmuls 5.5e Automation | Bulk enable/disable failed:", err);
                     ui.notifications.error("Could not update selected spells. Check F12 console.");
                 } finally { refreshSelection(); }
             });
@@ -944,7 +944,7 @@ class RegionSpellManager
                 for (const name of names) this.selectedSpells.delete(name);
                 this.render({ force: true });
             } catch (err) {
-                console.error("Region Spell Automation | Could not delete selected spells:", err);
+                console.error("Ugmuls 5.5e Automation | Could not delete selected spells:", err);
                 ui.notifications.error("Could not delete selected spells. Check F12 console.");
             } finally { refreshSelection(); }
         });
@@ -960,7 +960,7 @@ class RegionSpellManager
                 ui.notifications.info(`Added ${added.length} starting spell(s), disabled for review. Match activities/effects, then enable them.`);
                 this.render({ force: true });
             } catch (err) {
-                console.error("Region Spell Automation | Could not add starting spells:", err);
+                console.error("Ugmuls 5.5e Automation | Could not add starting spells:", err);
                 ui.notifications.error("Could not add starting spells. Check F12 console.");
             } finally { button.disabled = false; }
         });
@@ -1070,7 +1070,7 @@ class RegionSpellManager
                     );
                     this.render({ force: true });
                     } catch (err) {
-                        console.error('Region Spell Automation | Enable/disable failed:', err);
+                        console.error('Ugmuls 5.5e Automation | Enable/disable failed:', err);
                         ui.notifications.error('Could not update spell state. Check F12 console.');
                     } finally { button.disabled = false; }
                 }
@@ -2612,7 +2612,7 @@ class RegionConditionPicker extends foundry.applications.api.ApplicationV2 {
                 this.editor.render({force:true});
                 this.editor.bringToFront?.();
             } catch(err) {
-                console.error("Region Spell Automation | Could not save Region conditions:",err);
+                console.error("Ugmuls 5.5e Automation | Could not save Region conditions:",err);
                 ui.notifications.error("Could not save Region conditions.");
             } finally {button.disabled=false;}
         });
@@ -2684,7 +2684,7 @@ class RegionSpellDropDialog extends foundry.applications.api.ApplicationV2 {
                 }
                 editor.render({force:true});
             } catch (err) {
-                console.error("Region Spell Automation | Could not add dropped spell:", err);
+                console.error("Ugmuls 5.5e Automation | Could not add dropped spell:", err);
                 ui.notifications.error("Could not add the spell or feature. Check F12 console.");
             } finally { this.busy = false; }
         });
@@ -2744,6 +2744,6 @@ Hooks.once("init", () => {
 
 
     console.log(
-        "Region Spell Automation | v0.6.1 Spell Manager registered"
+        "Ugmuls 5.5e Automation | v0.6.1 Spell Manager registered"
     );
 });

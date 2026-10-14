@@ -1,4 +1,4 @@
-const MODULE_ID="region-spell-automation";
+const MODULE_ID="ugmuls-5-5e-automation";
 
 export function attackCardProgress(message) {
     if (message?.type !== "usage" || message.getAssociatedActivity?.()?.type !== "attack") return null;
@@ -95,8 +95,8 @@ export function showPendingSaves(message,root) {
         status.title=animating?"Saving throw dice are still rolling":"Click to reopen this target's saving throw prompt";
         status.addEventListener("click",async event=>{
             event.preventDefault();event.stopPropagation();status.disabled=true;
-            try {await globalThis.RegionSpellAutomationRepromptSave?.(message,target.token);}
-            catch(err){console.error("Region Spell Automation | Save retry failed:",err);ui.notifications.error("Could not reopen the saving throw prompt.");}
+            try {await globalThis.Ugmuls55eAutomationRepromptSave?.(message,target.token);}
+            catch(err){console.error("Ugmuls 5.5e Automation | Save retry failed:",err);ui.notifications.error("Could not reopen the saving throw prompt.");}
             finally {status.disabled=animating;}
         });
         section.append(icon,list,status);row.append(section);previous.after(row);previous=row;
@@ -127,8 +127,8 @@ export async function rollAttackCardDamage(attack,event) {
         data.data.system.origin=usage.id;
         data.data.system.targets=attack.system.targets;
         data.data.flags[MODULE_ID]={...data.data.flags[MODULE_ID],damageAttackId:attack.id};
-        if (globalThis.RegionSpellAutomationDamage) Object.assign(dialog,
-            globalThis.RegionSpellAutomationDamage.configurePromptDialog("damage",dialog));
+        if (globalThis.Ugmuls55eAutomationDamage) Object.assign(dialog,
+            globalThis.Ugmuls55eAutomationDamage.configurePromptDialog("damage",dialog));
         Hooks.off("dnd5e.preRollDamageV2",hook);
     });
     try {await activity.onChatAction(event,{dataset:{action:"rollDamage"},disabled:false},usage);}
@@ -158,7 +158,7 @@ function addAttackDamageButton(attack,root) {
         event.preventDefault();event.stopPropagation();if(button.disabled)return;
         button.disabled=true;
         try {await rollAttackCardDamage(attack,event);}
-        catch(err){console.error("Region Spell Automation | Attack damage action failed:",err);ui.notifications.error("Could not open attack damage.");}
+        catch(err){console.error("Ugmuls 5.5e Automation | Attack damage action failed:",err);ui.notifications.error("Could not open attack damage.");}
         finally {button.disabled=false;}
     });
     if (controls.tagName === "UL") {
@@ -230,8 +230,8 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"simplifyAttackCards",{
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
 }));
 Hooks.once("ready",()=>{
-    globalThis.RegionSpellAutomationFollowRollMenu=followRollMenuExpansion;
-    globalThis.RegionSpellAutomationFollowChatChanges=followChatCardChanges;
+    globalThis.Ugmuls55eAutomationFollowRollMenu=followRollMenuExpansion;
+    globalThis.Ugmuls55eAutomationFollowChatChanges=followChatCardChanges;
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
     Hooks.on("diceSoNiceRollComplete",id=>{
         // DSN clears its animating flag after notifying listeners.
@@ -254,4 +254,4 @@ Hooks.once("init",()=>game.settings.register(MODULE_ID,"scrollChatOnOpen",{
     name:"Scroll Chat to Bottom on Open",hint:"When switching to the Chat tab, scroll to the newest message after the log becomes visible.",
     scope:"client",config:true,type:Boolean,default:true
 }));
-Hooks.on("changeSidebarTab",tab=>scrollOnChatTab(tab).catch(err=>console.error("Region Spell Automation | Chat scroll failed:",err)));
+Hooks.on("changeSidebarTab",tab=>scrollOnChatTab(tab).catch(err=>console.error("Ugmuls 5.5e Automation | Chat scroll failed:",err)));

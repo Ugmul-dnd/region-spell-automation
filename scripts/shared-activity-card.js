@@ -11,19 +11,19 @@ export function linkedHpCards(roll) {
     if(roll.type!=="attack")return cards;
     const attacks=Array.from(origin.getAssociatedRolls?.("attack")??[]);
     return cards.filter(card=>{
-        const explicit=card.getFlag?.("region-spell-automation","damageAttackId");
+        const explicit=card.getFlag?.("ugmuls-5-5e-automation","damageAttackId");
         if(explicit)return explicit===roll.id;
         const preceding=attacks.filter(attack=>attack.timestamp<=card.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
         return preceding?.id===roll.id;
     });
 }
 export function isRollAdjustmentLocked(roll) {
-    return linkedHpCards(roll).some(card=>!card.getFlag?.("region-spell-automation","masteryGrazeUndone")&&
-        (card.getFlag?.("region-spell-automation","hpApplicationRecorded")===true||card.getFlag?.("region-spell-automation","damageUndoHistory")?.length>0));
+    return linkedHpCards(roll).some(card=>!card.getFlag?.("ugmuls-5-5e-automation","masteryGrazeUndone")&&
+        (card.getFlag?.("ugmuls-5-5e-automation","hpApplicationRecorded")===true||card.getFlag?.("ugmuls-5-5e-automation","damageUndoHistory")?.length>0));
 }
 Hooks.once("ready",()=>{
     Hooks.on("updateChatMessage",(card,changes)=>{
-        if(!isDamageOrHealingCard(card)||!changes.flags?.["region-spell-automation"])return;
+        if(!isDamageOrHealingCard(card)||!changes.flags?.["ugmuls-5-5e-automation"])return;
         const origin=cardOrigin(card);
         const related=[...(origin?.getAssociatedRolls?.("attack")??[]),...(origin?.getAssociatedRolls?.("save")??[])];
         for(const roll of related)ui.chat?.updateMessage?.(roll);
@@ -145,7 +145,7 @@ export async function appendSharedTarget(message, descriptor) {
         const targets = mergeTargets(eligible, descriptor);
         if (targets.length !== card.system.targets.length || targets.some((target, index) => target.token !== card.system.targets[index]?.token)) {
             const update = { "system.targets": targets };
-            if (eligible.length !== card.system.targets.length) update["flags.region-spell-automation.retargeted"] = true;
+            if (eligible.length !== card.system.targets.length) update["flags.ugmuls-5-5e-automation.retargeted"] = true;
             await card.update(update);
         }
     }

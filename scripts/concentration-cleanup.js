@@ -1,11 +1,11 @@
 // ============================================================
-// Region Spell Automation
+// Ugmuls 5.5e Automation
 // Concentration Cleanup
 // ============================================================
 console.log("RSA | CONCENTRATION FILE LOADED");
 
 Hooks.once("ready", () => {
-    const moduleId="region-spell-automation";
+    const moduleId="ugmuls-5-5e-automation";
     const hasRegions=effect=>{
         const item=effect?.getFlag("dnd5e","item")?.uuid;
         return item&&Array.from(game.scenes).some(scene=>scene.regions.some(region=>region.flags?.dnd5e?.item===item));
@@ -22,7 +22,7 @@ Hooks.once("ready", () => {
         const user=game.users.get(packet.userId),actor=await fromUuid(packet.actorUuid);
         const effect=actor?.effects.get(packet.effectId);
         if(!user?.active||!actor?.testUserPermission(user,"OWNER")||!actor.concentration.effects.has(effect)||!hasRegions(effect))return;
-        try {await actor.endConcentration(effect);}catch(err){console.error("Region Spell Automation | GM aura cleanup failed:",err);}
+        try {await actor.endConcentration(effect);}catch(err){console.error("Ugmuls 5.5e Automation | GM aura cleanup failed:",err);}
     });
 
     Hooks.on(
@@ -59,14 +59,14 @@ Hooks.once("ready", () => {
                     );
 
                     console.log(
-                        `Region Spell Automation | Deleted ${regionIds.length} Region(s) from "${scene.name}" after concentration ended.`
+                        `Ugmuls 5.5e Automation | Deleted ${regionIds.length} Region(s) from "${scene.name}" after concentration ended.`
                     );
 
                 }
                 catch (err) {
 
                     console.error(
-                        `Region Spell Automation | Failed deleting Regions from "${scene.name}":`,
+                        `Ugmuls 5.5e Automation | Failed deleting Regions from "${scene.name}":`,
                         err
                     );
                 }
@@ -75,6 +75,6 @@ Hooks.once("ready", () => {
     );
 
     console.log(
-        "Region Spell Automation | Concentration cleanup ready"
+        "Ugmuls 5.5e Automation | Concentration cleanup ready"
     );
 });

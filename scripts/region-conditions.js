@@ -1,5 +1,5 @@
 import {isEligibleTarget,regionEffectDispositions,resolveRegionCaster} from "./shared-activity-card.js";
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const TYPE = `${MODULE_ID}.conditions`;
 const queues = new Map();
 const isAuthority = () => game.user.isGM && (!game.users.activeGM || game.users.activeGM.id === game.user.id);
@@ -40,7 +40,7 @@ export async function syncRegionConditions(region, conditions = [], removed = fa
 }
 
 function report(err) {
-    console.error("Region Spell Automation | Region conditions failed:", err);
+    console.error("Ugmuls 5.5e Automation | Region conditions failed:", err);
     ui.notifications.error("Could not update Region conditions. Check the console.");
 }
 

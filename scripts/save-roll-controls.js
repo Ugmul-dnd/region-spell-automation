@@ -1,5 +1,5 @@
 import { createEventQueue, isRollAdjustmentLocked } from "./shared-activity-card.js";
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 const channel = `module.${MODULE_ID}`;
 const enqueue = createEventQueue();
 const visualAnimations=new Map();
@@ -81,7 +81,7 @@ export async function updateSaveMode(message, mode, index, user = game.user) {
     if (mode !== 0) flavor += ` (${game.i18n.localize(mode === 1 ? "DND5E.Advantage" : "DND5E.Disadvantage")})`;
     await animateNewSaveDice(message, adjusted._rsaNewD20Results, user);
     if(adjusted._rsaNewD20Results?.length&&game.dice3d?.showForRoll&&game.user.isGM) {
-        await globalThis.RegionSpellAutomationNpcDamage?.waitForWorkflowAnimations?.(message);
+        await globalThis.Ugmuls55eAutomationNpcDamage?.waitForWorkflowAnimations?.(message);
     }
     if(!canAdjustSave(message,user))return;
     await message.update({ rolls, flavor });
@@ -101,14 +101,14 @@ export async function animateNewSaveDice(message, results, user = game.user) {
             message.whisper?.length ? message.whisper : null, message.blind ?? false, message.id, message.speaker));
         // A hidden GM can defer its local animation indefinitely. Other visible
         // clients still finish their dice before the coordinated result update.
-        if(globalThis.document?.hidden){animation.catch(err=>console.warn("Region Spell Automation | Background dice animation failed:",err));return;}
-        const wait=globalThis.RegionSpellAutomationNpcDamage?.waitForDamageAnimation;
+        if(globalThis.document?.hidden){animation.catch(err=>console.warn("Ugmuls 5.5e Automation | Background dice animation failed:",err));return;}
+        const wait=globalThis.Ugmuls55eAutomationNpcDamage?.waitForDamageAnimation;
         if(wait)await wait(message,animation);
         else await Promise.all([animation,waitForTrackedRollAnimation(message)]);
     } catch (err) {
         // An optional animation failure must not retry the adjustment or
         // generate another die. Commit the already evaluated result afterward.
-        console.warn("Region Spell Automation | Roll adjustment dice animation failed:", err);
+        console.warn("Ugmuls 5.5e Automation | Roll adjustment dice animation failed:", err);
     }
 }
 
@@ -127,7 +127,7 @@ function requestChange(message, mode, index) {
 }
 
 function reportError(err) {
-    console.error("Region Spell Automation | Roll advantage adjustment failed:", err);
+    console.error("Ugmuls 5.5e Automation | Roll advantage adjustment failed:", err);
     ui.notifications.error("Could not adjust the roll. Check F12 console.");
 }
 
@@ -185,7 +185,7 @@ export function addSaveControls(message, html) {
             menu.append(button);
         }
         host.append(menu);
-        globalThis.RegionSpellAutomationFollowRollMenu?.(host,menu);
+        globalThis.Ugmuls55eAutomationFollowRollMenu?.(host,menu);
     }
 }
 
@@ -200,7 +200,7 @@ Hooks.once("init", () => {
     });
 });
 Hooks.once("ready", () => {
-    globalThis.RegionSpellAutomationRollVisualWait=waitForTrackedRollAnimation;
+    globalThis.Ugmuls55eAutomationRollVisualWait=waitForTrackedRollAnimation;
     Hooks.on("diceSoNiceReady",dice=>trackRollAnimations(dice));
     trackRollAnimations();
     Hooks.on("dnd5e.renderChatMessage", addSaveControls);

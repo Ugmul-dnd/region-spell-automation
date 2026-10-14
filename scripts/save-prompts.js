@@ -1,4 +1,4 @@
-const MODULE_ID = "region-spell-automation";
+const MODULE_ID = "ugmuls-5-5e-automation";
 import { isEligibleTarget, createEventQueue } from "./shared-activity-card.js";
 export { isEligibleTarget };
 const prompted = new Map();
@@ -19,7 +19,7 @@ export function registerMagicResistanceBridge(api=globalThis.ac5e?.usageRules) {
             evaluate:sandbox=>game.settings.get(MODULE_ID,"magicResistanceSaves")===true&&
                 (sandbox.isSpell===true||sandbox.isMagical===true)&&
                 hasMagicResistance(fromUuidSync(sandbox.actorUuid,{strict:false}))}));
-    } catch(err){magicResistanceBridge=false;console.warn("Region Spell Automation | Magic Resistance integration unavailable:",err);}
+    } catch(err){magicResistanceBridge=false;console.warn("Ugmuls 5.5e Automation | Magic Resistance integration unavailable:",err);}
     return magicResistanceBridge;
 }
 export function magicResistanceSaveDefaults(config,dialog,message) {
@@ -63,11 +63,11 @@ export async function receiveSavePrompt(packet) {
     if (!isEligibleTarget(token)) return;
     if (!message.system.targets?.some(target => target.token === packet.tokenUuid ||
         (actor?.uuid && target.actor === actor.uuid))) {
-        console.warn("Region Spell Automation | Save prompt skipped: token is not recorded on the cast card.", packet.tokenUuid);
+        console.warn("Ugmuls 5.5e Automation | Save prompt skipped: token is not recorded on the cast card.", packet.tokenUuid);
         return;
     }
     if (!actor?.isOwner || typeof actor.rollSavingThrow !== "function") {
-        console.warn("Region Spell Automation | Save prompt skipped: target actor is unavailable or not owned.", packet.tokenUuid);
+        console.warn("Ugmuls 5.5e Automation | Save prompt skipped: target actor is unavailable or not owned.", packet.tokenUuid);
         return;
     }
     const takeover=packet.retry===true&&packet.userId===packet.sourceId&&
@@ -81,7 +81,7 @@ export async function receiveSavePrompt(packet) {
     const rawDC = activity.save.dc.value;
     const dc = rawDC == null || rawDC === "" ? NaN : Number(rawDC);
     if (!ability || !Number.isFinite(dc)) {
-        console.warn("Region Spell Automation | Save prompt skipped: missing save ability or DC.", message.id);
+        console.warn("Ugmuls 5.5e Automation | Save prompt skipped: missing save ability or DC.", message.id);
         return;
     }
     const key = JSON.stringify([message.id, token.uuid]);
@@ -93,10 +93,10 @@ export async function receiveSavePrompt(packet) {
     const config = { ability, target: dc };
     if (bonusData.parts.length) config.rolls = [bonusData];
     try {
-        const auto=!takeover&&globalThis.RegionSpellAutomationNpcDamage?.shouldAutoRollNpc(actor)===true;
+        const auto=!takeover&&globalThis.Ugmuls55eAutomationNpcDamage?.shouldAutoRollNpc(actor)===true;
         if(auto)config.rsaAutoNpcSave=true;
         const dialog = { configure: !auto, options: { id: `rsa-save-${message.id}-${token.id ?? token.uuid}` } };
-        const positioned = auto?dialog:(globalThis.RegionSpellAutomationDamage?.configurePromptDialog("save",dialog) ?? dialog);
+        const positioned = auto?dialog:(globalThis.Ugmuls55eAutomationDamage?.configurePromptDialog("save",dialog) ?? dialog);
         const rolls=await actor.rollSavingThrow(config, positioned, { data: {
             speaker: ChatMessage.getSpeaker({ actor, scene: token.parent, token }),
             system: { ...activity.messageSources, origin: message.id }
@@ -156,7 +156,7 @@ export async function sendSavePrompt(message, token, kind) {
     });
     const packet = { action: kind === "spell" ? "promptSpellSave" : "promptRegionSave", messageId: message.id, tokenUuid: token.uuid,
         sourceId: game.user.id, userId: user.id };
-    console.log("Region Spell Automation | Routing save prompt", {
+    console.log("Ugmuls 5.5e Automation | Routing save prompt", {
         target: token.name ?? token.actor.name ?? token.uuid, recipient: user.name ?? user.id, gm: user.isGM
     });
     if (user.id === game.user.id) {
@@ -166,12 +166,12 @@ export async function sendSavePrompt(message, token, kind) {
 }
 
 function reportError(err) {
-    console.error("Region Spell Automation | Saving throw prompt failed:", err);
+    console.error("Ugmuls 5.5e Automation | Saving throw prompt failed:", err);
     ui.notifications.error("Could not prompt the affected token's saving throw. Use its chat-card Save button.");
 }
 
 export function registerSavePromptHooks() {
-    globalThis.RegionSpellAutomationRepromptSave=repromptTargetSave;
+    globalThis.Ugmuls55eAutomationRepromptSave=repromptTargetSave;
     registerMagicResistanceBridge();
     Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerMagicResistanceBridge(usageRules));
     Hooks.on("dnd5e.preRollSavingThrowV2",magicResistanceSaveDefaults);
