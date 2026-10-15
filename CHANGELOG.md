@@ -2,6 +2,22 @@
 
 ## v0.7.1 (Unreleased)
 
+- Player pending-damage retries now hand completed rolls to the GM before coordinating animation acknowledgements. Fixes player rolls animating but leaving the pending card unresolved.
+
+- Publishing pending damage explicitly suppresses Dice So Nice automatic replay during the card update on every client, then restores normal handling. Covers original prompts and retries.
+
+- Pending damage publication suppresses Dice So Nice replay of dice already animated by the pending workflow, avoiding duplicate throws after rolling or retrying. Later additional rolls keep normal animation handling.
+
+- Damage/healing prompts create a pending card before the roll. Click ---pending--- to reopen the prompt for yourself or let the GM take over; older prompts are invalidated. The same card fills after dice animation, retaining normal application and Undo controls.
+
+- Metamagic-only confirmation shows a fixed, read-only target list. Adding/removing creatures is available only when Choose Targets is enabled; Careful Spell still selects protected creatures without removing them from the spell.
+
+- Area casts collect targets and proceed without confirmation unless the activity has Choose Targets enabled or the caster has applicable cast-time Metamagic. Selective and Metamagic casts retain confirmation before rolls; Retarget remains available for corrections.
+
+- Spell damage cards show Metamagic tags beside Spell/Magical, including Transmuted, Heightened, Careful, Empowered and Seeking. Hover for the changed element or affected targets; reroll tags apply only to the corresponding damage/attack.
+
+- Cast-time Metamagic configuration supports single-target and area spells. Choose Transmuted damage type, one Heightened target, and Careful protection before rolls begin. Costs and combination limits respect Sorcery Incarnate with active Innate Sorcery; Arcane Apotheosis tracks its free use on your turn, including Empowered and Seeking. Heightened combines with other save conditions, Careful records automatic successes and prevents half-on-save damage, and Region follow-ups retain Heightened/Transmuted.
+
 - Conjure Minor Elementals uses the damage-row selector for its remembered elemental damage type, removing the duplicate Configuration selector. Bonus damage rows have extra spacing below Situational Bonus.
 
 - Seeking Spell no longer cancels because animation or condition-rendering metadata refreshed during the reroll. Its change guard compares actual dice, totals, mode and targets, while genuine attack edits still refund the point.

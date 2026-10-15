@@ -28,7 +28,7 @@ export async function waitForTrackedRollAnimation(message) {
 }
 
 export function canAdjustSave(message, user) {
-    return !isRollAdjustmentLocked(message) && ["save", "attack"].includes(message?.type) && Boolean(user?.isGM || message.author?.id === user?.id ||
+    return !message?.getFlag?.(MODULE_ID,"carefulSpell") && !isRollAdjustmentLocked(message) && ["save", "attack"].includes(message?.type) && Boolean(user?.isGM || message.author?.id === user?.id ||
         message.getAssociatedActor?.()?.testUserPermission?.(user, "OWNER"));
 }
 

@@ -145,6 +145,7 @@ export async function promptTargetSave(message, token, trigger) {
 
 export async function sendSavePrompt(message, token, kind) {
     if (!isEligibleTarget(token)) return;
+    if(await globalThis.Ugmuls55eAutomationMetamagic?.carefulSave(message,token))return;
     const setting = kind === "spell" ? "promptForSaveOnSpellCasts" : "promptForSaveOnRegionTriggers";
     if (game.settings.get(MODULE_ID, setting) !== true) return;
     const user = selectSaveUser(token.actor, game.users, game.users.activeGM, game.user.isGM ? game.user : null);

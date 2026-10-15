@@ -38,7 +38,7 @@ export function damageDice(rolls) {
 const signature=message=>JSON.stringify(message.rolls.map(roll=>roll.toJSON()));
 export function canEmpower(message,user=game.user) {
     const actor=actorFor(message),origin=originOf(message);
-    return enabled()&&spellDamage(message)&&!!empoweredFeature(actor)&&!!sorceryResource(actor)&&!isRollAdjustmentLocked(message)&&
+    return enabled()&&spellDamage(message)&&!!empoweredFeature(actor)&&(!!sorceryResource(actor)||!!globalThis.Ugmuls55eAutomationMetamagic?.freeMetamagic(actor))&&!isRollAdjustmentLocked(message)&&
         !message.getFlag?.(ID,"empoweredSpellUsed")&&!origin?.getFlag?.(ID,"empoweredSpellUsed")&&
         !!(user?.isGM||actor?.testUserPermission?.(user,"OWNER"))&&damageDice(message.rolls??[]).length>0;
 }
@@ -74,9 +74,10 @@ export async function applyEmpowered(message,keys,expected,user=game.user) {
     await message.setFlag(ID,"manualDamageWorkflow",true);
     const result=await rerollDamageDice(message.rolls,keys);
     if(!canEmpower(message,user)||signature(message)!==expected)throw Error("The damage card changed before the reroll could finish.");
-    const resource=sorceryResource(actor),spent=Number(resource.system.uses.spent??0);let charged=false,committed=false;
+    const resource=sorceryResource(actor),spent=Number(resource?.system.uses.spent??0);let charged=false,committed=false,charge;
     try {
-        await resource.update({"system.uses.spent":spent+1});charged=true;
+        if(globalThis.Ugmuls55eAutomationMetamagic)charge=await globalThis.Ugmuls55eAutomationMetamagic.chargeMetamagic(actor,message,"empowered");
+        else await resource.update({"system.uses.spent":spent+1});charged=true;
         if(game.dice3d?.showForRoll) {
             const terms=result.visual.flatMap((die,index)=>index?[new foundry.dice.terms.OperatorTerm({operator:"+"}),die]:[die]);
             const visual=Roll.fromTerms(terms);
@@ -90,7 +91,7 @@ export async function applyEmpowered(message,keys,expected,user=game.user) {
             try {await origin.setFlag(ID,"empoweredSpellUsed",true);await origin.system?.onDescendentRefresh?.(message);await ui.chat?.updateMessage?.(origin);}
             catch(error){console.error("Ugmuls 5.5e Automation | Empowered origin refresh failed:",error);}
         }
-    } catch(error){if(charged&&!committed)await resource.update({"system.uses.spent":spent});throw error;}
+    } catch(error){if(charged&&!committed){if(charge)await charge.refund();else await resource.update({"system.uses.spent":spent});}throw error;}
 }
 async function pauseAutomation(message) {
     const gm=game.users.activeGM;
@@ -129,7 +130,7 @@ export function addEmpoweredButton(message,html) {
         const card=game.messages.get(summary.dataset.messageId);if(card?.type==="damage"&&!summary.hidden)entries.push({message:card,root:summary});
     }
     for(const entry of entries) {
-        const card=entry.message,actor=actorFor(card);if(!spellDamage(card)||!empoweredFeature(actor)||!card.isContentVisible||!sorceryResource(actor)||!(game.user.isGM||actor.testUserPermission?.(game.user,"OWNER")))continue;
+        const card=entry.message,actor=actorFor(card);if(!spellDamage(card)||!empoweredFeature(actor)||!card.isContentVisible||(!sorceryResource(actor)&&!globalThis.Ugmuls55eAutomationMetamagic?.freeMetamagic(actor))||!(game.user.isGM||actor.testUserPermission?.(game.user,"OWNER")))continue;
         const old=entry.root.querySelector('[data-rsa-empowered]');if(old){old.disabled=!canEmpower(card);continue;}
         const face=entry.root.querySelector('.chat-card')??entry.root;let controls=face.querySelector('.rsa-damage-actions');
         if(!controls){controls=document.createElement("div");controls.className="rsa-attack-actions rsa-damage-actions";face.append(controls);}

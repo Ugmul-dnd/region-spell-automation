@@ -12,6 +12,7 @@ export function styleActivityCard(message,html) {
     const root=html instanceof HTMLElement ? html : html?.[0];
     if (!root) return;
     hideUndoneGraze(message,root);
+    addMetamagicTags(message,root);
     root.classList.add("rsa-action-colors");
     showPendingSaves(message,root);
     if (["attack","save","damage","healing"].includes(message.type)) root.classList.add(`rsa-roll-${message.type}`);
@@ -50,6 +51,45 @@ export function styleActivityCard(message,html) {
         }
     }
 }
+// Cast-time choices belong to every damage roll; result-time choices belong to the specific roll.
+export function metamagicDamageTags(message) {
+    if(message?.type!=="damage")return [];
+    const chain=[message],seen=new Set([message.id]);let card=message;
+    while(card?.system?.origin){const origin=card.system.origin;card=typeof origin==="string"?game.messages.get(origin):origin;if(!card||seen.has(card.id))break;seen.add(card.id);chain.push(card);}
+    const flag=key=>chain.map(card=>card.getFlag?.(MODULE_ID,key)).find(Boolean);
+    const meta=flag("metamagic")??{},tags=[];
+    const targets=chain.find(card=>card.type==="usage")?.system?.targets??[];
+    const targetName=id=>targets.find(target=>target.token===id)?.name??"selected target";
+    const conversion=flag("transmutedSpell"),element=meta.transmuted??Object.values(conversion??{})[0];
+    if(element)tags.push({key:"transmuted",label:"Transmuted",hint:"Damage changed to "+element+"."});
+    if(meta.heightened)tags.push({key:"heightened",label:"Heightened",hint:"Disadvantage on saves against this casting: "+targetName(meta.heightened)+"."});
+    if(meta.careful?.length)tags.push({key:"careful",label:"Careful",hint:"Protected by Careful Spell: "+meta.careful.map(targetName).join(", ")+"."});
+    if(message.getFlag?.(MODULE_ID,"empoweredSpellUsed"))tags.push({key:"empowered",label:"Empowered",hint:"Selected damage dice were rerolled with Empowered Spell."});
+    const attackId=message.getFlag?.(MODULE_ID,"damageAttackId");
+    const usage=chain.find(card=>card.type==="usage");
+    const attack=attackId?game.messages.get(attackId):[...(usage?.getAssociatedRolls?.("attack")??[])].filter(roll=>roll.timestamp<=message.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
+    if(attack?.getFlag?.(MODULE_ID,"seekingSpellUsed"))tags.push({key:"seeking",label:"Seeking",hint:"This attack was rerolled with Seeking Spell."});
+    return tags;
+}
+export function addMetamagicTags(message,root) {
+    const entries=message.type==="damage"?[{message,root}]:[];
+    for(const summary of root.querySelectorAll('.card-summary[data-message-id]')){
+        const card=game.messages.get(summary.dataset.messageId);if(card?.type==="damage")entries.push({message:card,root:summary});
+    }
+    for(const entry of entries){
+        entry.root.querySelectorAll('[data-rsa-metamagic-tag]').forEach(tag=>tag.remove());
+        if(entry.message.isContentVisible===false)continue;
+        const face=entry.root.querySelector('.chat-card');
+        const properties=face?.querySelector('.icon-row .fa-tag')?.closest('.icon-row')?.querySelector('ul.pills');
+        if(!properties)continue;
+        for(const tag of metamagicDamageTags(entry.message)){
+            const pill=document.createElement('li');pill.className='pill transparent';pill.dataset.rsaMetamagicTag=tag.key;
+            pill.dataset.tooltip=tag.hint;
+            const label=document.createElement('span');label.className='label';label.textContent=tag.label;pill.append(label);properties.append(pill);
+        }
+    }
+}
+
 export function hideUndoneGraze(message,root) {
     const entries=message.type==="damage"?[{message,root}]:[];
     for(const summary of root.querySelectorAll(".card-summary[data-message-id]")) {
@@ -233,6 +273,10 @@ Hooks.once("ready",()=>{
     globalThis.Ugmuls55eAutomationFollowRollMenu=followRollMenuExpansion;
     globalThis.Ugmuls55eAutomationFollowChatChanges=followChatCardChanges;
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
+    Hooks.on("updateChatMessage",(card,changes)=>{
+        if(card.type==="attack"&&changes.flags?.[MODULE_ID]?.seekingSpellUsed)
+            for(const damage of linkedAttackDamage(card))ui.chat?.updateMessage?.(damage);
+    });
     Hooks.on("diceSoNiceRollComplete",id=>{
         // DSN clears its animating flag after notifying listeners.
         setTimeout(()=>refreshOrigin(game.messages.get(id)),0);

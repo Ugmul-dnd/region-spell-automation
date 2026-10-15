@@ -48,12 +48,17 @@ export function configurePromptDialog(kind, dialog = {}) {
                 const frenzy=globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch,{preview:true})??eldritch;
                 return globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,frenzy,{preview:true})??frenzy;
             }
+            async _prepareContext(options) {
+                if(kind==="damage")await globalThis.Ugmuls55eAutomationPendingDamage?.prepareDamageDialog(this);
+                return super._prepareContext(options);
+            }
             async _prepareFormulasContext(context,options) {
                 this._rsaPreview=kind==="damage";
                 try {return await super._prepareFormulasContext(context,options);}
                 finally {this._rsaPreview=false;}
             }
             _finalizeRolls(action) {
+                if(kind==="damage"&&globalThis.Ugmuls55eAutomationPendingDamage?.canSubmitDamage(this)===false)return [];
                 const rolls=super._finalizeRolls(action);
                 if(kind === "damage") {
                     const weaponRolls=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls)??rolls;

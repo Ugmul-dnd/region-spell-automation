@@ -60,6 +60,12 @@ Hooks.once("ready",()=>{
         const state={activity,message,remaining:total-1,firstPending:true,busy:false};
         state.window=new MultiShotWindow(state);windows.set(message.id,state);state.window.render({force:true});
     });
+    Hooks.on("ugmuls55eAutomation.castReady",(activity,message)=>{
+        if(game.settings.get(ID,"multiShotAttacks")!==true||windows.has(message.id))return;
+        const total=shotCount(activity,message);if(total<2)return;
+        const state={activity,message,remaining:total-1,firstPending:true,busy:false};
+        state.window=new MultiShotWindow(state);windows.set(message.id,state);state.window.render({force:true});
+    });
     Hooks.on("createChatMessage",message=>{
         if(message.type!=="attack")return;
         const origin=message.system?.origin;

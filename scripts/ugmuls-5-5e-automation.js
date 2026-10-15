@@ -688,6 +688,11 @@ async function executeRegionEvent({
                 data: {
                     system: { targets: [describeTarget(targetDoc)] },
                     flags: { [MODULE_ID]: { regionTriggered: true,
+                        ...(() => {
+                            const origin=game.messages.get(region.getFlag?.(MODULE_ID,"metamagicOrigin"));
+                            const meta=origin?.getFlag?.(MODULE_ID,"metamagic"),transmuted=origin?.getFlag?.(MODULE_ID,"transmutedSpell");
+                            return meta?{metamagic:{...meta,careful:[]},...(transmuted?{transmutedSpell:transmuted}:{})}:{};
+                        })(),
                         ...(sharedKey ? { sharedCardPerTurn: true, sharedCardKeys: [sharedKey] } : {}) } }
                 }
             }

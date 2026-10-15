@@ -41,7 +41,7 @@ function attackForDamage(message) {
     return [...(origin?.getAssociatedRolls?.("attack")??[])].filter(roll=>roll.timestamp<=message.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
 }
 export async function readyDamageTargets(message) {
-    if(!isDamageOrHealingCard(message))return null;
+    if(!isDamageOrHealingCard(message)||message.getFlag?.(MODULE_ID,"pendingDamage"))return null;
     if(message.getFlag(MODULE_ID,"masteryGrazeUndone"))return null;
     if(isManual(message))return waiting(message,"Manual card interaction stopped this workflow.");
     if(message.getFlag(MODULE_ID,"damageUndoHistory")?.length&&!message.getFlag(MODULE_ID,"automaticDamageDone"))return waiting(message,"HP changes were already applied manually.");
@@ -303,7 +303,7 @@ Hooks.once("ready",()=>{
         if(event.isTrusted===false)return;
         const interactive=event.target.closest?.("button,a,input,select,label,target-pill,[data-action]");if(!interactive)return;
         // Retrying an unanswered save continues the automatic workflow.
-        if(interactive.closest("[data-rsa-reprompt-save]"))return;
+        if(interactive.closest("[data-rsa-reprompt-save],[data-rsa-reprompt-damage]"))return;
         const id=interactive.closest("[data-message-id]")?.dataset.messageId;
         const message=game.messages.get(id);if(message)stopAutomaticDamage(message).catch(console.error);
     };

@@ -9,7 +9,7 @@ export function canSeek(card,user=game.user) {
     const actor=actorFor(card),item=card?.getAssociatedItem?.()??card?.getAssociatedActivity?.()?.item,targets=card?.system?.evaluatedTargets??[];
     return game.settings.get(ID,"seekingSpellAutomation")===true&&card?.type==="attack"&&item?.type==="spell"&&
         !card.getFlag?.(ID,"seekingSpellUsed")&&targets.length>0&&targets.every(target=>target.isMiss===true)&&
-        !!seekingFeature(actor)&&!!sorceryResource(actor,seekingFeature(actor))&&!!(user?.isGM||actor?.testUserPermission?.(user,"OWNER"))&&
+        !!seekingFeature(actor)&&(!!sorceryResource(actor,seekingFeature(actor))||!!globalThis.Ugmuls55eAutomationMetamagic?.freeMetamagic(actor))&&!!(user?.isGM||actor?.testUserPermission?.(user,"OWNER"))&&
         !!card.rolls?.[0]?.d20;
 }
 export function seekingSnapshot(card) {
@@ -40,13 +40,14 @@ export async function applySeeking(card,user=game.user) {
     if(!canSeek(card,user))throw Error("Seeking Spell requires a missed spell attack and an available Sorcery Point.");
     const original=seekingSnapshot(card),result=await seekingRoll(card.rolls[0]);
     if(!canSeek(card,user)||seekingSnapshot(card)!==original)throw Error("The attack changed. Try Seeking Spell again.");
-    const actor=actorFor(card),resource=sorceryResource(actor,seekingFeature(actor)),spent=Number(resource.system.uses.spent??0);let charged=false;
+    const actor=actorFor(card),resource=sorceryResource(actor,seekingFeature(actor)),spent=Number(resource?.system.uses.spent??0);let charged=false,charge;
     try {
-        await resource.update({"system.uses.spent":spent+1});charged=true;
+        if(globalThis.Ugmuls55eAutomationMetamagic)charge=await globalThis.Ugmuls55eAutomationMetamagic.chargeMetamagic(actor,card,"seeking");
+        else await resource.update({"system.uses.spent":spent+1});charged=true;
         await animateNewSaveDice(card,result.results,user);
         if(card.getFlag?.(ID,"seekingSpellUsed")||!card.system.evaluatedTargets.every(target=>target.isMiss===true)||seekingSnapshot(card)!==original)throw Error("The attack changed during the reroll. The Sorcery Point was refunded.");
         await card.update({rolls:[result.roll,...card.rolls.slice(1)],["flags."+ID+".seekingSpellUsed"]:true});
-    } catch(error){if(charged)await resource.update({"system.uses.spent":spent});throw error;}
+    } catch(error){if(charged){if(charge)await charge.refund();else await resource.update({"system.uses.spent":spent});}throw error;}
 }
 function report(error){console.error("Ugmuls 5.5e Automation | Seeking Spell failed:",error);ui.notifications.error(error.message);}
 export function addSeekingButton(message,html) {

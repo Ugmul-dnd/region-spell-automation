@@ -13,7 +13,8 @@ function stateFor(app,rolls) {
 function eligible(app) {const actor=actorFor(app);return game.settings.get(ID,"transmutedSpellAutomation")===true&&app.config.subject?.item?.type==="spell"&&actor?.isOwner&&!!transmutedFeature(actor);}
 export function addTransmutedChoice(app) {
     if(!eligible(app)||app.element.querySelector('[data-rsa-transmuted]'))return;
-    const state=stateFor(app,app.rolls??[]);if(!state.original.some(part=>part.types.some(type=>transmutedTypes.includes(type))))return;
+    const state=stateFor(app,app.rolls??[]);if(globalThis.Ugmuls55eAutomationMetamagic&&!state.inherited)return;
+    if(!state.original.some(part=>part.types.some(type=>transmutedTypes.includes(type))))return;
     const actor=actorFor(app),group=globalThis.Ugmuls55eAutomationDamage.addDamageChoice(app,{
         key:"transmuted",label:"Transmuted Spell",value:state.yes,locked:!!state.inherited,
         disabled:!state.inherited&&!sorceryResource(actor,transmutedFeature(actor)),change:yes=>{state.yes=yes;}
@@ -21,7 +22,7 @@ export function addTransmutedChoice(app) {
 }
 export function finalizeTransmuted(app,rolls,{preview=false}={}) {
     if(!eligible(app))return rolls;
-    const state=stateFor(app,rolls),active=state.yes&&(!!state.inherited||!!sorceryResource(actorFor(app),transmutedFeature(actorFor(app))));
+    const state=stateFor(app,rolls),active=(!globalThis.Ugmuls55eAutomationMetamagic||!!state.inherited)&&state.yes&&(!!state.inherited||!!sorceryResource(actorFor(app),transmutedFeature(actorFor(app))));
     const mapping={},result=rolls.map((roll,index)=>{
         const original=state.original[index];if(!original)return roll;
         const selected=roll.options.type??original.type;
@@ -51,8 +52,12 @@ export async function commitTransmuted(app,options) {
     try {if(origin)await origin.setFlag(ID,"transmutedSpell",entry.mapping);}
     catch(error){await resource.update({"system.uses.spent":spent});throw error;}
 }
-Hooks.once("init",()=>game.settings.register(ID,"transmutedSpellAutomation",{name:"Transmuted Spell Damage Type",hint:"Add Transmuted Spell to spell damage Configuration. Yes opens eligible elemental damage choices above. Spend 1 Sorcery Point on submission; repeated rolls from that casting retain its conversion.",scope:"world",config:true,type:Boolean,default:true}));
+Hooks.once("init",()=>game.settings.register(ID,"transmutedSpellAutomation",{name:"Transmuted Spell Damage Type",hint:"Choose Transmuted Spell during casting target confirmation. Spend 1 Sorcery Point once; damage and repeated rolls retain the selected conversion.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
     globalThis.Ugmuls55eAutomationTransmuted={addTransmutedChoice,finalizeTransmuted,commitTransmuted};
+    Hooks.on("dnd5e.postDamageRollConfiguration",(rolls,config,dialog,message)=>{
+        if(dialog.configure!==false||config.subject?.item?.type!=="spell")return;
+        const adjusted=finalizeTransmuted({config,message},rolls);rolls.splice(0,rolls.length,...adjusted);
+    });
     Hooks.on("dnd5e.preRollDamageV2",(config,dialog)=>{if(config.subject?.item?.type!=="spell")return;const configure=dialog.configure;Object.assign(dialog,globalThis.Ugmuls55eAutomationDamage.configurePromptDialog("damage",dialog));if(configure===false)dialog.configure=false;});
 });
