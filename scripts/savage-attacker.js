@@ -40,7 +40,7 @@ export async function commitSavage(app,options) {
     try {
         if(options?.dnd5e?.submitted) {
             const data={name:"Savage Used",img:savageFeature(actor)?.img,disabled:false,transfer:false,
-                duration:{rounds:1,expiry:"sourceStart"},start:CONFIG.ActiveEffect.documentClass.getEffectStart(),
+                duration:{rounds:1,expiry:"sourceStart",expired:false},start:CONFIG.ActiveEffect.documentClass.getEffectStart(),
                 system:{changes:[],origin:{actor:actor.uuid,item:savageFeature(actor)?.uuid}},flags:{[ID]:{savageUsed:true}}};
             if(globalThis.Ugmuls55eAutomationResources?.reuseMarker)await globalThis.Ugmuls55eAutomationResources.reuseMarker(actor,data,"savageUsed");
             else await actor.createEmbeddedDocuments("ActiveEffect",[data]);

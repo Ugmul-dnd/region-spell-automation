@@ -2,6 +2,23 @@
 
 ## v0.7.1 (Unreleased)
 
+- Conjure Minor Elementals uses the damage-row selector for its remembered elemental damage type, removing the duplicate Configuration selector. Bonus damage rows have extra spacing below Situational Bonus.
+
+- Seeking Spell no longer cancels because animation or condition-rendering metadata refreshed during the reroll. Its change guard compares actual dice, totals, mode and targets, while genuine attack edits still refund the point.
+
+- Seeking Spell adds a missed-spell-attack action that spends 1 Sorcery Point to reroll one d20 and use the new result. Refreshes hit/critical outcomes and prompts damage on a hit, with no Undo prerequisite.
+- Transmuted Spell adds a Yes/No option to damage Configuration. Yes opens eligible elemental damage-type selectors above; submission spends 1 Sorcery Point and repeated damage rolls from that casting retain the conversion. Cancel costs nothing.
+
+- Empowered Spell adds a feature-icon action to spell damage cards: select up to the Charisma modifier (minimum 1) active damage dice, confirm to spend 1 Sorcery Point, and replace those results even when lower. Supports critical dice, Dice So Nice timing, cancel, and applied-damage locks. One use per casting; opening the picker hands auto-application back to manual control.
+
+- Active Innate Sorcery defaults Sorcerer spell attack rolls to Advantage, with Automated Conditions support and normal advantage/disadvantage cancellation. Other classes' spells and weapon attacks are excluded; the existing spell DC effect is unchanged.
+
+- Combat-end cleanup leaves native expired/turn-expiry effects to D&D5e, avoiding missing-effect errors when native deletion overlaps tracker cleanup. Persistent bonus-action and spell-casting markers still become inactive.
+
+- Reckless Attack uses only the originating character's next-turn-start expiry, clearing inherited duration timers so Strength-based reaction attacks retain advantage until that point.
+
+- Renewing spent markers now explicitly clears D&D5e's stored expiry flag. Reused Savage Attacker markers correctly enforce the use limit again after each turn reset.
+
 - Divine Smite uses the shared bonus-action and spell-slot casting trackers instead of a separate per-turn marker. Free Smite consumes only its free charge and bonus action; slot-funded Smite also marks the spell cast. Legacy Divine Smite markers are disabled. Spent-feature markers are reused, and turn resource/Savage markers become inactive when reset. Eldritch Smite retains its separate once-per-turn Pact slot cost without spending a bonus action.
 
 - Bonus action and reaction trackers apply to all active combat participants. Spell-slot casting tracking is limited to character actors. All trackers exclude out-of-combat uses.

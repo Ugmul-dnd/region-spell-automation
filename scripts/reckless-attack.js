@@ -95,7 +95,7 @@ export async function activateReckless(actor) {
         for(const effect of effects??[]) {
             const copy=effect.toObject();delete copy._id;
             copy.disabled=false;copy.transfer=false;
-            copy.duration={...copy.duration,rounds:1,turns:0,seconds:null,expired:false,expiry:"sourceStart"};
+            copy.duration={...copy.duration,rounds:null,turns:null,seconds:null,value:null,expired:false,expiry:"sourceStart"};
             copy.start=CONFIG.ActiveEffect.documentClass.getEffectStart();
             copy.system??={};copy.system.origin={...copy.system.origin,actor:actor.uuid,item:feature.uuid,activity:activity?.uuid};
             copy.system.changes=await CONFIG.ActiveEffect.documentClass.forApplication(copy.system.changes??[],activity??feature,actor);
@@ -106,7 +106,7 @@ export async function activateReckless(actor) {
         // Some imported features have text but no effect; retain the same cue,
         // source-turn expiry and rule integration with a marker effect.
         if(!data.length)data.push({name:"Reckless Attack",img:feature.img,disabled:false,transfer:false,
-            duration:{rounds:1,expiry:"sourceStart"},start:CONFIG.ActiveEffect.documentClass.getEffectStart(),
+            duration:{rounds:null,turns:null,seconds:null,value:null,expired:false,expiry:"sourceStart"},start:CONFIG.ActiveEffect.documentClass.getEffectStart(),
             system:{changes:[],origin:{actor:actor.uuid,item:feature.uuid}},flags:{[MODULE_ID]:{reckless:true}}});
         await actor.createEmbeddedDocuments("ActiveEffect",data);
     })();

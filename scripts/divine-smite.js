@@ -81,9 +81,14 @@ export function addSmiteChoice(app) {
     }
     select.value=!used&&resources.some(resource=>resource.value===selections.get(app))?selections.get(app):"no";
     select.addEventListener("change",event=>{event.stopPropagation();selections.set(app,select.value);app.rebuild();});old.replaceWith(select);
-    const label=document.createElement("label");label.className="rsa-smite-target";
-    const check=document.createElement("input");check.type="checkbox";check.disabled=true;check.checked=smiteBonus(smiteTarget(app));
-    label.append(check,document.createTextNode("Fiend / Undead (+1d8)"));group.querySelector(".form-fields").append(label);
+    const caption=group.querySelector("label");
+    const name=document.createElement("span");name.textContent="Divine Smite";
+    name.className=smiteBonus(smiteTarget(app))?"rsa-smite-holy":"";
+    const explanation="Divine Smite adds an extra 1d8 against Fiends and Undead. A golden glow and underline indicate this bonus applies.";
+    const info=document.createElement("i");info.className="fa-solid fa-circle-info rsa-rider-info";
+    info.tabIndex=0;info.setAttribute("role","img");info.setAttribute("aria-label",explanation);
+    info.setAttribute("data-tooltip",explanation);
+    caption.replaceChildren(name,info);
 }
 export function finalizeSmite(app,rolls,{preview=false}={}) {
     if(!smiteEligible(app)||smiteUsed(actorFor(app))||rolls.some(roll=>roll.options?.rsaDivineSmite))return rolls;

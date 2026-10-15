@@ -16,6 +16,8 @@ export function resourceEffect(actor,kind) {
 }
 export function resourceUsed(actor,kind) {return !!definitions[kind]&&enabled(kind)&&!!applies(actor,kind)&&(!!resourceEffect(actor,kind)||creating.has(actor?.uuid+":"+kind));}
 export async function reuseMarker(actor,data,flag) {
+    // D&D5e persists expiry separately from disabled and start; every renewal must clear it.
+    data={...data,duration:{...data.duration,expired:false},start:data.start??CONFIG.ActiveEffect.documentClass.getEffectStart()};
     const matches=Array.from(actor.effects??[]).filter(effect=>effect.getFlag?.(ID,flag)||effect.name===data.name);
     const existing=matches[0];
     if(!existing)return (await actor.createEmbeddedDocuments("ActiveEffect",[data]))?.[0]??null;
@@ -85,7 +87,13 @@ export async function resetTurnResources(combat,changes={},ending=false) {
             if(get("resourceCombat")&&get("resourceCombat")!==combat.id)return false;
             const spell=get("consumedSpellSlot")===true||effect.name==="Consumed Spell Slot";
             const personal=get("bonusActionUsed")===true||get("reactionUsed")===true||get("savageUsed")===true||["Bonus Action - used","Reaction - used"].includes(effect.name);
-            if(ending||!combat.started)return spell||personal;
+            if(ending||!combat.started) {
+                // D&D5e deletes expired and pseudo-expiry effects on combat exit.
+                // Updating those in the deleteCombat hook races its queued deletion.
+                const nativeExpiry=effect.specialDuration||["sourceStart","sourceEnd","targetStart","targetEnd"].includes(effect.duration?.expiry);
+                if(effect.duration?.expired||nativeExpiry)return false;
+                return spell||personal;
+            }
             if(spell)return get("resourceTurn")!==current;
             return personal&&actor.uuid===incoming;
         }).map(effect=>effect.id);

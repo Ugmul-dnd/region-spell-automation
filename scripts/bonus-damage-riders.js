@@ -86,22 +86,26 @@ export function addRiderChoices(app) {
         });
         if(!label)continue;
         label.dataset.rsaRider=rider.key;
-        if(rider.key===elementalKey) {
-            const select=document.createElement("select");select.setAttribute("aria-label","Conjure Minor Elementals damage type");
-            for(const type of elementalTypes) {
-                const option=document.createElement("option");option.value=type;option.textContent=type[0].toUpperCase()+type.slice(1);select.append(option);
-            }
-            select.value=state.get(`${rider.key}:type`)??lastElementalType();
-            state.set(`${rider.key}:type`,select.value);
-            select.addEventListener("change",event=>{
-                event.stopPropagation();
-                if(!elementalTypes.includes(select.value))return;
-                state.set(`${rider.key}:type`,select.value);
-                game.settings.set(ID,"lastMinorElementalsType",select.value).catch(err=>console.warn("Ugmuls 5.5e Automation | Could not remember elemental damage type:",err));
-                app.rebuild();
-            });label.querySelector(".form-fields").append(select);
-        }
 
+    }
+    bindRiderDamageTypes(app);
+}
+export function bindRiderDamageTypes(app) {
+    const state=choices.get(app)??new Map();choices.set(app,state);
+    const preview=finalizeRiders(app,app.rolls??[]);
+    for(const [index,roll] of preview.entries()) {
+        if(roll.options?.rsaBonusRider!==elementalKey)continue;
+        const select=app.element.querySelector('[name="roll.'+index+'.damageType"]');
+        if(!select||select.dataset.rsaElementalType)continue;
+        select.dataset.rsaElementalType="true";
+        select.setAttribute("aria-label","Conjure Minor Elementals damage type");
+        select.value=roll.options.type;
+        select.addEventListener("change",event=>{
+            event.stopPropagation();if(!elementalTypes.includes(select.value))return;
+            state.set(elementalKey+":type",select.value);
+            game.settings.set(ID,"lastMinorElementalsType",select.value).catch(error=>console.warn("Ugmuls 5.5e Automation | Could not remember elemental damage type:",error));
+            app.rebuild();
+        });
     }
 }
 export function finalizeRiders(app,rolls) {
@@ -115,7 +119,7 @@ export function finalizeRiders(app,rolls) {
             if(!elementalTypes.includes(type))continue;
             const config=rider.activity.getDamageConfig({scaling:rider.scaling,isCritical:critical});
             for(const part of config.rolls??[])result.push(CONFIG.Dice.DamageRoll.fromConfig({...part,
-                options:{...part.options,type,flavor:rider.name,isCritical:critical,critical:policy,rsaBonusRider:rider.key}}, {critical:policy}));
+                options:{...part.options,type,types:[...elementalTypes],flavor:rider.name,isCritical:critical,critical:policy,rsaBonusRider:rider.key}}, {critical:policy}));
             continue;
         }
         result.push(new CONFIG.Dice.DamageRoll(`1d6[${rider.name}]`,{},

@@ -45,7 +45,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                 const prey=globalThis.Ugmuls55eAutomationPrey?.finalizePrey(this,sneak,{preview:true})??sneak;
                 const smite=globalThis.Ugmuls55eAutomationSmite?.finalizeSmite(this,prey,{preview:true})??prey;
                 const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite,{preview:true})??smite;
-                return globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch,{preview:true})??eldritch;
+                const frenzy=globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch,{preview:true})??eldritch;
+                return globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,frenzy,{preview:true})??frenzy;
             }
             async _prepareFormulasContext(context,options) {
                 this._rsaPreview=kind==="damage";
@@ -61,7 +62,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                     const prey=globalThis.Ugmuls55eAutomationPrey?.finalizePrey(this,sneak)??sneak;
                     const smite=globalThis.Ugmuls55eAutomationSmite?.finalizeSmite(this,prey)??prey;
                     const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite)??smite;
-                    return globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch)??eldritch;
+                    const frenzy=globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch)??eldritch;
+                    return globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,frenzy)??frenzy;
                 }
                 return kind === "attack" ? globalThis.Ugmuls55eAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
             }
@@ -69,6 +71,7 @@ export function configurePromptDialog(kind, dialog = {}) {
                 const prepared=await super._prepareButtonsContext(context,options);
                 if(kind === "attack") globalThis.Ugmuls55eAutomationMasteries?.prepareAttackButtons(this,prepared);
                 if(kind === "attack") globalThis.Ugmuls55eAutomationReckless?.prepareRecklessButtons(this,prepared);
+                if(kind === "attack") globalThis.Ugmuls55eAutomationInnateSorcery?.prepareInnateButtons(this,prepared);
                 return prepared;
             }
             _onRender(context,options) {
@@ -78,7 +81,7 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind === "damage") {
                     // Extra rider rows are previews, not separate native configuration entries.
                     for(const [index,row] of Array.from(this.element.querySelectorAll(".formulas > li")).entries()) {
-                        if(index>=super.rolls.length)row.querySelector(".form-group")?.remove();
+                        if(index>=super.rolls.length){row.querySelector(".form-group")?.remove();row.classList.add("rsa-bonus-damage-row");}
                         const formula=row.querySelector(".formula");
                         if(formula)formula.textContent=formula.textContent.replace(/(\S)\[/g,"$1 [");
                     }
@@ -90,6 +93,7 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind === "damage") globalThis.Ugmuls55eAutomationSmite?.addSmiteChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationEldritch?.addEldritchChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationFrenzy?.addFrenzyChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationTransmuted?.addTransmutedChoice(this);
             }
             _onPosition(position) {
                 super._onPosition(position);
@@ -110,11 +114,13 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind === "attack")globalThis.Ugmuls55eAutomationMultiShot?.settleFirstShot(this,options);
                 if(kind === "damage") {
                     try {
+                        await globalThis.Ugmuls55eAutomationTransmuted?.commitTransmuted(this,options);
                         await globalThis.Ugmuls55eAutomationEldritch?.commitEldritch(this,options);
                         await globalThis.Ugmuls55eAutomationSmite?.commitSmite(this,options);
                     }
                     catch(error) {
                         // Release pending uses if resource consumption blocks submission.
+                        await globalThis.Ugmuls55eAutomationTransmuted?.commitTransmuted(this,{});
                         await globalThis.Ugmuls55eAutomationSmite?.commitSmite(this,{});
                         await globalThis.Ugmuls55eAutomationEldritch?.commitEldritch(this,{});
                         await globalThis.Ugmuls55eAutomationSavage?.commitSavage(this,{});

@@ -58,8 +58,26 @@
 .rsa-damage-choice.rsa-savage-used {color:var(--color-text-secondary, #888);}
 .rsa-damage-choice select:disabled {opacity:0.45;filter:grayscale(1);cursor:not-allowed;}
 
-.rsa-smite-target {display:flex;align-items:center;gap:4px;font-size:var(--font-size-11,11px);white-space:nowrap;}
-.rsa-smite-target input:disabled {opacity:0.8;}
-.rsa-damage-choice[data-rsa-smite] .form-fields {flex-wrap:wrap;}
 
 .rsa-rider-info {margin-left:5px;cursor:help;font-size:0.85em;}
+
+.rsa-smite-holy {
+    color:#ffe8a3;
+    text-decoration:underline;
+    text-decoration-color:#f6ce67;
+    text-decoration-thickness:2px;
+    text-underline-offset:3px;
+    text-shadow:0 0 4px rgba(255,245,201,.8),0 0 10px rgba(245,190,60,.75);
+}
+
+[data-rsa-empowered] img {width:18px;height:18px;border:0;vertical-align:middle;margin-right:4px;}
+.rsa-empowered-dice {display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px;max-height:350px;overflow-y:auto;}
+.rsa-empowered-dice label {display:flex;align-items:center;gap:5px;padding:8px;border:1px solid var(--color-border-light-primary,#777);border-radius:5px;cursor:pointer;}
+.rsa-empowered-dice label:has(input:checked) {border-color:#69bce8;background:rgba(70,150,200,.2);}
+.rsa-empowered-dice label span {display:flex;flex-direction:column;}
+.rsa-empowered-dice strong {font-size:20px;}
+.rsa-empowered-dice small {font-size:11px;}
+
+[data-rsa-seeking] img {width:18px;height:18px;border:0;vertical-align:middle;margin-right:4px;}
+
+.formulas > li.rsa-bonus-damage-row {margin-block-start:8px;}
