@@ -1,83 +1,44 @@
 # Changelog
 
-## v0.7.1 (Unreleased)
+## v0.7.1
 
-- Unique Classes adds an All/class filter above its scrolling settings, including every core class. The options window now supports dragging the native bottom-right resize handle.
+### Added
 
-- Automation category buttons stay visible while the settings beneath them scroll independently.
+- **Stunning Strike:** a default-No damage Configuration option for confirmed Monk weapon and Unarmed Strike hits. Spends 1 Focus Point once per combat turn and creates a native Constitution save card. Failure applies Stunned; success halves Speed and grants advantage on the next attack. Effects expire at the Monk's next turn start and support Undo Effect.
+- **Grapple / Prone:** qualifying action-based Unarmed, Empowered and Elemental Strike hits offer No, Grapple, or Prone for any creature. Attempts replace damage and create independent save cards, without modifying existing item activities. Saves use the target's higher Strength/Dexterity save modifier, choosing Strength on ties; Martial Arts can use Dexterity for the DC.
+- **Grappler:** a separate feat automation preserves damage plus Grapple once on the attacker's turn and recommends advantage against creatures grappled by that attacker. Later attempts replace damage. Grappled is a Temporary effect for token HUD visibility, without a timed expiry.
+- **Combined Stunning Strike and Grapple:** Stunning Strike resolves first, including animation and automatic effects. Stunned targets automatically fail the subsequent Grapple/Prone save; other targets receive their normal prompt.
+- **Divine Smite:** melee weapon hit damage offers the configured free cast or an available spell slot, consumes the appropriate resource and bonus action, and automatically adds the Fiend/Undead bonus. A golden glow and info tooltip identify the bonus. Critical damage follows the weapon roll.
+- **Eldritch Smite:** a default-No pact-weapon damage rider consumes a Pact Magic slot, scales Force damage with its level, and is limited to once per combat turn without spending a bonus action.
+- **Hunter's Prey / Colossus Slayer:** a remembered Yes/No rider, initially No, adds the feature damage against an injured single target once per combat turn. Damage matches the weapon and supports criticals.
+- **Frenzy:** the first qualifying Strength-based weapon hit on the Barbarian's turn while Rage and Reckless Attack are active automatically adds the feature damage. Matches the weapon damage type, supports criticals, and locks after use that turn.
+- **Innate Sorcery:** active Innate Sorcery recommends advantage on Sorcerer spell attacks, with Automated Conditions integration and normal disadvantage cancellation.
+- **Empowered Spell:** a feature-icon action on spell damage cards lets users select active damage dice up to their Charisma modifier (minimum one), spend 1 Sorcery Point, and replace the selected results. Supports critical dice and animation timing. Opening the picker stops automatic application; applied damage must be undone before adjustment.
+- **Seeking Spell:** a missed-spell-attack action spends 1 Sorcery Point to reroll one d20 and use the new result, refreshing hit/critical outcomes and prompting damage when appropriate.
+- **Cast-time Metamagic:** Transmuted, Heightened and Careful Spell choices support single-target and area casts. Resource costs and combination limits respect Sorcery Incarnate with active Innate Sorcery and Arcane Apotheosis. Empowered and Seeking remain available on result cards.
+- **Metamagic card tags:** spell damage cards show the applied options beside Spell/Magical, with element or target details in tooltips. Result-time reroll tags stay with the relevant attack or damage card.
+- **Pending damage and healing:** prompts create a clickable ---pending--- card before rolling. A GM or owner can reopen the prompt for themselves; older prompts are invalidated. Results fill the same card after animations, retaining Apply and Undo controls.
+- **Combat resource trackers:** Bonus Action and Reaction tracking cover all active combat participants and reset at their next turn start. Consumed Spell Slot tracks character actors only and resets at the current turn's end. Cantrips, free casts and non-spell slot expenditures do not count toward that spell-casting limit. Trackers do not run out of combat.
 
-- Disabling Weapon Mastery Effect Automation disables and greys out its individual mastery options while retaining their selections. Grappler Feat Automation is now a separate Feats setting; Unarmed Grapple / Prone Prompts remain under Common.
+### Changed
 
-- Module Options opens to Automations, with Unique Classes, Weapon Masteries, Feats, Common, and Spells submenus. Class features are grouped by class; existing setting values and other configuration sections are preserved.
+- **Automation settings:** Module Options opens to Automations, with Unique Classes, Weapon Masteries, Feats, Common and Spells submenus. Unique Classes has an All/class filter covering all twelve core classes. Navigation stays above the scrolling settings, and the window has a bottom-right resize handle.
+- Disabling the main Weapon Mastery Effect Automation switch greys out its child options while preserving their selections. Grappler Feat Automation is separate from the Common Unarmed Grapple / Prone Prompts setting.
+- Damage Configuration uses Yes/No selectors and live dice previews. Savage Attacker defaults to Yes, Sneak Attack matches the weapon damage type, and once-per-turn lockouts display No - Already Used in the selector.
+- Conjure Minor Elementals uses its remembered elemental selector in the damage row, with extra spacing below Situational Bonus and no duplicate Configuration selector.
+- Ordinary area casts proceed after collecting targets unless Choose Targets is enabled or applicable cast-time Metamagic requires confirmation. Metamagic-only confirmation keeps the target list fixed; Careful selects protection without removing targets. Retarget remains available for corrections.
+- Reckless Attack can be activated only on the first attack roll of the attacker's own turn. Its advantage persists until the start of the attacker's next turn, including qualifying reaction attacks.
+- Divine Smite uses the shared bonus-action and spell-slot trackers instead of a separate per-turn marker. Spent markers are reused and become inactive when reset; Eldritch Smite retains its own once-per-turn limit.
 
-- Linked rider save updates explicitly resume their original damage card. Fixes Stunned automatic Grapple failures leaving Grapple effects waiting for damage application; rolled saves use the same handoff.
+### Fixed
 
-- Combined Stunning Strike and Grapple resolve Stunning Strike first, including its dice animation and automatic condition application. A Stunned target records an automatic failed Grapple/Prone save; otherwise its normal save is prompted.
-
-- Automated Grappled effects are classified as Temporary for token HUD visibility, without adding a timed expiry.
-
-- Action-based Unarmed, Empowered and Elemental Strike hit damage offers Grapple / Prone / No (default No) for any creature. Separate native save cards use the target’s stronger Strength/Dexterity save (Strength on ties), with automatic effects and Undo. Attempts replace damage; Grappler keeps damage plus Grapple once on the attacker’s turn. Grappler also recommends advantage against creatures grappled by that attacker, preserving disadvantage cancellation. Existing item activities remain unchanged.
-
-- Resolving pending damage keeps chat at the bottom through the completed card’s layout changes on GM and player clients, while respecting users who have scrolled up.
-
-- Stunning Strike hides its Apply Effects button after application. Undo Effect restores the button and unlocks its save advantage/normal/disadvantage controls independently of weapon damage; reapplying effects locks the save again.
-
-- Stunning Strike adds a default-No damage Configuration option for confirmed Monk-weapon and Unarmed Strike hits. Spends 1 Focus Point once per combat turn and opens the native save card; automatic damage waits for the save. Failure applies Stunned; success halves Speed and grants advantage on the next attack, with source-next-turn expiry and Undo Effect support.
-
-- Player pending-damage retries now hand completed rolls to the GM before coordinating animation acknowledgements. Fixes player rolls animating but leaving the pending card unresolved.
-
-- Publishing pending damage explicitly suppresses Dice So Nice automatic replay during the card update on every client, then restores normal handling. Covers original prompts and retries.
-
-- Pending damage publication suppresses Dice So Nice replay of dice already animated by the pending workflow, avoiding duplicate throws after rolling or retrying. Later additional rolls keep normal animation handling.
-
-- Damage/healing prompts create a pending card before the roll. Click ---pending--- to reopen the prompt for yourself or let the GM take over; older prompts are invalidated. The same card fills after dice animation, retaining normal application and Undo controls.
-
-- Metamagic-only confirmation shows a fixed, read-only target list. Adding/removing creatures is available only when Choose Targets is enabled; Careful Spell still selects protected creatures without removing them from the spell.
-
-- Area casts collect targets and proceed without confirmation unless the activity has Choose Targets enabled or the caster has applicable cast-time Metamagic. Selective and Metamagic casts retain confirmation before rolls; Retarget remains available for corrections.
-
-- Spell damage cards show Metamagic tags beside Spell/Magical, including Transmuted, Heightened, Careful, Empowered and Seeking. Hover for the changed element or affected targets; reroll tags apply only to the corresponding damage/attack.
-
-- Cast-time Metamagic configuration supports single-target and area spells. Choose Transmuted damage type, one Heightened target, and Careful protection before rolls begin. Costs and combination limits respect Sorcery Incarnate with active Innate Sorcery; Arcane Apotheosis tracks its free use on your turn, including Empowered and Seeking. Heightened combines with other save conditions, Careful records automatic successes and prevents half-on-save damage, and Region follow-ups retain Heightened/Transmuted.
-
-- Conjure Minor Elementals uses the damage-row selector for its remembered elemental damage type, removing the duplicate Configuration selector. Bonus damage rows have extra spacing below Situational Bonus.
-
-- Seeking Spell no longer cancels because animation or condition-rendering metadata refreshed during the reroll. Its change guard compares actual dice, totals, mode and targets, while genuine attack edits still refund the point.
-
-- Seeking Spell adds a missed-spell-attack action that spends 1 Sorcery Point to reroll one d20 and use the new result. Refreshes hit/critical outcomes and prompts damage on a hit, with no Undo prerequisite.
-- Transmuted Spell adds a Yes/No option to damage Configuration. Yes opens eligible elemental damage-type selectors above; submission spends 1 Sorcery Point and repeated damage rolls from that casting retain the conversion. Cancel costs nothing.
-
-- Empowered Spell adds a feature-icon action to spell damage cards: select up to the Charisma modifier (minimum 1) active damage dice, confirm to spend 1 Sorcery Point, and replace those results even when lower. Supports critical dice, Dice So Nice timing, cancel, and applied-damage locks. One use per casting; opening the picker hands auto-application back to manual control.
-
-- Active Innate Sorcery defaults Sorcerer spell attack rolls to Advantage, with Automated Conditions support and normal advantage/disadvantage cancellation. Other classes' spells and weapon attacks are excluded; the existing spell DC effect is unchanged.
-
-- Combat-end cleanup leaves native expired/turn-expiry effects to D&D5e, avoiding missing-effect errors when native deletion overlaps tracker cleanup. Persistent bonus-action and spell-casting markers still become inactive.
-
-- Reckless Attack uses only the originating character's next-turn-start expiry, clearing inherited duration timers so Strength-based reaction attacks retain advantage until that point.
-
-- Renewing spent markers now explicitly clears D&D5e's stored expiry flag. Reused Savage Attacker markers correctly enforce the use limit again after each turn reset.
-
-- Divine Smite uses the shared bonus-action and spell-slot casting trackers instead of a separate per-turn marker. Free Smite consumes only its free charge and bonus action; slot-funded Smite also marks the spell cast. Legacy Divine Smite markers are disabled. Spent-feature markers are reused, and turn resource/Savage markers become inactive when reset. Eldritch Smite retains its separate once-per-turn Pact slot cost without spending a bonus action.
-
-- Bonus action and reaction trackers apply to all active combat participants. Spell-slot casting tracking is limited to character actors. All trackers exclude out-of-combat uses.
-
-- Combat resource tracking adds Bonus Action - used (cleared at your next turn start) and Consumed Spell Slot (cleared when the current turn ends). Native bonus actions and actual spell-slot casting are tracked; free spells, cantrips and non-spell slot expenditures are excluded from the spell-casting limit. Reaction tracking includes own-turn reactions and explicit next-turn cleanup. Shared resource helpers are available for rider integration.
-
-- Frenzy is automatic and locked to Yes on the first qualifying hit, then No - Already Used. All once-per-turn damage choices now put Already Used inside the dropdown while keeping feature names unchanged.
-
-- Reckless Attack activation is limited to the first attack roll of your own turn. Rolling any attack without Reckless closes that opportunity; canceled prompts do not. Active Reckless continues granting advantage through its existing expiry.
-
-- Frenzy adds a default-Yes rider to Strength-based weapon hits on your turn while Rage and Reckless Attack are active. Uses the feature's damage dice, matches the weapon damage type, supports criticals and locks after use that combat turn.
-
-- Eldritch Smite adds a default-No damage rider for pact weapons, consumes a Pact Magic slot, scales Force damage with that slot level, and locks out without slots or after use that combat turn.
-
-- Hunter's Prey (Colossus Slayer) adds a remembered Yes/No damage rider, initially No, with rule tooltip. Only available against an injured single target and once per combat turn; damage matches the weapon and supports criticals.
-
-- Divine Smite can join melee weapon hit damage through Configuration, using a tracked free cast or an available spell slot. Fiend/Undead bonus is detected automatically, critical damage follows the weapon roll, and use is limited to once per combat turn. Available under Bonus Damage Riders.
-
-- Savage Attacker defaults to Yes when available. Sneak Attack inherits the weapon damage type without a separate type selector.
-
-- Damage roll Configuration now uses Yes/No choices for Savage Attacker, Sneak Attack and applicable spell riders, with a live dice preview. Used once-per-turn features show a disabled No. Conjure Minor Elementals keeps its remembered damage type in the same section.
+- Pending-damage retries made by players now publish their results through the GM correctly. Original rolls and retries suppress duplicate Dice So Nice animation when the card is populated.
+- Chat follows pending-damage card expansion to the bottom, while respecting users who have scrolled up.
+- Linked rider save updates resume the original damage card, so automatic Stunned failures continue through damage and Grapple effect application without a manual click or duplicate application.
+- Stunning Strike hides Apply Effects after application. Undo Effect restores it and unlocks save advantage/normal/disadvantage independently of weapon damage; reapplication locks the save again.
+- Renewing Savage Attacker and other spent markers clears stored expiry state, restoring once-per-turn limits after reset.
+- Combat-end tracker cleanup avoids conflicts with native effect expiry/deletion.
+- Seeking Spell ignores animation and rendering-only metadata changes during rerolls, while genuine attack edits still cancel and refund the point.
 
 ## v0.7.0
 
