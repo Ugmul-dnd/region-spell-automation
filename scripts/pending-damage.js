@@ -143,10 +143,23 @@ export function renderPendingDamage(message,html){
         face.append(button);
     }
 }
+// Run on every client receiving the result, including a player whose roll
+// was published by the GM. Follow layout changes while the card is replaced.
+export function followResolvedPendingDamage(card,changes){
+    const resolved=changes.flags?.[ID]?.pendingDamage??changes[`flags.${ID}.pendingDamage`];
+    const hasPendingChange=Object.hasOwn(changes.flags?.[ID]??{},"pendingDamage")||Object.hasOwn(changes,`flags.${ID}.pendingDamage`);
+    if(!hasPendingChange||resolved!=null||!changes.rolls?.length)return;
+    const buttons=Array.from(globalThis.document?.querySelectorAll?.('[data-rsa-reprompt-damage]')??[]);
+    for(const button of buttons)if(button.dataset.rsaRepromptDamage===card.id){
+        const finish=globalThis.Ugmuls55eAutomationFollowChatChanges?.(button);
+        finish?.();
+    }
+}
 function report(error){console.error("Ugmuls 5.5e Automation | Pending damage:",error);ui.notifications.error(error.message??"Could not reopen pending damage.");}
 Hooks.once("ready",()=>{
-    globalThis.Ugmuls55eAutomationPendingDamage={prepareDamageDialog,canSubmitDamage};installPendingDamagePublication();
+    globalThis.Ugmuls55eAutomationPendingDamage={prepareDamageDialog,canSubmitDamage,pendingCard:app=>game.messages.get(contexts.get(app.message)?.cardId)};installPendingDamagePublication();
     Hooks.on("diceSoNiceMessagePreProcess",skipPendingDamageReplay);
+    Hooks.on("updateChatMessage",followResolvedPendingDamage);
     Hooks.on("dnd5e.preRollDamageV2",startPendingDamage);Hooks.on("dnd5e.renderChatMessage",renderPendingDamage);
     game.socket.on(channel,packet=>{
         if(packet?.action==="pendingDamageReply"&&packet.userId===game.user.id){const request=waiting.get(packet.requestId);if(!request)return;clearTimeout(request.timer);waiting.delete(packet.requestId);packet.error?request.reject(Error(packet.error)):request.resolve(packet.result);return;}

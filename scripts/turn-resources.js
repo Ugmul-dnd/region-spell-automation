@@ -7,7 +7,7 @@ const stamp=combat=>combat?.started?String(combat.id)+":"+combat.round+":"+comba
 const enabled=kind=>game.settings.get(ID,definitions[kind].setting)===true;
 const inCombat=(actor,combat=game.combat)=>!!actor&&combat?.started&&Array.from(combat.combatants??[]).some(entry=>entry.actor?.uuid===actor?.uuid);
 const applies=(actor,kind,combat=game.combat)=>inCombat(actor,combat)&&(kind!=="spell"||actor.type==="character");
-function manual(activity,message) {return !message?.data?.flags?.[ID]?.regionTriggered&&["spell","weapon","feat"].includes(activity?.item?.type);}
+function manual(activity,message) {return !message?.data?.flags?.[ID]?.regionTriggered&&!message?.data?.flags?.[ID]?.riderTriggered&&["spell","weapon","feat"].includes(activity?.item?.type);}
 export function resourceEffect(actor,kind) {
     const def=definitions[kind];if(!def||!applies(actor,kind))return null;
     return Array.from(actor?.effects??[]).find(effect=>!effect.disabled&&effect.active!==false&&!effect.duration?.expired&&effect.system?.expired!==true&&

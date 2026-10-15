@@ -14,7 +14,7 @@ export function offTurn(activity) {
     return !!combatant&&combatant.id!==combat.combatant.id;
 }
 function manualActivity(activity,message) {
-    return ["spell","weapon","feat"].includes(activity?.item?.type)&&!message?.data?.flags?.[ID]?.regionTriggered;
+    return ["spell","weapon","feat"].includes(activity?.item?.type)&&!message?.data?.flags?.[ID]?.regionTriggered&&!message?.data?.flags?.[ID]?.riderTriggered;
 }
 export function reactionActivity(activity) {
     const actor=activity?.actor??activity?.item?.actor;
@@ -30,7 +30,7 @@ export function allowReactionUse(activity,usage,dialog,message) {
 }
 export async function recordReactionUse(activity,usage,results) {
     const message=results?.message,actor=activity?.actor??activity?.item?.actor;
-    if(!enabled()||!message||message.getFlag?.(ID,"regionTriggered")||!manualActivity(activity,{})||!reactionActivity(activity)||!actor?.isOwner||reactionUsed(actor)||creating.has(actor.uuid))return;
+    if(!enabled()||!message||message.getFlag?.(ID,"regionTriggered")||message.getFlag?.(ID,"riderTriggered")||!manualActivity(activity,{})||!reactionActivity(activity)||!actor?.isOwner||reactionUsed(actor)||creating.has(actor.uuid))return;
     creating.add(actor.uuid);
     try {
         const data={name:"Reaction - used",img:"icons/svg/clockwork.svg",disabled:false,transfer:false,

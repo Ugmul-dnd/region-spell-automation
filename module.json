@@ -78,6 +78,8 @@
     "scripts/spell-manager.js",
     "scripts/module-settings.js",
     "scripts/sheet-compendium-browser.js",
+    "scripts/stunning-strike.js",
+    "scripts/grapple.js",
     "scripts/pending-damage.js"
   ],
   "styles": [

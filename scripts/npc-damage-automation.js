@@ -42,7 +42,9 @@ function attackForDamage(message) {
 }
 export async function readyDamageTargets(message) {
     if(!isDamageOrHealingCard(message)||message.getFlag?.(MODULE_ID,"pendingDamage"))return null;
-    if(message.getFlag(MODULE_ID,"masteryGrazeUndone"))return null;
+    if(message.getFlag(MODULE_ID,"masteryGrazeUndone")||message.getFlag(MODULE_ID,"grappleNoDamage"))return null;
+    if(globalThis.Ugmuls55eAutomationGrapple?.grappleSaveReady(message)===false)return waiting(message,"Waiting for the Grapple / Prone saving throw.");
+    if(globalThis.Ugmuls55eAutomationStunning?.stunningSaveReady(message)===false)return waiting(message,"Waiting for the Stunning Strike saving throw.");
     if(isManual(message))return waiting(message,"Manual card interaction stopped this workflow.");
     if(message.getFlag(MODULE_ID,"damageUndoHistory")?.length&&!message.getFlag(MODULE_ID,"automaticDamageDone"))return waiting(message,"HP changes were already applied manually.");
     const origin=originOf(message);
@@ -144,6 +146,10 @@ export async function waitForWorkflowAnimations(message) {
     const origin=originOf(message);
     const usage=origin??message;
     const rolls=[...(message.type==="usage"?[...(message.getAssociatedRolls?.("damage")??[]),...(message.getAssociatedRolls?.("healing")??[])]:[message]),...(usage.getAssociatedRolls?.("save")??[])];
+    const stunning=game.messages.get(message.getFlag?.(MODULE_ID,"stunningStrikeSave"));
+    rolls.push(...(stunning?.getAssociatedRolls?.("save")??[]));
+    const grapple=game.messages.get(message.getFlag?.(MODULE_ID,"grappleSave"));
+    rolls.push(...(grapple?.getAssociatedRolls?.("save")??[]));
     const rollIds=[...new Set(rolls.map(roll=>roll.id))];
     const others=Array.from(game.users).filter(user=>user.active&&user.id!==game.user.id);
     let requestId;
@@ -165,6 +171,8 @@ export async function applyOutcomeEffects(card) {
     if(!authority()||runningEffects.has(card.id)||isManual(card))return;
     const usage=card.type==="usage"?card:originOf(card);
     if(!usage||usage.getFlag?.(MODULE_ID,"targetsConfirmationPending")||usage.getFlag?.(MODULE_ID,"targetsConfirmationCanceled"))return;
+    if(usage.getFlag?.(MODULE_ID,"grappleStrike"))return globalThis.Ugmuls55eAutomationGrapple?.applyGrappleOutcome(usage);
+    if(usage.getFlag?.(MODULE_ID,"stunningStrike"))return globalThis.Ugmuls55eAutomationStunning?.applyStunningOutcome(usage);
     const activity=usage.getAssociatedActivity?.({scaled:true});
     const saving=activity?.type==="save";
     const setting=saving?"autoApplySavedEffects":"autoApplyHitEffects";
@@ -246,6 +254,11 @@ async function receiveAnimationRequest(packet) {
     await Promise.all(rolls.map(roll=>waitForDamageAnimation(roll)));
     game.socket.emit(`module.${MODULE_ID}`,{action:"damageAnimationsComplete",requestId:packet.requestId,gmId:packet.gmId,userId:game.user.id});
 }
+function scheduleRiderDamage(message) {
+    const usage=message?.type==="usage"?message:originOf(message);
+    const link=usage?.getFlag?.(MODULE_ID,"grappleStrike")??usage?.getFlag?.(MODULE_ID,"stunningStrike");
+    if(link?.damageId){const damage=game.messages.get(link.damageId);if(damage)schedule(damage);}
+}
 function schedule(message) {
     if(!authority()||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true||!isDamageOrHealingCard(message)||queued.has(message.id))return;
     queued.add(message.id);
@@ -275,6 +288,7 @@ Hooks.once("ready",()=>{
     Hooks.on("dnd5e.preRollD20TestV2",(config,dialog)=>{if(config.rsaAutoNpcSave)dialog.configure=false;});
     for(const event of ["createChatMessage","updateChatMessage"])Hooks.on(event,(message)=>{
         if(isDamageOrHealingCard(message))schedule(message);
+        scheduleRiderDamage(message);
         const origin=originOf(message);
         const source=origin??message;
         for(const type of ["damage","healing"])for(const result of source.getAssociatedRolls?.(type)??[])schedule(result);

@@ -74,6 +74,7 @@ export async function receiveSavePrompt(packet) {
         (source.isGM||actor.testUserPermission(source,"OWNER"));
     const user = takeover?source:selectSaveUser(actor, game.users, game.users.activeGM, source.isGM ? source : null);
     if (user?.id !== game.user.id) return;
+    if(globalThis.Ugmuls55eAutomationGrapple?.deferGrappleSave(message))return;
     const activity = message.getAssociatedActivity?.();
     if (activity?.type !== "save") return;
     if (packet.action === "promptSpellSave" && (!["spell", "feat"].includes(activity.item?.type) || message.getFlag?.(MODULE_ID, "regionTriggered"))) return;
@@ -145,6 +146,7 @@ export async function promptTargetSave(message, token, trigger) {
 
 export async function sendSavePrompt(message, token, kind) {
     if (!isEligibleTarget(token)) return;
+    if(globalThis.Ugmuls55eAutomationGrapple?.deferGrappleSave(message))return;
     if(await globalThis.Ugmuls55eAutomationMetamagic?.carefulSave(message,token))return;
     const setting = kind === "spell" ? "promptForSaveOnSpellCasts" : "promptForSaveOnRegionTriggers";
     if (game.settings.get(MODULE_ID, setting) !== true) return;

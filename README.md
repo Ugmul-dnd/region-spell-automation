@@ -18,6 +18,7 @@ Some features may work with content from **D&D Beyond Importer**, but imported c
 - **Targeting and saving throws:** confirm area targets, retarget attack cards, prompt token owners for saves, and let a GM take over a pending save. Optional automatic saves for GM-run NPCs leave player-owned NPCs manual.
 - **Damage, healing, and effects:** optional roll prompts and automatic application, with GM Undo Damage, Undo Healing, and Undo Effect controls. Applied damage locks retroactive roll adjustments until it is undone.
 - **Attack assistance:** retroactive Advantage/Normal/Disadvantage and Normal/Critical controls, Shield assistance, Reckless Attack, Savage Attacker, Sneak Attack, and off-turn reaction tracking.
+- **Unarmed combat:** Grapple / Prone options on action-based unarmed hits, independent saving throws using the target’s better save, and Grappler’s once-per-turn damage benefit and source-specific attack advantage.
 - **Bonus damage riders:** Hex, Hunter's Mark, and Conjure Minor Elementals add eligible bonus damage to the existing damage card. These spell riders currently support single-target damage cards.
 - **Multiple spell attacks:** Eldritch Blast and Scorching Ray offer a remaining-attacks window so users can choose targets between shots without casting or spending a slot again.
 - **Weapon masteries:** assistance for Graze, Sap, Slow, Topple, and Vex, with individual enable/disable options. Push, Nick, and Cleave are not automated.

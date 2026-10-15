@@ -7,6 +7,9 @@ export function linkedHpCards(roll) {
     if(isDamageOrHealingCard(roll))return [roll];
     const origin=cardOrigin(roll);
     if(!origin)return [];
+    const stunningId=(origin.getFlag?.("ugmuls-5-5e-automation","stunningStrike")??origin.getFlag?.("ugmuls-5-5e-automation","grappleStrike"))?.damageId;
+    const stunningDamage=stunningId?game.messages.get(stunningId):null;
+    if(stunningDamage)return [stunningDamage];
     const cards=Array.from(game.messages??[]).filter(card=>isDamageOrHealingCard(card)&&cardOrigin(card)?.id===origin.id);
     if(roll.type!=="attack")return cards;
     const attacks=Array.from(origin.getAssociatedRolls?.("attack")??[]);
@@ -18,13 +21,22 @@ export function linkedHpCards(roll) {
     });
 }
 export function isRollAdjustmentLocked(roll) {
+    const origin=cardOrigin(roll);
+    // Rider saves resolve their own effects independently of weapon HP changes.
+    if(roll?.type==="save"&&(origin?.getFlag?.("ugmuls-5-5e-automation","stunningStrike")||origin?.getFlag?.("ugmuls-5-5e-automation","grappleStrike"))) {
+        return origin.getFlag("ugmuls-5-5e-automation","outcomeEffectsApplied")===true||
+            (origin.getFlag("ugmuls-5-5e-automation","effectUndoHistory")?.length??0)>0;
+    }
     return linkedHpCards(roll).some(card=>!card.getFlag?.("ugmuls-5-5e-automation","masteryGrazeUndone")&&
         (card.getFlag?.("ugmuls-5-5e-automation","hpApplicationRecorded")===true||card.getFlag?.("ugmuls-5-5e-automation","damageUndoHistory")?.length>0));
 }
 Hooks.once("ready",()=>{
     Hooks.on("updateChatMessage",(card,changes)=>{
-        if(!isDamageOrHealingCard(card)||!changes.flags?.["ugmuls-5-5e-automation"])return;
-        const origin=cardOrigin(card);
+        const moduleId="ugmuls-5-5e-automation";
+        if(!changes.flags?.[moduleId]&&!Object.keys(changes).some(key=>key.startsWith(`flags.${moduleId}.`)))return;
+        const rider=card.getFlag?.(moduleId,"stunningStrike")??card.getFlag?.(moduleId,"grappleStrike");
+        if(!isDamageOrHealingCard(card)&&!rider)return;
+        const origin=rider?card:cardOrigin(card);
         const related=[...(origin?.getAssociatedRolls?.("attack")??[]),...(origin?.getAssociatedRolls?.("save")??[])];
         for(const roll of related)ui.chat?.updateMessage?.(roll);
         if(origin)ui.chat?.updateMessage?.(origin);

@@ -2,6 +2,20 @@
 
 ## v0.7.1 (Unreleased)
 
+- Linked rider save updates explicitly resume their original damage card. Fixes Stunned automatic Grapple failures leaving Grapple effects waiting for damage application; rolled saves use the same handoff.
+
+- Combined Stunning Strike and Grapple resolve Stunning Strike first, including its dice animation and automatic condition application. A Stunned target records an automatic failed Grapple/Prone save; otherwise its normal save is prompted.
+
+- Automated Grappled effects are classified as Temporary for token HUD visibility, without adding a timed expiry.
+
+- Action-based Unarmed, Empowered and Elemental Strike hit damage offers Grapple / Prone / No (default No) for any creature. Separate native save cards use the target’s stronger Strength/Dexterity save (Strength on ties), with automatic effects and Undo. Attempts replace damage; Grappler keeps damage plus Grapple once on the attacker’s turn. Grappler also recommends advantage against creatures grappled by that attacker, preserving disadvantage cancellation. Existing item activities remain unchanged.
+
+- Resolving pending damage keeps chat at the bottom through the completed card’s layout changes on GM and player clients, while respecting users who have scrolled up.
+
+- Stunning Strike hides its Apply Effects button after application. Undo Effect restores the button and unlocks its save advantage/normal/disadvantage controls independently of weapon damage; reapplying effects locks the save again.
+
+- Stunning Strike adds a default-No damage Configuration option for confirmed Monk-weapon and Unarmed Strike hits. Spends 1 Focus Point once per combat turn and opens the native save card; automatic damage waits for the save. Failure applies Stunned; success halves Speed and grants advantage on the next attack, with source-next-turn expiry and Undo Effect support.
+
 - Player pending-damage retries now hand completed rolls to the GM before coordinating animation acknowledgements. Fixes player rolls animating but leaving the pending card unresolved.
 
 - Publishing pending damage explicitly suppresses Dice So Nice automatic replay during the card update on every client, then restores normal handling. Covers original prompts and retries.

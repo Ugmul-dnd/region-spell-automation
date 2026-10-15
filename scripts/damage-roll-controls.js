@@ -2,7 +2,7 @@ import {createEventQueue,isRollAdjustmentLocked} from "./shared-activity-card.js
 const MODULE_ID="ugmuls-5-5e-automation";
 const enqueue=createEventQueue();
 export function isAttackDamage(message) {
-    if (message?.type !== "damage" || message.getFlag?.("ugmuls-5-5e-automation","masteryGraze")) return false;
+    if (message?.type !== "damage" || message.getFlag?.("ugmuls-5-5e-automation","masteryGraze") || message.getFlag?.(MODULE_ID,"grappleNoDamage")) return false;
     const activity=message.getAssociatedActivity?.();
     return activity?.type === "attack" ||
         (activity?.type === "damage" && activity.damage?.critical?.allow === true);

@@ -39,6 +39,8 @@ export function configurePromptDialog(kind, dialog = {}) {
             get rolls() {
                 const rolls=super.rolls;
                 if(!this._rsaPreview)return rolls;
+                const grapple=globalThis.Ugmuls55eAutomationGrapple?.finalizeGrapple(this,rolls,{preview:true})??rolls;
+                if(globalThis.Ugmuls55eAutomationGrapple?.replacesGrappleDamage(this))return grapple;
                 const savage=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls,{preview:true})??rolls;
                 const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,savage)??savage;
                 const sneak=globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders,{preview:true})??riders;
@@ -61,14 +63,17 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind==="damage"&&globalThis.Ugmuls55eAutomationPendingDamage?.canSubmitDamage(this)===false)return [];
                 const rolls=super._finalizeRolls(action);
                 if(kind === "damage") {
-                    const weaponRolls=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls)??rolls;
+                    const grapple=globalThis.Ugmuls55eAutomationGrapple?.finalizeGrapple(this,rolls)??rolls;
+                    if(globalThis.Ugmuls55eAutomationGrapple?.replacesGrappleDamage(this))return grapple;
+                    const weaponRolls=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,grapple)??grapple;
                     const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,weaponRolls)??weaponRolls;
                     const sneak=globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders)??riders;
                     const prey=globalThis.Ugmuls55eAutomationPrey?.finalizePrey(this,sneak)??sneak;
                     const smite=globalThis.Ugmuls55eAutomationSmite?.finalizeSmite(this,prey)??prey;
                     const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite)??smite;
                     const frenzy=globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch)??eldritch;
-                    return globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,frenzy)??frenzy;
+                    const stunning=globalThis.Ugmuls55eAutomationStunning?.finalizeStunning(this,frenzy)??frenzy;
+                    return globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,stunning)??stunning;
                 }
                 return kind === "attack" ? globalThis.Ugmuls55eAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
             }
@@ -98,6 +103,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind === "damage") globalThis.Ugmuls55eAutomationSmite?.addSmiteChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationEldritch?.addEldritchChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationFrenzy?.addFrenzyChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationStunning?.addStunningChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationGrapple?.addGrappleChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationTransmuted?.addTransmutedChoice(this);
             }
             _onPosition(position) {
@@ -122,9 +129,13 @@ export function configurePromptDialog(kind, dialog = {}) {
                         await globalThis.Ugmuls55eAutomationTransmuted?.commitTransmuted(this,options);
                         await globalThis.Ugmuls55eAutomationEldritch?.commitEldritch(this,options);
                         await globalThis.Ugmuls55eAutomationSmite?.commitSmite(this,options);
+                        await globalThis.Ugmuls55eAutomationStunning?.commitStunning(this,options);
+                        await globalThis.Ugmuls55eAutomationGrapple?.commitGrapple(this,options);
                     }
                     catch(error) {
                         // Release pending uses if resource consumption blocks submission.
+                        await globalThis.Ugmuls55eAutomationGrapple?.commitGrapple(this,{});
+                        await globalThis.Ugmuls55eAutomationStunning?.commitStunning(this,{});
                         await globalThis.Ugmuls55eAutomationTransmuted?.commitTransmuted(this,{});
                         await globalThis.Ugmuls55eAutomationSmite?.commitSmite(this,{});
                         await globalThis.Ugmuls55eAutomationEldritch?.commitEldritch(this,{});
