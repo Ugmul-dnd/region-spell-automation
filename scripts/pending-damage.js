@@ -117,7 +117,9 @@ export function installPendingDamagePublication(RollClass=CONFIG.Dice.DamageRoll
         const create=message.create;message.create=false;
         try{await original.call(this,rolls,config,message);}finally{message.create=create;}
         const card=game.messages.get(context.cardId);
-        if(game.dice3d?.showForRoll)for(const roll of rolls){
+        if(game.dice3d?.showForRoll){
+            // One evaluated pool keeps weapon and rider dice in the same throw.
+            const roll=rolls.length===1?rolls[0]:Roll.fromTerms([foundry.dice.terms.PoolTerm.fromRolls(rolls)]);
             const animation=game.dice3d.showForRoll(roll,game.user,true,message.data.whisper?.length?message.data.whisper:null,message.data.blind??false,card.id,message.data.speaker);
             if(globalThis.document?.hidden)Promise.resolve(animation).catch(report);else await animation;
         }

@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.7.2 (Unreleased)
+
+- Relentless adds a Superiority Die selector below Maneuver: spend the current die (default), or use a free d8 once per active combat turn. With no normal dice remaining, the free d8 is selected when available. Precision Attack offers the same choice and shares the turn limit. Canceled prompts do not consume the free use; damage cards identify Relentless.
+
+- Fixed Goading Attack expiry: its effect now participates in native turn-end expiry tracking. Existing Goading effects are repaired when the active GM reloads.
+
+- Added Goading Attack (Wisdom save, source-aware disadvantage until the end of the Fighter’s next turn), Maneuvering Attack (damage and reminder tag), and Pushing Attack (damage, Strength save for Large or smaller targets, and manual movement reminder). All spend one current Superiority Die, share the one-maneuver-per-attack limit, and have Fighter settings.
+
+- Weapon and rider damage dice now animate together in one Dice So Nice throw when resolving pending damage.
+- Great Weapon Fighting automatically treats damage dice of 1 or 2 as 3 for qualifying two-handed melee weapon attacks, including attached riders and Savage Attacker pools.
+- Great Weapon Master offers proficiency-bonus damage on Heavy-weapon hits made with the Attack action on your turn. Bonus-action and reaction attacks are excluded; Hew remains manual. Both feat settings are under Automations → Feats.
+
+- Menacing Attack joins the Maneuver damage selector: spend the current Superiority Die, add its damage, and prompt a Wisdom save. Failure applies the native Frightened condition, linked to the Fighter until the end of their next turn, with Apply/Undo support and the shared one-maneuver-per-attack limit.
+
+- Trip Attack uses the native Prone condition toggle, recognized by standard condition controls and Automated Conditions 5e. Apply/Undo support retains existing conditions instead of creating a separate tracking effect.
+
+- Battle Master assistance adds Precision Attack on missed attack cards and a shared Trip Attack / Distracting Strike damage selector. Uses available Combat Superiority charges and the configured current die, with one maneuver per attack, native critical damage, Trip saves/Prone, and source-tracked next-other-attacker advantage. Relentless can replace the die with a free d8 once per active combat turn. Settings are under Automations → Unique Classes → Fighter.
+
 ## v0.7.1
 
 ### Added

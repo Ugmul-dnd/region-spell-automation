@@ -31,6 +31,19 @@ export async function applyEffectWithUndo(card,usage,effect,actor,tray) {
         return applied;
     });
 }
+export async function applyConditionWithUndo(card,actor,statusId,updates={}){
+    return enqueue(async()=>{
+        if(actor.statuses?.has?.(statusId))return;
+        const nativeId=CONFIG.statusEffects?.[statusId]?._id;
+        const snapshots=new Map(Array.from(actor.effects??[]).map(effect=>[effect.id,effect.toObject()]));
+        const result=await actor.toggleStatusEffect(statusId,{active:true});
+        const applied=result?.uuid?result:(nativeId?actor.effects.get?.(nativeId):null)??Array.from(actor.effects??[]).find(effect=>effect.statuses?.has?.(statusId)&&!effect.disabled);
+        if(!applied?.uuid)return;
+        await applied.update({...updates,"system.origin.message":card.uuid});
+        await card.setFlag(MODULE_ID,"effectUndoHistory",[...effectHistory(card),{id:foundry.utils.randomID(),effectUuid:applied.uuid,sourceMessage:card.uuid,before:snapshots.get(applied.id)??null}]);
+        return applied;
+    });
+}
 export function effectUndoSources(message) {
     if(!isDamageOrHealingCard(message))return [message].filter(Boolean);
     const usage=originOf(message);

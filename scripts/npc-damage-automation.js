@@ -43,6 +43,7 @@ function attackForDamage(message) {
 export async function readyDamageTargets(message) {
     if(!isDamageOrHealingCard(message)||message.getFlag?.(MODULE_ID,"pendingDamage"))return null;
     if(message.getFlag(MODULE_ID,"masteryGrazeUndone")||message.getFlag(MODULE_ID,"grappleNoDamage"))return null;
+    if(globalThis.Ugmuls55eAutomationBattleMaster?.maneuverSaveReady(message)===false)return waiting(message,"Waiting for the maneuver saving throw.");
     if(globalThis.Ugmuls55eAutomationGrapple?.grappleSaveReady(message)===false)return waiting(message,"Waiting for the Grapple / Prone saving throw.");
     if(globalThis.Ugmuls55eAutomationStunning?.stunningSaveReady(message)===false)return waiting(message,"Waiting for the Stunning Strike saving throw.");
     if(isManual(message))return waiting(message,"Manual card interaction stopped this workflow.");
@@ -150,6 +151,7 @@ export async function waitForWorkflowAnimations(message) {
     rolls.push(...(stunning?.getAssociatedRolls?.("save")??[]));
     const grapple=game.messages.get(message.getFlag?.(MODULE_ID,"grappleSave"));
     rolls.push(...(grapple?.getAssociatedRolls?.("save")??[]));
+    const maneuver=game.messages.get(message.getFlag?.(MODULE_ID,"maneuverSave"));rolls.push(...(maneuver?.getAssociatedRolls?.("save")??[]));
     const rollIds=[...new Set(rolls.map(roll=>roll.id))];
     const others=Array.from(game.users).filter(user=>user.active&&user.id!==game.user.id);
     let requestId;
@@ -173,6 +175,7 @@ export async function applyOutcomeEffects(card) {
     if(!usage||usage.getFlag?.(MODULE_ID,"targetsConfirmationPending")||usage.getFlag?.(MODULE_ID,"targetsConfirmationCanceled"))return;
     if(usage.getFlag?.(MODULE_ID,"grappleStrike"))return globalThis.Ugmuls55eAutomationGrapple?.applyGrappleOutcome(usage);
     if(usage.getFlag?.(MODULE_ID,"stunningStrike"))return globalThis.Ugmuls55eAutomationStunning?.applyStunningOutcome(usage);
+    if(usage.getFlag?.(MODULE_ID,"maneuverStrike"))return globalThis.Ugmuls55eAutomationBattleMaster?.applyTripOutcome(usage);
     const activity=usage.getAssociatedActivity?.({scaled:true});
     const saving=activity?.type==="save";
     const setting=saving?"autoApplySavedEffects":"autoApplyHitEffects";
@@ -256,7 +259,7 @@ async function receiveAnimationRequest(packet) {
 }
 function scheduleRiderDamage(message) {
     const usage=message?.type==="usage"?message:originOf(message);
-    const link=usage?.getFlag?.(MODULE_ID,"grappleStrike")??usage?.getFlag?.(MODULE_ID,"stunningStrike");
+    const link=usage?.getFlag?.(MODULE_ID,"grappleStrike")??usage?.getFlag?.(MODULE_ID,"stunningStrike")??usage?.getFlag?.(MODULE_ID,"maneuverStrike");
     if(link?.damageId){const damage=game.messages.get(link.damageId);if(damage)schedule(damage);}
 }
 function schedule(message) {
@@ -289,6 +292,7 @@ Hooks.once("ready",()=>{
     for(const event of ["createChatMessage","updateChatMessage"])Hooks.on(event,(message)=>{
         if(isDamageOrHealingCard(message))schedule(message);
         scheduleRiderDamage(message);
+        const maneuverSave=game.messages.get(message.getFlag?.(MODULE_ID,"maneuverSave"));if(maneuverSave)scheduleEffects(maneuverSave);
         const origin=originOf(message);
         const source=origin??message;
         for(const type of ["damage","healing"])for(const result of source.getAssociatedRolls?.(type)??[])schedule(result);
@@ -299,6 +303,8 @@ Hooks.once("ready",()=>{
     });
     // Save completion refreshes native damage HTML without updating the document.
     Hooks.on("renderChatMessageHTML",message=>{
+        scheduleRiderDamage(message);
+        const maneuverSave=game.messages.get(message.getFlag?.(MODULE_ID,"maneuverSave"));if(maneuverSave)scheduleEffects(maneuverSave);
         if(isDamageOrHealingCard(message))schedule(message);
         const usage=message.type==="usage"?message:originOf(message);
         if(usage&&liveEffectUsages.has(usage.id))scheduleEffects(message);

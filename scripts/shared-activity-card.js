@@ -7,7 +7,7 @@ export function linkedHpCards(roll) {
     if(isDamageOrHealingCard(roll))return [roll];
     const origin=cardOrigin(roll);
     if(!origin)return [];
-    const stunningId=(origin.getFlag?.("ugmuls-5-5e-automation","stunningStrike")??origin.getFlag?.("ugmuls-5-5e-automation","grappleStrike"))?.damageId;
+    const stunningId=(origin.getFlag?.("ugmuls-5-5e-automation","stunningStrike")??origin.getFlag?.("ugmuls-5-5e-automation","grappleStrike")??origin.getFlag?.("ugmuls-5-5e-automation","maneuverStrike"))?.damageId;
     const stunningDamage=stunningId?game.messages.get(stunningId):null;
     if(stunningDamage)return [stunningDamage];
     const cards=Array.from(game.messages??[]).filter(card=>isDamageOrHealingCard(card)&&cardOrigin(card)?.id===origin.id);
@@ -23,7 +23,7 @@ export function linkedHpCards(roll) {
 export function isRollAdjustmentLocked(roll) {
     const origin=cardOrigin(roll);
     // Rider saves resolve their own effects independently of weapon HP changes.
-    if(roll?.type==="save"&&(origin?.getFlag?.("ugmuls-5-5e-automation","stunningStrike")||origin?.getFlag?.("ugmuls-5-5e-automation","grappleStrike"))) {
+    if(roll?.type==="save"&&(origin?.getFlag?.("ugmuls-5-5e-automation","stunningStrike")||origin?.getFlag?.("ugmuls-5-5e-automation","grappleStrike")||origin?.getFlag?.("ugmuls-5-5e-automation","maneuverStrike"))) {
         return origin.getFlag("ugmuls-5-5e-automation","outcomeEffectsApplied")===true||
             (origin.getFlag("ugmuls-5-5e-automation","effectUndoHistory")?.length??0)>0;
     }
@@ -34,7 +34,7 @@ Hooks.once("ready",()=>{
     Hooks.on("updateChatMessage",(card,changes)=>{
         const moduleId="ugmuls-5-5e-automation";
         if(!changes.flags?.[moduleId]&&!Object.keys(changes).some(key=>key.startsWith(`flags.${moduleId}.`)))return;
-        const rider=card.getFlag?.(moduleId,"stunningStrike")??card.getFlag?.(moduleId,"grappleStrike");
+        const rider=card.getFlag?.(moduleId,"stunningStrike")??card.getFlag?.(moduleId,"grappleStrike")??card.getFlag?.(moduleId,"maneuverStrike");
         if(!isDamageOrHealingCard(card)&&!rider)return;
         const origin=rider?card:cardOrigin(card);
         const related=[...(origin?.getAssociatedRolls?.("attack")??[]),...(origin?.getAssociatedRolls?.("save")??[])];

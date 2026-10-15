@@ -83,7 +83,7 @@ export async function changeDamageCritical(roll,critical) {
                 if (policy.multiplyNumeric) term.number=critical?term.number*multiplier:term.number/multiplier;
                 terms.push(term);continue;
             }
-            if (!(term instanceof foundry.dice.terms.Die) || term.modifiers?.length) throw Error("Complex or modified dice are not supported by this toggle.");
+            if (!(term instanceof foundry.dice.terms.Die) || term.modifiers?.some(mod=>!roll.options.rsaGreatWeaponFighting||!/^min\d+$/.test(mod))) throw Error("Complex or modified dice are not supported by this toggle.");
             const previous=source[index-1],next=source[index+1];
             if ([previous,next].some(operator=>operator instanceof foundry.dice.terms.OperatorTerm && !["+","-"].includes(operator.operator))) {
                 throw Error("Nested or multiplied powerful-critical dice require manual correction.");
@@ -110,12 +110,12 @@ export async function changeDamageCritical(roll,critical) {
             if (policy.multiplyNumeric) term.number=critical?term.number*multiplier:term.number/multiplier;
             continue;
         }
-        if (!(term instanceof foundry.dice.terms.Die) || term.modifiers?.length) throw Error("Complex or modified dice are not supported by this toggle.");
+        if (!(term instanceof foundry.dice.terms.Die) || term.modifiers?.some(mod=>!roll.options.rsaGreatWeaponFighting||!/^min\d+$/.test(mod))) throw Error("Complex or modified dice are not supported by this toggle.");
         const bonus=index===0?(policy.bonusDice ?? 0):0;
         const number=critical ? term.number*multiplier+bonus : (term.number-bonus)/multiplier;
         if (!Number.isInteger(number) || number<1) throw Error("Cannot safely determine the original damage dice count.");
         if (critical) {
-            const extra=new term.constructor({number:number-term.number,faces:term.faces,options:foundry.utils.deepClone(term.options)});
+            const extra=new term.constructor({number:number-term.number,faces:term.faces,modifiers:foundry.utils.deepClone(term.modifiers??[]),options:foundry.utils.deepClone(term.options)});
             if (extra.number>0) {
                 await extra.evaluate({allowInteractive:false});
                 term.results.push(...foundry.utils.deepClone(extra.results));newDice.push(extra);

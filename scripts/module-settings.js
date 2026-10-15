@@ -4,7 +4,7 @@ export const CLASS_AUTOMATIONS=[
     {name:"Bard",keys:[]},
     {name:"Cleric",keys:[]},
     {name:"Druid",keys:[]},
-    {name:"Fighter",keys:[]},
+    {name:"Fighter",keys:["precisionAttackAutomation","tripAttackAutomation","distractingAttackAutomation","menacingAttackAutomation","goadingAttackAutomation","maneuveringAttackAutomation","pushingAttackAutomation","relentlessAutomation"]},
     {name:"Monk",keys:["stunningStrikeAutomation"]},
     {name:"Paladin",keys:["divineSmiteAutomation"]},
     {name:"Ranger",keys:["huntersPreyAutomation"]},
@@ -16,7 +16,7 @@ export const CLASS_AUTOMATIONS=[
 export const AUTOMATION_GROUPS=[
     {id:"classes",name:"Unique Classes",icon:"fa-hat-wizard",sections:CLASS_AUTOMATIONS,keys:CLASS_AUTOMATIONS.flatMap(section=>section.keys)},
     {id:"masteries",name:"Weapon Masteries",icon:"fa-sword",parent:"weaponMasteryAutomation",keys:["weaponMasteryAutomation","masteryGraze","masterySap","masterySlow","masteryTopple","masteryVex"]},
-    {id:"feats",name:"Feats",icon:"fa-star",keys:["savageAttackerAutomation","grapplerAutomation"]},
+    {id:"feats",name:"Feats",icon:"fa-star",keys:["savageAttackerAutomation","grapplerAutomation","greatWeaponFightingAutomation","greatWeaponMasterAutomation"]},
     {id:"common",name:"Common",icon:"fa-gears",keys:["reactionTracker","bonusActionTracker","spellSlotTurnTracker","grappleAutomation","magicResistanceSaves","showConcentrationHud"]},
     {id:"spells",name:"Spells",icon:"fa-book-open",keys:["showShieldReaction","riderHex","riderHuntersMark","riderMinorElementals","multiShotAttacks","autoApplyBuffEffects"]}
 ];

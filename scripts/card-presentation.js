@@ -69,6 +69,10 @@ export function metamagicDamageTags(message) {
     const usage=chain.find(card=>card.type==="usage");
     const attack=attackId?game.messages.get(attackId):[...(usage?.getAssociatedRolls?.("attack")??[])].filter(roll=>roll.timestamp<=message.timestamp).sort((a,b)=>b.timestamp-a.timestamp)[0];
     if(attack?.getFlag?.(MODULE_ID,"seekingSpellUsed"))tags.push({key:"seeking",label:"Seeking",hint:"This attack was rerolled with Seeking Spell."});
+    const maneuver=message.getFlag?.(MODULE_ID,"battleManeuver")??attack?.getFlag?.(MODULE_ID,"battleManeuver");
+    if(maneuver?.relentless)tags.push({key:"relentless",label:"Relentless",hint:"Free d8 used; no Superiority Die was expended."});
+    const maneuvers={goading:["Goading Attack","Wisdom save: on failure, disadvantage on attacks against creatures other than the Fighter until the end of the Fighter's next turn."],maneuvering:["Maneuvering Attack","Choose an ally who can see or hear you. They can use their Reaction to move up to half their Speed without provoking Opportunity Attacks from this attack's target."],pushing:["Pushing Attack","Large or smaller target: Strength save. On failure, the GM moves it up to 15 feet directly away. Movement is manual."]};
+    if(maneuvers[maneuver?.key]){const [label,hint]=maneuvers[maneuver.key];tags.push({key:"maneuver-"+maneuver.key,label,hint});}
     return tags;
 }
 export function addMetamagicTags(message,root) {
