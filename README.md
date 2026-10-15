@@ -24,7 +24,7 @@ Some features may work with content from **D&D Beyond Importer**, but imported c
 - **Weapon masteries:** assistance for Graze, Sap, Slow, Topple, and Vex, with individual enable/disable options. Push, Nick, and Cleave are not automated.
 - **Interface conveniences:** compact chat cards, remembered roll-popup positions, chat scrolling improvements, and character-sheet Add Item buttons that open the matching compendium browser tab.
 
-Use the module's tabbed options interface to enable the features that suit your table. Automatic damage and effect application are optional; manual card controls remain available.
+Use the module's tabbed options interface to enable the features that suit your table. The Automations section groups options into Unique Classes, Weapon Masteries, Feats, Common, and Spells. Automatic damage and effect application are optional; manual card controls remain available.
 
 ## Compatibility
 

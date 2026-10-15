@@ -2,6 +2,14 @@
 
 ## v0.7.1 (Unreleased)
 
+- Unique Classes adds an All/class filter above its scrolling settings, including every core class. The options window now supports dragging the native bottom-right resize handle.
+
+- Automation category buttons stay visible while the settings beneath them scroll independently.
+
+- Disabling Weapon Mastery Effect Automation disables and greys out its individual mastery options while retaining their selections. Grappler Feat Automation is now a separate Feats setting; Unarmed Grapple / Prone Prompts remain under Common.
+
+- Module Options opens to Automations, with Unique Classes, Weapon Masteries, Feats, Common, and Spells submenus. Class features are grouped by class; existing setting values and other configuration sections are preserved.
+
 - Linked rider save updates explicitly resume their original damage card. Fixes Stunned automatic Grapple failures leaving Grapple effects waiting for damage application; rolled saves use the same handoff.
 
 - Combined Stunning Strike and Grapple resolve Stunning Strike first, including its dice animation and automatic condition application. A Stunned target records an automatic failed Grapple/Prone save; otherwise its normal save is prompted.

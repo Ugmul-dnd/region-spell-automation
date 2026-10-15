@@ -3,6 +3,7 @@ import {stunningTarget} from "./stunning-strike.js";
 import {sendSavePrompt} from "./save-prompts.js";
 const ID="ugmuls-5-5e-automation",selections=new WeakMap(),pending=new WeakMap(),reserved=new Map(),applying=new Set(),scheduled=new Set();
 const enabled=()=>game.settings.get(ID,"grappleAutomation")===true;
+const grapplerEnabled=()=>game.settings.get(ID,"grapplerAutomation")===true;
 const stamp=()=>game.combat?.started?`${game.combat.id}:${game.combat.round}:${game.combat.turn}`:null;
 const active=effect=>!effect.disabled&&effect.active!==false&&!effect.duration?.expired&&effect.system?.expired!==true;
 const actorFor=app=>(app.message?.data?.speaker?ChatMessage.getSpeakerActor(app.message.data.speaker):null)??app.config.subject?.actor;
@@ -36,7 +37,7 @@ export function grappleDC(actor){
 export function grapplerUsed(actor){
     const current=stamp();return !!current&&(reserved.has(actor?.uuid)||Array.from(actor?.effects??[]).some(effect=>active(effect)&&effect.getFlag?.(ID,"grapplerTurn")===current));
 }
-export function keepsGrappleDamage(app){return selections.get(app)==="grapple"&&!!grapplerFeature(actorFor(app))&&!grapplerUsed(actorFor(app));}
+export function keepsGrappleDamage(app){return grapplerEnabled()&&selections.get(app)==="grapple"&&!!grapplerFeature(actorFor(app))&&!grapplerUsed(actorFor(app));}
 export function replacesGrappleDamage(app){
     if(pending.has(app))return pending.get(app).noDamage;
     if(cardFor(app)?.getFlag(ID,"grappleSave"))return cardFor(app).getFlag(ID,"grappleNoDamage")===true;
@@ -53,9 +54,9 @@ export function addGrappleChoice(app){
     for(const [value,text] of [["no","No"],["grapple","Grapple"],["prone","Prone"]]){const option=document.createElement("option");option.value=value;option.textContent=text;select.append(option);}
     select.value=selections.get(app);select.addEventListener("change",event=>{event.stopPropagation();selections.set(app,select.value);app.rebuild();});group.querySelector("select").replaceWith(select);
     const info=document.createElement("i");info.className="fas fa-circle-info";info.style.marginLeft="0.3em";
-    info.dataset.tooltip=`The target saves with its higher Strength or Dexterity save (Strength on a tie), against DC ${grappleDC(actor)}. Failure applies Grappled or Prone. These options replace damage. Grappler allows damage plus Grapple once on your turn; it never adds damage to Prone. Grappling requires a free hand and a target no more than one size larger than you.`;
+    info.dataset.tooltip=`The target saves with its higher Strength or Dexterity save (Strength on a tie), against DC ${grappleDC(actor)}. Failure applies Grappled or Prone. These options replace damage. ${grapplerEnabled()?"Grappler allows damage plus Grapple once on your turn; it never adds damage to Prone.":"Grappler feat automation is disabled, so Grapple replaces damage."} Grappling requires a free hand and a target no more than one size larger than you.`;
     group.querySelector("label").append(info);
-    if(grapplerFeature(actor)){const note=document.createElement("p");note.className="hint";note.textContent=grapplerUsed(actor)?"Grappler already used: further Grapple / Prone attempts replace damage.":"Grappler available: Grapple keeps damage once this turn.";group.append(note);}
+    if(grapplerEnabled()&&grapplerFeature(actor)){const note=document.createElement("p");note.className="hint";note.textContent=grapplerUsed(actor)?"Grappler already used: further Grapple / Prone attempts replace damage.":"Grappler available: Grapple keeps damage once this turn.";group.append(note);}
 }
 export function finalizeGrapple(app,rolls,{preview=false}={}){
     if(!enabled()||!unarmedAction(app)||!["grapple","prone"].includes(selections.get(app)))return rolls;
@@ -216,7 +217,7 @@ export async function resetGrappler(combat,changes={},ending=false){
     }
 }
 export function grapplerAdvantage(actor,target){
-    return !!grapplerFeature(actor)&&Array.from(target?.effects??[]).some(effect=>active(effect)&&effect.getFlag?.(ID,"grappleCaster")===actor.uuid&&effect.getFlag?.(ID,"grappleMode")==="grapple");
+    return grapplerEnabled()&&!!grapplerFeature(actor)&&Array.from(target?.effects??[]).some(effect=>active(effect)&&effect.getFlag?.(ID,"grappleCaster")===actor.uuid&&effect.getFlag?.(ID,"grappleMode")==="grapple");
 }
 let conditionBridge=false;
 export function registerGrapplerConditions(api=globalThis.ac5e?.usageRules){
@@ -233,7 +234,10 @@ export function grapplerAttackDefaults(config,dialog,message){
     dialog.options??={};dialog.options.defaultButton=(config.disadvantage||config.rolls?.[0]?.options.disadvantage)?"normal":"advantage";
 }
 function report(error){console.error("Ugmuls 5.5e Automation | Grapple:",error);ui.notifications.error(error.message??"Could not resolve Grapple / Prone. Use its save card.");}
-Hooks.once("init",()=>game.settings.register(ID,"grappleAutomation",{name:"Unarmed Grapple / Prone Assistance",hint:"Offer Grapple / Prone on action-based unarmed hit damage for any creature. Uses the target's better Strength/Dexterity save. Grappler keeps damage with Grapple once per turn; otherwise the attempt replaces damage.",scope:"world",config:true,type:Boolean,default:true}));
+Hooks.once("init",()=>{
+    game.settings.register(ID,"grappleAutomation",{name:"Unarmed Grapple / Prone Prompts",hint:"Offer Grapple / Prone on action-based unarmed hit damage for any creature, using the target's better Strength/Dexterity save. Attempts replace damage unless Grappler Feat Automation is enabled and available.",scope:"world",config:true,type:Boolean,default:true});
+    game.settings.register(ID,"grapplerAutomation",{name:"Grappler Feat Automation",hint:"For creatures with Grappler: keep damage plus Grapple once on your turn and recommend advantage against creatures grappled by you. The damage option uses Unarmed Grapple / Prone Prompts under Common.",scope:"world",config:true,type:Boolean,default:true});
+});
 Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerGrapplerConditions(usageRules));
 Hooks.once("ready",()=>{
     registerGrapplerConditions();Hooks.on("dnd5e.preRollAttackV2",grapplerAttackDefaults);
