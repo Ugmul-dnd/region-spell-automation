@@ -3,6 +3,22 @@ const enabled=()=>game.settings.get(MODULE_ID,"recklessAttackAutomation")===true
 const activating=new Map();
 let conditionBridge=false;
 const recklessSubmissions=new WeakMap();
+const attackedTurns=new Map();
+const combatTurn=()=>game.combat?.started?`${game.combat.id}:${game.combat.round}:${game.combat.turn}`:null;
+export function canActivateReckless(actor) {
+    const turn=combatTurn();
+    if(!turn)return true;
+    if(game.combat.combatant?.actor?.uuid!==actor?.uuid)return false;
+    return attackedTurns.get(actor.uuid)!==turn&&actor.getFlag?.(MODULE_ID,"recklessAttackTurn")!==turn;
+}
+export async function recordAttackTurn(rolls,{subject}={}) {
+    const actor=subject?.actor??subject?.item?.actor,turn=combatTurn();
+    if(!enabled()||!turn||!actor?.isOwner||!recklessFeature(actor)||!rolls?.length||game.combat.combatant?.actor?.uuid!==actor.uuid)return;
+    if(attackedTurns.get(actor.uuid)===turn)return;
+    // Mark every attack, including Dexterity, ranged and spell attacks; canceling a dialog never reaches this hook.
+    attackedTurns.set(actor.uuid,turn);
+    await actor.setFlag(MODULE_ID,"recklessAttackTurn",turn);
+}
 export function syncRecklessConditionChoice(config,mode) {
     const key="automated-conditions-5e",action=mode===0?"normal":"advantage";
     const options=[config.options,...Array.from(config.rolls??[],roll=>roll.options)].filter(Boolean);
@@ -71,6 +87,7 @@ export async function activateReckless(actor) {
     const feature=recklessFeature(actor);if(!feature)throw Error("Reckless Attack feature is unavailable.");
     if(recklessEffects(actor).length)return;
     if(activating.has(actor.uuid))return activating.get(actor.uuid);
+    if(!canActivateReckless(actor))throw Error("Reckless Attack can only be activated on your first attack roll of your turn.");
     const task=(async()=>{
         const activity=Array.from(feature.system?.activities??[]).find(activity=>activity.effects?.length);
         const effects=activity?await activity.getApplicableEffects():Array.from(feature.effects??[]).filter(effect=>!effect.transfer);
@@ -152,8 +169,8 @@ export function addRecklessButton(app) {
     adv.before(wrapper);wrapper.append(adv);adv.textContent="Adv";adv.title=game.i18n.localize("DND5E.Advantage");
     const button=document.createElement("button");button.type="button";button.dataset.rsaReckless="";button.textContent="Reckless";
     const eligible=strengthAttack(app.config,app.rolls?.[0]??app.config.rolls?.[0]);
-    button.disabled=!eligible||recklessEffects(actor).length>0;
-    button.title=!eligible?"Reckless Attack requires a Strength attack":recklessEffects(actor).length?"Reckless Attack is already active":"Use Reckless Attack and roll; effect expires at your next turn start";
+    button.disabled=!eligible||recklessEffects(actor).length>0||!canActivateReckless(actor);
+    button.title=!eligible?"Reckless Attack requires a Strength attack":recklessEffects(actor).length?"Reckless Attack is already active":!canActivateReckless(actor)?"Reckless Attack is only available on your first attack roll of your turn":"Use Reckless Attack and roll; effect expires at your next turn start";
     button.addEventListener("click",async event=>{
         event.preventDefault();event.stopImmediatePropagation();button.disabled=true;
         try {
@@ -166,15 +183,16 @@ export function addRecklessButton(app) {
             syncRecklessConditionChoice(app.config,mode);
             syncRecklessConditionChoice(config,mode);
             app.element.querySelector(`.dialog-buttons button[data-action="${selected}"]`)?.click();
-        } catch(err){button.disabled=false;console.error("Ugmuls 5.5e Automation | Reckless Attack failed:",err);ui.notifications.error("Could not activate Reckless Attack.");}
+        } catch(err){button.disabled=!canActivateReckless(actor);console.error("Ugmuls 5.5e Automation | Reckless Attack failed:",err);ui.notifications.error("Could not activate Reckless Attack.");}
     });wrapper.append(button);
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"recklessAttackAutomation",{
-    name:"Reckless Attack Assistance",hint:"Add Reckless beside Advantage in Strength attack dialogs for characters with the feature. Apply the feature's effect until next turn start and recommend advantage for attacks against Reckless creatures.",scope:"world",config:true,type:Boolean,default:true
+    name:"Reckless Attack Assistance",hint:"Offer Reckless beside Advantage only on the first attack of your turn, using Strength, for characters with the feature. Apply the feature's effect until next turn start and recommend advantage for attacks against Reckless creatures.",scope:"world",config:true,type:Boolean,default:true
 }));
 Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerRecklessConditions(usageRules));
 Hooks.once("ready",()=>{
     registerRecklessConditions();
+    Hooks.on("dnd5e.rollAttackV2",(rolls,data)=>recordAttackTurn(rolls,data).catch(error=>console.error("Ugmuls 5.5e Automation | First attack tracking failed:",error)));
     globalThis.Ugmuls55eAutomationReckless={prepareRecklessButtons,addRecklessButton,finalizeRecklessRolls};
     Hooks.on("dnd5e.preRollAttackV2",recklessDefaults);
     Hooks.on("dnd5e.postRollConfiguration",completeRecklessConfiguration);

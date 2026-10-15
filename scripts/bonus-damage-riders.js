@@ -76,16 +76,16 @@ export function availableRiders(app) {
     return riders;
 }
 export function addRiderChoices(app) {
-    const available=availableRiders(app),buttons=app.element.querySelector(".dialog-buttons");
-    if(!buttons)return;
+    const available=availableRiders(app);
     const state=choices.get(app)??new Map();choices.set(app,state);
     for(const rider of available) {
         if(app.element.querySelector(`[data-rsa-rider="${rider.key}"]`))continue;
         if(!state.has(rider.key))state.set(rider.key,true);
-        const label=document.createElement("label");label.dataset.rsaRider=rider.key;label.className="rsa-savage-toggle";
-        const input=document.createElement("input");input.type="checkbox";input.checked=state.get(rider.key);
-        input.addEventListener("change",()=>state.set(rider.key,input.checked));
-        label.append(input,document.createTextNode(rider.key===elementalKey?rider.name:`${rider.name} (+1d6 ${rider.type})`));
+        const label=globalThis.Ugmuls55eAutomationDamage.addDamageChoice(app,{
+            key:rider.key,label:rider.name,value:state.get(rider.key),change:yes=>state.set(rider.key,yes)
+        });
+        if(!label)continue;
+        label.dataset.rsaRider=rider.key;
         if(rider.key===elementalKey) {
             const select=document.createElement("select");select.setAttribute("aria-label","Conjure Minor Elementals damage type");
             for(const type of elementalTypes) {
@@ -93,13 +93,15 @@ export function addRiderChoices(app) {
             }
             select.value=state.get(`${rider.key}:type`)??lastElementalType();
             state.set(`${rider.key}:type`,select.value);
-            select.addEventListener("change",()=>{
+            select.addEventListener("change",event=>{
+                event.stopPropagation();
                 if(!elementalTypes.includes(select.value))return;
                 state.set(`${rider.key}:type`,select.value);
                 game.settings.set(ID,"lastMinorElementalsType",select.value).catch(err=>console.warn("Ugmuls 5.5e Automation | Could not remember elemental damage type:",err));
-            });label.append(select);
+                app.rebuild();
+            });label.querySelector(".form-fields").append(select);
         }
-        buttons.before(label);
+
     }
 }
 export function finalizeRiders(app,rolls) {

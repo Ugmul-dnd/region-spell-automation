@@ -1,5 +1,5 @@
 const ID="ugmuls-5-5e-automation";
-const selected=new WeakSet(),pending=new WeakMap(),reserved=new Set();
+const selected=new WeakMap(),pending=new WeakMap(),reserved=new Set();
 const enabled=()=>game.settings.get(ID,"savageAttackerAutomation")===true;
 export const savageFeature=actor=>Array.from(actor?.items??[]).find(item=>item.type==="feat"&&
     (item.system?.identifier==="savage-attacker"||item.identifier==="savage-attacker"||/^savage attacker$/i.test(item.name?.trim()??"")));
@@ -17,31 +17,34 @@ export function savageRoll(roll) {
 }
 export function addSavageToggle(app) {
     if(!eligible(app)||app.element.querySelector("[data-rsa-savage]"))return;
-    const buttons=app.element.querySelector(".dialog-buttons");if(!buttons)return;
-    const label=document.createElement("label");label.dataset.rsaSavage="";label.className="rsa-savage-toggle";
-    const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=selected.has(app);
-    checkbox.disabled=savageUsed(actorFor(app));
-    label.classList.toggle("rsa-savage-used",checkbox.disabled);
-    if(checkbox.disabled){selected.delete(app);checkbox.checked=false;}
-    checkbox.addEventListener("change",()=>checkbox.checked?selected.add(app):selected.delete(app));
-    label.append(checkbox,document.createTextNode(checkbox.disabled?"Savage Attacker - Already Used":"Use Savage Attacker"));buttons.before(label);
+    const used=savageUsed(actorFor(app));
+    if(!selected.has(app))selected.set(app,true);
+    if(used)selected.set(app,false);
+    const group=globalThis.Ugmuls55eAutomationDamage.addDamageChoice(app,{
+        key:"savage",label:"Savage Attacker",used,
+        value:selected.get(app),disabled:used,change:yes=>selected.set(app,yes)
+    });
+    if(group)group.dataset.rsaSavage="";
 }
-export function finalizeSavage(app,rolls) {
-    if(!selected.has(app)||!eligible(app)||savageUsed(actorFor(app)))return rolls;
+export function finalizeSavage(app,rolls,{preview=false}={}) {
+    if(preview&&!selected.has(app))selected.set(app,true);
+    if(selected.get(app)!==true||!eligible(app)||savageUsed(actorFor(app)))return rolls;
     const index=app.config.rolls?.findIndex(roll=>roll.base===true)??-1;
     if(index<0||!rolls[index])return rolls;
     const replacement=savageRoll(rolls[index]);if(!replacement)return rolls;
-    const actor=actorFor(app);reserved.add(actor.uuid);pending.set(app,actor);
+    if(!preview){const actor=actorFor(app);reserved.add(actor.uuid);pending.set(app,actor);}
     const result=[...rolls];result[index]=replacement;return result;
 }
 export async function commitSavage(app,options) {
     const actor=pending.get(app);if(!actor)return;
     try {
-        if(options?.dnd5e?.submitted)await actor.createEmbeddedDocuments("ActiveEffect",[{
-            name:"Savage Used",img:savageFeature(actor)?.img,disabled:false,transfer:false,
-            duration:{rounds:1,expiry:"sourceStart"},start:CONFIG.ActiveEffect.documentClass.getEffectStart(),
-            system:{changes:[],origin:{actor:actor.uuid,item:savageFeature(actor)?.uuid}},flags:{[ID]:{savageUsed:true}}
-        }]);
+        if(options?.dnd5e?.submitted) {
+            const data={name:"Savage Used",img:savageFeature(actor)?.img,disabled:false,transfer:false,
+                duration:{rounds:1,expiry:"sourceStart"},start:CONFIG.ActiveEffect.documentClass.getEffectStart(),
+                system:{changes:[],origin:{actor:actor.uuid,item:savageFeature(actor)?.uuid}},flags:{[ID]:{savageUsed:true}}};
+            if(globalThis.Ugmuls55eAutomationResources?.reuseMarker)await globalThis.Ugmuls55eAutomationResources.reuseMarker(actor,data,"savageUsed");
+            else await actor.createEmbeddedDocuments("ActiveEffect",[data]);
+        }
     } finally {pending.delete(app);reserved.delete(actor.uuid);selected.delete(app);}
 }
 Hooks.once("init",()=>game.settings.register(ID,"savageAttackerAutomation",{name:"Savage Attacker Assistance",

@@ -7,18 +7,61 @@ const queued = new Set();
 const dialogClasses = new Map();
 let positionWrites = Promise.resolve();
 
+export function addDamageChoice(app, {key, label, value, disabled=false, used=false, locked=false, change=()=>{}}) {
+    const configuration=app.element.querySelector('[data-application-part="configuration"] fieldset')
+        ??app.element.querySelector('fieldset');
+    if(!configuration)return null;
+    const existing=configuration.querySelector('[data-rsa-choice="'+key+'"]');
+    if(existing)return existing;
+    const group=document.createElement("div");group.className="form-group rsa-damage-choice";
+    group.dataset.rsaChoice=key;group.classList.toggle("rsa-savage-used",disabled||used||locked);
+    const caption=document.createElement("label");caption.textContent=label;
+    const fields=document.createElement("div");fields.className="form-fields";
+    const select=document.createElement("select");select.disabled=disabled||used||locked;
+    select.setAttribute("aria-label",label);
+    for(const [value,text] of [["yes","Yes"],["no",used?"No - Already Used":"No"]]) {
+        const option=document.createElement("option");option.value=value;option.textContent=text;select.append(option);
+    }
+    select.value=!disabled&&!used&&value?"yes":"no";
+    select.addEventListener("change",event=>{
+        event.stopPropagation();change(select.value==="yes");
+        app.rebuild();
+    });
+    fields.append(select);group.append(caption,fields);configuration.append(group);return group;
+}
+
 export function configurePromptDialog(kind, dialog = {}) {
     const base = dialog.applicationClass ?? globalThis.CONFIG?.Dice?.[kind === "damage" ? "DamageRoll" : "D20Roll"]?.DefaultConfigurationDialog;
     if (!base) return dialog;
     let PositionedDialog = dialogClasses.get(kind);
     if (!PositionedDialog) {
         PositionedDialog = class extends base {
+            get rolls() {
+                const rolls=super.rolls;
+                if(!this._rsaPreview)return rolls;
+                const savage=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls,{preview:true})??rolls;
+                const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,savage)??savage;
+                const sneak=globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders,{preview:true})??riders;
+                const prey=globalThis.Ugmuls55eAutomationPrey?.finalizePrey(this,sneak,{preview:true})??sneak;
+                const smite=globalThis.Ugmuls55eAutomationSmite?.finalizeSmite(this,prey,{preview:true})??prey;
+                const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite,{preview:true})??smite;
+                return globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch,{preview:true})??eldritch;
+            }
+            async _prepareFormulasContext(context,options) {
+                this._rsaPreview=kind==="damage";
+                try {return await super._prepareFormulasContext(context,options);}
+                finally {this._rsaPreview=false;}
+            }
             _finalizeRolls(action) {
                 const rolls=super._finalizeRolls(action);
                 if(kind === "damage") {
                     const weaponRolls=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls)??rolls;
                     const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,weaponRolls)??weaponRolls;
-                    return globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders)??riders;
+                    const sneak=globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders)??riders;
+                    const prey=globalThis.Ugmuls55eAutomationPrey?.finalizePrey(this,sneak)??sneak;
+                    const smite=globalThis.Ugmuls55eAutomationSmite?.finalizeSmite(this,prey)??prey;
+                    const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite)??smite;
+                    return globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch)??eldritch;
                 }
                 return kind === "attack" ? globalThis.Ugmuls55eAutomationReckless?.finalizeRecklessRolls(this,rolls) ?? rolls : rolls;
             }
@@ -32,9 +75,21 @@ export function configurePromptDialog(kind, dialog = {}) {
                 super._onRender(context,options);
                 if(kind === "attack") globalThis.Ugmuls55eAutomationMasteries?.focusMasteryAttackButtons(this);
                 if(kind === "attack") globalThis.Ugmuls55eAutomationReckless?.addRecklessButton(this);
+                if(kind === "damage") {
+                    // Extra rider rows are previews, not separate native configuration entries.
+                    for(const [index,row] of Array.from(this.element.querySelectorAll(".formulas > li")).entries()) {
+                        if(index>=super.rolls.length)row.querySelector(".form-group")?.remove();
+                        const formula=row.querySelector(".formula");
+                        if(formula)formula.textContent=formula.textContent.replace(/(\S)\[/g,"$1 [");
+                    }
+                }
                 if(kind === "damage") globalThis.Ugmuls55eAutomationSavage?.addSavageToggle(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationRiders?.addRiderChoices(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationSneak?.addSneakChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationPrey?.addPreyChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationSmite?.addSmiteChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationEldritch?.addEldritchChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationFrenzy?.addFrenzyChoice(this);
             }
             _onPosition(position) {
                 super._onPosition(position);
@@ -53,8 +108,26 @@ export function configurePromptDialog(kind, dialog = {}) {
             }
             async close(options) {
                 if(kind === "attack")globalThis.Ugmuls55eAutomationMultiShot?.settleFirstShot(this,options);
+                if(kind === "damage") {
+                    try {
+                        await globalThis.Ugmuls55eAutomationEldritch?.commitEldritch(this,options);
+                        await globalThis.Ugmuls55eAutomationSmite?.commitSmite(this,options);
+                    }
+                    catch(error) {
+                        // Release pending uses if resource consumption blocks submission.
+                        await globalThis.Ugmuls55eAutomationSmite?.commitSmite(this,{});
+                        await globalThis.Ugmuls55eAutomationEldritch?.commitEldritch(this,{});
+                        await globalThis.Ugmuls55eAutomationSavage?.commitSavage(this,{});
+                        await globalThis.Ugmuls55eAutomationSneak?.commitSneak(this,{});
+                        await globalThis.Ugmuls55eAutomationPrey?.commitPrey(this,{});
+                        await globalThis.Ugmuls55eAutomationFrenzy?.commitFrenzy(this,{});
+                        throw error;
+                    }
+                }
                 if(kind === "damage")await globalThis.Ugmuls55eAutomationSavage?.commitSavage(this,options);
                 if(kind === "damage")await globalThis.Ugmuls55eAutomationSneak?.commitSneak(this,options);
+                if(kind === "damage")await globalThis.Ugmuls55eAutomationPrey?.commitPrey(this,options);
+                if(kind === "damage")await globalThis.Ugmuls55eAutomationFrenzy?.commitFrenzy(this,options);
                 clearTimeout(this.positionTimer);
                 this.rememberPosition();
                 return super.close(options);
@@ -164,7 +237,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-    globalThis.Ugmuls55eAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation};
+    globalThis.Ugmuls55eAutomationDamage = {promptDamage,configurePromptDialog,waitForAttackAnimation,addDamageChoice};
     // Region activity execution retains its original authority. Only the
     // damage dialog is routed to a connected owner of the casting actor.
     const promptRegionDamage=message=>{

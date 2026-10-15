@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.7.1 (Unreleased)
+
+- Divine Smite uses the shared bonus-action and spell-slot casting trackers instead of a separate per-turn marker. Free Smite consumes only its free charge and bonus action; slot-funded Smite also marks the spell cast. Legacy Divine Smite markers are disabled. Spent-feature markers are reused, and turn resource/Savage markers become inactive when reset. Eldritch Smite retains its separate once-per-turn Pact slot cost without spending a bonus action.
+
+- Bonus action and reaction trackers apply to all active combat participants. Spell-slot casting tracking is limited to character actors. All trackers exclude out-of-combat uses.
+
+- Combat resource tracking adds Bonus Action - used (cleared at your next turn start) and Consumed Spell Slot (cleared when the current turn ends). Native bonus actions and actual spell-slot casting are tracked; free spells, cantrips and non-spell slot expenditures are excluded from the spell-casting limit. Reaction tracking includes own-turn reactions and explicit next-turn cleanup. Shared resource helpers are available for rider integration.
+
+- Frenzy is automatic and locked to Yes on the first qualifying hit, then No - Already Used. All once-per-turn damage choices now put Already Used inside the dropdown while keeping feature names unchanged.
+
+- Reckless Attack activation is limited to the first attack roll of your own turn. Rolling any attack without Reckless closes that opportunity; canceled prompts do not. Active Reckless continues granting advantage through its existing expiry.
+
+- Frenzy adds a default-Yes rider to Strength-based weapon hits on your turn while Rage and Reckless Attack are active. Uses the feature's damage dice, matches the weapon damage type, supports criticals and locks after use that combat turn.
+
+- Eldritch Smite adds a default-No damage rider for pact weapons, consumes a Pact Magic slot, scales Force damage with that slot level, and locks out without slots or after use that combat turn.
+
+- Hunter's Prey (Colossus Slayer) adds a remembered Yes/No damage rider, initially No, with rule tooltip. Only available against an injured single target and once per combat turn; damage matches the weapon and supports criticals.
+
+- Divine Smite can join melee weapon hit damage through Configuration, using a tracked free cast or an available spell slot. Fiend/Undead bonus is detected automatically, critical damage follows the weapon roll, and use is limited to once per combat turn. Available under Bonus Damage Riders.
+
+- Savage Attacker defaults to Yes when available. Sneak Attack inherits the weapon damage type without a separate type selector.
+
+- Damage roll Configuration now uses Yes/No choices for Savage Attacker, Sneak Attack and applicable spell riders, with a live dice preview. Used once-per-turn features show a disabled No. Conjure Minor Elementals keeps its remembered damage type in the same section.
+
 ## v0.7.0
 
 Renamed to **Ugmuls 5.5e Automation**, with repository, module ID, installation folder and release ZIP named `ugmuls-5-5e-automation`. This is a clean installation identity; settings and stored world references from the previous ID are not migrated. Starter spells can be added through the manager.

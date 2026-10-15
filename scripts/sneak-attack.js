@@ -20,34 +20,36 @@ export function sneakDefault(app) {
 }
 export function addSneakChoice(app) {
     if(!eligible(app)||app.element.querySelector("[data-rsa-sneak]"))return;
-    const buttons=app.element.querySelector(".dialog-buttons");if(!buttons)return;
     const used=sneakUsed(actorFor(app));
     if(!selected.has(app))selected.set(app,sneakDefault(app));
-    const label=document.createElement("label");label.dataset.rsaSneak="";label.className=`rsa-savage-toggle${used?" rsa-savage-used":""}`;
-    const input=document.createElement("input");input.type="checkbox";input.disabled=used;input.checked=!used&&selected.get(app);
-    input.addEventListener("change",()=>selected.set(app,input.checked));
-    label.append(input,document.createTextNode(used?"Sneak Attack - Already Used":"Use Sneak Attack"));buttons.before(label);
+    if(used)selected.set(app,false);
+    const group=globalThis.Ugmuls55eAutomationDamage.addDamageChoice(app,{
+        key:"sneak",label:"Sneak Attack",used,
+        value:selected.get(app),disabled:used,change:yes=>selected.set(app,yes)
+    });
+    if(group)group.dataset.rsaSneak="";
 }
-export function finalizeSneak(app,rolls) {
+export function finalizeSneak(app,rolls,{preview=false}={}) {
+    if(preview&&!selected.has(app))selected.set(app,sneakDefault(app));
     if(!eligible(app)||selected.get(app)!==true||sneakUsed(actorFor(app))||rolls.some(roll=>roll.options?.rsaSneakAttack))return rolls;
     const actor=actorFor(app),feature=sneakFeature(actor);
     const activity=Array.from(feature.system?.activities??[]).find(activity=>activity.damage?.parts?.length);
     const source=activity?.getDamageConfig?.()?.rolls?.[0];
-    if(!source?.parts?.length){ui.notifications.warn("Sneak Attack needs a configured damage activity on its feature.");return rolls;}
+    if(!source?.parts?.length){if(!preview)ui.notifications.warn("Sneak Attack needs a configured damage activity on its feature.");return rolls;}
     const base=rolls[0]?.options??{},policy={...base.critical,bonusDice:0,bonusDamage:""};
-    const config={...source,options:{...source.options,type:base.type,flavor:"Sneak Attack",isCritical:base.isCritical===true,
+    const config={...source,options:{...source.options,type:base.type,types:base.type?[base.type]:[],flavor:"Sneak Attack",isCritical:base.isCritical===true,
         critical:policy,rsaSneakAttack:true}};
     const extra=CONFIG.Dice.DamageRoll.fromConfig(config,{critical:policy});
-    const turn=combatTurn();if(turn){reserved.set(actor.uuid,turn);pending.set(app,{actor,turn});}
+    const turn=combatTurn();if(turn&&!preview){reserved.set(actor.uuid,turn);pending.set(app,{actor,turn});}
     return [...rolls,extra];
 }
 export async function commitSneak(app,options) {
     const entry=pending.get(app);if(!entry)return;
     const {actor,turn}=entry;
-    try {if(options?.dnd5e?.submitted)await actor.createEmbeddedDocuments("ActiveEffect",[{
+    try {if(options?.dnd5e?.submitted)await saveUsedMarker(actor,{
         name:"Sneak Attack - used",img:sneakFeature(actor)?.img,disabled:false,transfer:false,
         system:{changes:[]},flags:{[ID]:{sneakTurn:turn,sneakCombat:game.combat?.id}}
-    }]);}finally {if(reserved.get(actor.uuid)===turn)reserved.delete(actor.uuid);pending.delete(app);}
+    });}finally {if(reserved.get(actor.uuid)===turn)reserved.delete(actor.uuid);pending.delete(app);}
 }
 export async function resetSneakTurn(combat,changes) {
     if(!game.user.isGM||(game.users.activeGM&&game.users.activeGM.id!==game.user.id)||!("turn" in changes||"round" in changes||changes.started===false))return;
@@ -63,3 +65,8 @@ Hooks.once("ready",()=>{
     globalThis.Ugmuls55eAutomationSneak={addSneakChoice,finalizeSneak,commitSneak};
     Hooks.on("updateCombat",(combat,changes)=>resetSneakTurn(combat,changes).catch(err=>console.error("Ugmuls 5.5e Automation | Sneak Attack reset failed:",err)));
 });
+
+function saveUsedMarker(actor,data) {
+    return globalThis.Ugmuls55eAutomationResources?.reuseMarker?globalThis.Ugmuls55eAutomationResources.reuseMarker(actor,data,"sneakTurn"):
+        actor.createEmbeddedDocuments("ActiveEffect",[data]);
+}

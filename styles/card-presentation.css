@@ -54,3 +54,12 @@
 .rsa-savage-toggle {display:flex;align-items:center;gap:8px;margin:8px 0;padding:6px 8px;}
 .rsa-savage-toggle.rsa-savage-used {color:var(--color-text-secondary, #888);cursor:not-allowed;}
 .rsa-savage-toggle input:disabled {opacity:0.45;filter:grayscale(1);cursor:not-allowed;}
+
+.rsa-damage-choice.rsa-savage-used {color:var(--color-text-secondary, #888);}
+.rsa-damage-choice select:disabled {opacity:0.45;filter:grayscale(1);cursor:not-allowed;}
+
+.rsa-smite-target {display:flex;align-items:center;gap:4px;font-size:var(--font-size-11,11px);white-space:nowrap;}
+.rsa-smite-target input:disabled {opacity:0.8;}
+.rsa-damage-choice[data-rsa-smite] .form-fields {flex-wrap:wrap;}
+
+.rsa-rider-info {margin-left:5px;cursor:help;font-size:0.85em;}
