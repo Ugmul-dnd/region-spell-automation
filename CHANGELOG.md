@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Combat Inspiration Offense now appears as a default-No damage configuration option. Its die previews and rolls with initial attack damage; confirming spends Inspired, canceling preserves it. The post-roll offense button has been removed; Defense remains on incoming attack cards.
+
+- Valor Combat Inspiration: source-tracked Inspired dice offer Offense on single-target attack damage cards and Defense on incoming hits. Offense adds native critical-aware damage; Defense spends the recipient’s reaction for AC against that attack only and combines with Shield. Both consume the granted Inspired effect, not another source Bard use.
+
+- Peerless Skill: add the Bard’s current Inspiration die to their own failed attack or ability check, preserving original rolls. Spend a use only when the adjusted test succeeds. Unknown-DC checks request the GM-provided DC before rolling.
+
+- Cutting Words: eligible Bards can spend their Reaction and a Bardic Inspiration use from enemy attack-hit or damage cards within 60 feet. Original dice are preserved, damage is floored at zero, and each damage component is selectable. Sight walls block eligibility; users confirm visibility. Undo applied damage before adjusting it.
+
+- Shield reaction button now spends an available limited/free cast before selecting the lowest available spell slot, including higher-level and Pact slot fallback. Native consumption preserves reaction and spell-slot turn tracking.
+
+- Bardic Inspiration: add the source Bard’s die to failed attack, save, or check cards while preserving the existing d20. Consume the Inspired effect, retain the granted die size, and refresh results through the existing workflow. Unknown-DC rolls require confirmation of failure.
+
 ### Added
 
 - Spell New/Add buttons on standard and Tidy character sheets offer Browse Compendium or Load Unprepared Spells for full-list preparation classes. Loading respects enabled Compendium Sources, existing spell identifiers, configured slot capacity, and each class’s progression. Only missing leveled spells are added, initially unprepared; existing preparation and always-prepared spells are preserved. The option is configurable under Chat & Sheets.

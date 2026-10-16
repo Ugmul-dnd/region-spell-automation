@@ -91,3 +91,25 @@
 .rsa-confirm-target-list.rsa-two-columns, .rsa-careful-target-list.rsa-two-columns {grid-template-columns:repeat(2,minmax(0,1fr));}
 .rsa-confirm-target-row {display:flex;align-items:center;gap:6px;width:100%;min-width:0;min-height:30px;height:auto;margin:0;padding:3px 6px;text-align:left;white-space:normal;}
 .rsa-careful-target-list label {display:flex;align-items:center;gap:5px;min-width:0;margin:0;padding:3px;overflow-wrap:anywhere;}
+
+.rsa-bardic-actions button {display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:normal;}
+.rsa-bardic-actions button > img {width:18px;height:18px;min-width:18px;max-width:18px;min-height:18px;max-height:18px;flex:0 0 18px;object-fit:contain;border:0;margin:0;}
+
+/* The save usage card owns the continuous border, including inline results. */
+.rsa-save-usage .card-summary.rsa-roll-save {border-left:0 !important;}
+
+.rsa-shield-actions button {display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:normal;}
+.rsa-shield-actions button > img {width:18px;height:18px;min-width:18px;max-width:18px;min-height:18px;max-height:18px;flex:0 0 18px;object-fit:contain;border:0;margin:0;}
+
+.rsa-cutting-actions button {display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:normal;}
+.rsa-cutting-actions button > img {width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;object-fit:contain;border:0;margin:0;}
+.rsa-cutting-result {font-size:.85em;padding:4px;}
+
+.rsa-peerless-actions button {display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:normal;}
+.rsa-peerless-actions button > img {width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;object-fit:contain;border:0;margin:0;}
+
+.rsa-valor-actions button {display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:normal;}
+.rsa-valor-actions button > img {width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;object-fit:contain;border:0;margin:0;}
+
+/* Native card styles may override the hidden attribute. */
+.rsa-missed-attack-damage {display:none !important;}

@@ -84,6 +84,10 @@
     "scripts/create-player.js",
     "scripts/stunning-strike.js",
     "scripts/battlemaster.js",
+    "scripts/bardic-inspiration.js",
+    "scripts/cutting-words.js",
+    "scripts/peerless-skill.js",
+    "scripts/combat-inspiration.js",
     "scripts/grapple.js",
     "scripts/pending-damage.js"
   ],

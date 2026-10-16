@@ -49,7 +49,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                 const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite,{preview:true})??smite;
                 const frenzy=globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch,{preview:true})??eldritch;
                 const maneuver=globalThis.Ugmuls55eAutomationBattleMaster?.finalizeManeuver(this,frenzy,{preview:true})??frenzy;
-                const transmuted=globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,maneuver,{preview:true})??maneuver;
+                const valor=globalThis.Ugmuls55eAutomationValor?.finalizeValorOffense(this,maneuver,{preview:true})??maneuver;
+                const transmuted=globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,valor,{preview:true})??valor;
                 return globalThis.Ugmuls55eAutomationGreatWeapons?.finalizeGreatWeapons(this,transmuted)??transmuted;
             }
             async _prepareContext(options) {
@@ -75,7 +76,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                     const eldritch=globalThis.Ugmuls55eAutomationEldritch?.finalizeEldritch(this,smite)??smite;
                     const frenzy=globalThis.Ugmuls55eAutomationFrenzy?.finalizeFrenzy(this,eldritch)??eldritch;
                     const maneuver=globalThis.Ugmuls55eAutomationBattleMaster?.finalizeManeuver(this,frenzy)??frenzy;
-                    const stunning=globalThis.Ugmuls55eAutomationStunning?.finalizeStunning(this,maneuver)??maneuver;
+                    const valor=globalThis.Ugmuls55eAutomationValor?.finalizeValorOffense(this,maneuver)??maneuver;
+                    const stunning=globalThis.Ugmuls55eAutomationStunning?.finalizeStunning(this,valor)??valor;
                     const transmuted=globalThis.Ugmuls55eAutomationTransmuted?.finalizeTransmuted(this,stunning)??stunning;
                     return globalThis.Ugmuls55eAutomationGreatWeapons?.finalizeGreatWeapons(this,transmuted)??transmuted;
                 }
@@ -109,6 +111,7 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind === "damage") globalThis.Ugmuls55eAutomationEldritch?.addEldritchChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationFrenzy?.addFrenzyChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationBattleMaster?.addManeuverChoice(this);
+                if(kind === "damage") globalThis.Ugmuls55eAutomationValor?.addValorOffenseChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationStunning?.addStunningChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationGrapple?.addGrappleChoice(this);
                 if(kind === "damage") globalThis.Ugmuls55eAutomationTransmuted?.addTransmutedChoice(this);
@@ -138,10 +141,12 @@ export function configurePromptDialog(kind, dialog = {}) {
                         await globalThis.Ugmuls55eAutomationStunning?.commitStunning(this,options);
                         await globalThis.Ugmuls55eAutomationGrapple?.commitGrapple(this,options);
                         await globalThis.Ugmuls55eAutomationBattleMaster?.commitManeuver(this,options);
+                        await globalThis.Ugmuls55eAutomationValor?.commitValorOffense(this,options);
                     }
                     catch(error) {
                         // Release pending uses if resource consumption blocks submission.
                         await globalThis.Ugmuls55eAutomationBattleMaster?.commitManeuver(this,{});
+                        await globalThis.Ugmuls55eAutomationValor?.commitValorOffense(this,{});
                         await globalThis.Ugmuls55eAutomationGrapple?.commitGrapple(this,{});
                         await globalThis.Ugmuls55eAutomationStunning?.commitStunning(this,{});
                         await globalThis.Ugmuls55eAutomationTransmuted?.commitTransmuted(this,{});
@@ -282,7 +287,7 @@ Hooks.once("ready", () => {
         const activity=config.subject;
         if(activity?.type!=="heal")return;
         const prompt=game.settings.get(MODULE_ID,"promptDamageOnSave")===true;
-        if(!prompt&&game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true)return;
+        if(!prompt&&game.settings.get(MODULE_ID,"autoApplyCardHealing")!==true)return;
         if(prompt) {
             const configure=dialog.configure;
             Object.assign(dialog,configurePromptDialog("damage",dialog));

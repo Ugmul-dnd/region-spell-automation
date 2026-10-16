@@ -1,7 +1,7 @@
 const MODULE_ID="ugmuls-5-5e-automation";
 export const CLASS_AUTOMATIONS=[
     {name:"Barbarian",keys:["recklessAttackAutomation","frenzyAutomation"]},
-    {name:"Bard",keys:[]},
+    {name:"Bard",keys:["bardicInspirationAutomation","cuttingWordsAutomation","peerlessSkillAutomation","combatInspirationAutomation"]},
     {name:"Cleric",keys:[]},
     {name:"Druid",keys:[]},
     {name:"Fighter",keys:["precisionAttackAutomation","tripAttackAutomation","distractingAttackAutomation","menacingAttackAutomation","goadingAttackAutomation","maneuveringAttackAutomation","pushingAttackAutomation","relentlessAutomation"]},
@@ -25,7 +25,7 @@ export const SETTINGS_GROUPS=[
     {id:"regions",name:"Regions",icon:"fa-draw-polygon",keys:["promptForSaveOnRegionTriggers","regionPlacementControls","autoAttachSelfEmanations","cleanupTargetingRegions"]},
     {id:"targeting",name:"Targeting",icon:"fa-bullseye",keys:["confirmAreaTargets","retargetActivityCards"]},
     {id:"rolls",name:"Rolls & Damage / Healing",icon:"fa-dice",keys:["promptForSaveOnSpellCasts","promptDamageOnSave","promptDamageOnHit","adjustSavingThrowAdvantage","adjustAttackRollAdvantage","adjustDamageCritical"]},
-    {id:"npcdamage",name:"GM NPC & Damage / Healing",icon:"fa-skull",keys:["autoRollNpcSaves","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"]},
+    {id:"npcdamage",name:"GM NPC & Damage / Healing",icon:"fa-skull",keys:["autoRollNpcSaves","autoApplyCardDamage","autoApplyCardHealing","autoApplySavedEffects","autoApplyHitEffects"]},
     {id:"chat",name:"Chat & Sheets",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen","sheetAddCompendiumBrowser","sheetLoadUnpreparedSpells"]}
 ];
 const settingPages=()=>SETTINGS_GROUPS.flatMap(group=>group.children??[group]);

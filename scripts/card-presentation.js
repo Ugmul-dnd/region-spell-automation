@@ -16,6 +16,7 @@ export function styleActivityCard(message,html) {
     root.classList.add("rsa-action-colors");
     showPendingSaves(message,root);
     if (["attack","save","damage","healing"].includes(message.type)) root.classList.add(`rsa-roll-${message.type}`);
+    if(message.type==="usage"&&message.getAssociatedActivity?.()?.type==="save")root.classList.add("rsa-roll-save","rsa-save-usage");
     for (const summary of root.querySelectorAll(".card-summary[data-message-id]")) {
         const roll=game.messages.get(summary.dataset.messageId);
         if (["attack","save","damage","healing"].includes(roll?.type)) summary.classList.add(`rsa-roll-${roll.type}`);

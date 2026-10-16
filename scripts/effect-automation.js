@@ -8,10 +8,17 @@ export function isHuntersMarkActivity(activity) {
         /^hunter['’]?s mark$/i.test(item.name?.trim()??""));
 }
 
+export function isBardicInspireActivity(activity) {
+    const item=activity?.item;
+    return activity?.type==="utility"&&item?.type==="feat"&&
+        ((item.identifier??item.system?.identifier)==="bardic-inspiration"||/^bardic inspiration$/i.test(item.name?.trim()??""))&&
+        activity.roll?.prompt!==true&&(!activity.roll?.formula||/^@scale\.bard\.inspiration(?:\.die)?$/.test(activity.roll.formula.trim()));
+}
+
 export function eligibleBuffActivity(activity) {
     // Utility activities have no attack/save or damage/healing roll to resolve.
     return activity?.type === "utility" && ["spell","feat"].includes(activity.item?.type) &&
-        !activity.damage?.parts?.length && !activity.roll?.formula && !activity.target?.template?.type;
+        !activity.damage?.parts?.length && (!activity.roll?.formula || isBardicInspireActivity(activity)) && !activity.target?.template?.type;
 }
 
 export async function applyBuffEffects(message) {
@@ -23,8 +30,8 @@ export async function applyBuffEffects(message) {
     const effects=await activity.getApplicableEffects?.() ?? [];
     if (!effects.length) return;
     const caster=message.getAssociatedActor?.();
-    const mark=isHuntersMarkActivity(activity);
-    if(mark&&message.system.targets?.length!==1)return;
+    const mark=isHuntersMarkActivity(activity),inspire=isBardicInspireActivity(activity);
+    if((mark||inspire)&&message.system.targets?.length!==1)return;
     const actors=new Map();
     const type=activity.target?.affects?.type;
     if (type === "self") {
@@ -40,7 +47,8 @@ export async function applyBuffEffects(message) {
             if (!actor) continue;
             // Do not infer a no-save offensive effect as a buff. Self, explicit
             // allies, and friendly-disposition recipients are eligible.
-            if (mark || actor.uuid === caster?.uuid || type === "ally" ||
+            if(inspire&&actor.uuid===caster?.uuid)continue;
+            if (mark || inspire || actor.uuid === caster?.uuid || type === "ally" ||
                 (type === "creature" && casterDoc && token && token.disposition === casterDoc.disposition)) actors.set(actor.uuid,actor);
         }
     }

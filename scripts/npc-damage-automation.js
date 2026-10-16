@@ -20,7 +20,8 @@ function waiting(message,reason) {
 }
 const originOf=message=>typeof message?.system?.origin==="string"?game.messages.get(message.system.origin):message?.system?.origin;
 const authority=()=>game.user.isGM&&(!game.users.activeGM||game.users.activeGM.id===game.user.id);
-const automationEnabled=()=>["autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"].some(key=>game.settings.get(MODULE_ID,key)===true);
+export const autoApplyHpEnabled=message=>game.settings.get(MODULE_ID,isHealingCard(message)?"autoApplyCardHealing":"autoApplyCardDamage")===true;
+const automationEnabled=()=>["autoApplyCardHealing","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"].some(key=>game.settings.get(MODULE_ID,key)===true);
 export function shouldAutoRollNpc(actor) {
     return game.settings.get(MODULE_ID,"autoRollNpcSaves")===true&&game.user.isGM&&actor?.type==="npc"&&
         !Array.from(game.users).some(user=>!user.isGM&&actor.testUserPermission(user,"OWNER"));
@@ -76,13 +77,13 @@ export async function readyDamageTargets(message) {
     return remaining(targets);
 }
 export async function applyAutomaticDamage(message) {
-    if(!authority()||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true||running.has(message.id))return;
+    if(!authority()||!autoApplyHpEnabled(message)||running.has(message.id))return;
     const targets=await readyDamageTargets(message);if(!targets)return;
     running.add(message.id);appliedNow.set(message.id,new Set());
     let holder;
     try {
         await waitForWorkflowAnimations(message);
-        if(isManual(message)||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true)return;
+        if(isManual(message)||!autoApplyHpEnabled(message))return;
         const latest=await readyDamageTargets(message);
         if(!latest||latest.map(t=>t.token).join()!==targets.map(t=>t.token).join())return;
         // Use a native tray so saves, damage types, resistance, vulnerability,
@@ -263,7 +264,7 @@ function scheduleRiderDamage(message) {
     if(link?.damageId){const damage=game.messages.get(link.damageId);if(damage)schedule(damage);}
 }
 function schedule(message) {
-    if(!authority()||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true||!isDamageOrHealingCard(message)||queued.has(message.id))return;
+    if(!authority()||!autoApplyHpEnabled(message)||!isDamageOrHealingCard(message)||queued.has(message.id))return;
     queued.add(message.id);
     setTimeout(()=>{
         queued.delete(message.id);
@@ -280,12 +281,16 @@ Hooks.once("init",()=>{
     for(const [key,name,hint]of [
         ["autoRollNpcSaves","Automatically Roll GM NPC Saves","Resolve prompted saves for GM-run NPCs with native recommended advantage/disadvantage. Player-owned NPCs remain manual."],
         ["magicResistanceSaves","Magic Resistance Saving Throws","Recognize the Magic Resistance feature and recommend advantage against spells or features marked Magical. Combines with other advantage/disadvantage sources, including Automated Conditions."],
-        ["autoApplyCardDamage","Auto Apply Damage and Healing","Apply damage after all required saves resolve, and apply healing/temporary HP after the healing roll and dice animations finish. Non-save attacks apply to hit targets only. Manual card interaction stops automation."],
+        ["autoApplyCardDamage","Auto Apply Damage","Apply damage after required saves and dice animations finish. Non-save attacks apply to hit targets only. Manual card interaction stops automation."],
+        ["autoApplyCardHealing","Auto Apply Healing","Apply healing and temporary HP after the healing roll and dice animations finish. Manual card interaction stops automation."],
         ["autoApplySavedEffects","Auto Apply Saved Effects","After every required save and dice animation finishes, apply assigned activity effects on failed saves, and effects marked On Save on successful saves. Runs with automatic damage when enabled, or independently when damage is manual."],
         ["autoApplyHitEffects","Autoapply Status on Hit","Apply configured attack activity effects to hit targets after the attack dice finish. Misses remain unaffected. Uses native effect durations and concentration."]
     ])game.settings.register(MODULE_ID,key,{name,hint,scope:"world",config:true,type:Boolean,default:true});
 });
-Hooks.once("ready",()=>{
+Hooks.once("ready",async()=>{
+    // Seed the new healing preference once from the former combined setting.
+    const worldSettings=game.settings.storage?.get?.("world");
+    if(authority()&&worldSettings&&!worldSettings.has(MODULE_ID+".autoApplyCardHealing"))await game.settings.set(MODULE_ID,"autoApplyCardHealing",game.settings.get(MODULE_ID,"autoApplyCardDamage"));
     globalThis.Ugmuls55eAutomationNpcDamage={shouldAutoRollNpc,waitForWorkflowAnimations,waitForDamageAnimation};
 
     Hooks.on("dnd5e.preRollD20TestV2",(config,dialog)=>{if(config.rsaAutoNpcSave)dialog.configure=false;});
@@ -316,7 +321,7 @@ Hooks.once("ready",()=>{
     Hooks.on("dnd5e.preApplyDamage",(actor,amount,updates,options)=>{
         const message=options.origin??options.originatingMessage;
         if(!isDamageOrHealingCard(message))return;
-        if(options.rsaAutomaticDamage) {if(isManual(message)||game.settings.get(MODULE_ID,"autoApplyCardDamage")!==true)return false;}
+        if(options.rsaAutomaticDamage) {if(isManual(message)||!autoApplyHpEnabled(message))return false;}
         else stopAutomaticDamage(message).catch(console.error);
     });
     const manualInteraction=event=>{
