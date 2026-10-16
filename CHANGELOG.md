@@ -2,28 +2,51 @@
 
 ## Unreleased
 
-- Combat Inspiration Offense now appears as a default-No damage configuration option. Its die previews and rolls with initial attack damage; confirming spends Inspired, canceling preserves it. The post-roll offense button has been removed; Defense remains on incoming attack cards.
+## v0.7.3 — Character Creation, Bards & Barbarians
 
-- Valor Combat Inspiration: source-tracked Inspired dice offer Offense on single-target attack damage cards and Defense on incoming hits. Offense adds native critical-aware damage; Defense spends the recipient’s reaction for AC against that attack only and combines with Shield. Both consume the granted Inspired effect, not another source Bard use.
+This release adds guided player-character creation and expands Bard and Barbarian automation through the existing attack, save, damage, and effect card workflows.
 
-- Peerless Skill: add the Bard’s current Inspiration die to their own failed attack or ability check, preserving original rolls. Spend a use only when the adjusted test succeeds. Unknown-DC checks request the GM-provided DC before rolling.
+### Guided character creation
 
-- Cutting Words: eligible Bards can spend their Reaction and a Bardic Inspiration use from enemy attack-hit or damage cards within 60 feet. Original dice are preserved, damage is floored at zero, and each damage component is selectable. Sight walls block eligibility; users confirm visibility. Undo applied damage before adjusting it.
+- Create Player in the Actors directory walks through name and ownership, default PC token setup, Standard Array or 27-point buy, class, background, species, equipment or starting gold, class spells, preparation, and review.
+- Native advancement and spell pickers respect enabled Compendium Sources. Token artwork remains manual.
+- Ability scores start unassigned. Standard Array choices share a remaining-value pool; point buy shows remaining points and affordable choices. Reset clears the selections.
+- Continue Character Creator Wizard on an owned PC checks the current sheet and saved progress so setup can resume without duplicating starting equipment.
+- Standard and Tidy spell Add buttons offer eligible full-list preparation classes a missing-spell loader. It adds only currently castable leveled spells from enabled sources, unprepared, preserving existing and always-prepared spells. Paladins use the compendium browser.
 
-- Shield reaction button now spends an available limited/free cast before selecting the lowest available spell slot, including higher-level and Pact slot fallback. Native consumption preserves reaction and spell-slot turn tracking.
+### Bard automation
 
-- Bardic Inspiration: add the source Bard’s die to failed attack, save, or check cards while preserving the existing d20. Consume the Inspired effect, retain the granted die size, and refresh results through the existing workflow. Unknown-DC rolls require confirmation of failure.
+- Bardic Inspiration automatically applies the native Inspired effect and tracks its source Bard and granted die. Failed attacks, saves, and checks can add that die while preserving the original d20. The die is consumed when rolled.
+- Cutting Words offers eligible enemy attack and damage adjustments within 60 feet, using the Bard's Reaction and Inspiration resource while preserving existing dice.
+- Peerless Skill adjusts the Bard's own failed attacks and ability checks, spending Inspiration only when the adjusted test succeeds.
+- Valor Combat Inspiration adds its damage die in the initial damage configuration, including critical damage. Defense uses the recipient's Reaction to add AC against an incoming attack and combines with Shield.
+- Unknown-DC adjustments request the information needed to determine the result.
 
-### Added
+### Barbarian automation
 
-- Spell New/Add buttons on standard and Tidy character sheets offer Browse Compendium or Load Unprepared Spells for full-list preparation classes. Loading respects enabled Compendium Sources, existing spell identifiers, configured slot capacity, and each class’s progression. Only missing leveled spells are added, initially unprepared; existing preparation and always-prepared spells are preserved. The option is configurable under Chat & Sheets.
+- Zealot Divine Fury adds its scaled Radiant or Necrotic damage to the first eligible hit on the raging Barbarian's turn.
+- Fanatical Focus offers a single replacement d20 plus Rage Damage bonus on a failed save, once per Rage. Previous advantage/disadvantage is not reused, and recorded targeting is restored afterward.
+- Zealous Presence grants advantage on attacks and saves until the source Barbarian's next turn, combining normally with disadvantage and AC5E.
+- Brutal Strike sits above Normal in the attack prompt; Reckless sits above Advantage. Brutal can activate Reckless on the first attack, or reuse it later, and requires a Strength attack without disadvantage on the Barbarian's turn.
+- Brutal damage rolls with the weapon damage and supports native scaling and criticals. Damage configuration selects Forceful or Hamstring Blow; Improved Brutal Strike adds Staggering and Sundering, and Improved Brutal Strike (2) permits two different effects.
+- Selected native Hamstrung, Staggered, and Sundered effects apply to hit targets with source-turn expiry, manual Apply, and Undo support. Movement remains manual.
+- Sundered adds one +5 bonus to the next single-target attack by another creature, then consumes qualifying effects after the roll, hit or miss. Canceling the prompt preserves the effect.
+- Staggered supplies disadvantage on the next save through AC5E or the standalone flow. It cancels Magic Resistance advantage to Normal. The effect remains until expiry for its Opportunity Attack restriction after the save benefit is spent.
 
-- Owned PCs in the Actors directory now have a Continue Character Creator Wizard right-click action. It checks current character data against saved progress, reopens at the first incomplete step, and supports Back navigation for review. Existing equipment without a wizard receipt must be reviewed before any new starting items or gold are added.
+### Workflow improvements
 
-- Guided PC creation now includes class cantrips, class spells / Wizard spellbook, and preparation. Native class scales and preparation limits guide counts; native pickers respect Compendium Sources and class lists. Full-list preparation classes can load currently castable spell levels unprepared, then choose their prepared spells. Always-prepared and background/species/feat spells keep their existing configuration.
+- Shield spends an available limited/free use first, then the lowest available eligible spell slot, including upcasting and Pact slots.
+- Automatic damage and healing application have separate settings.
+- Damage cards hide when a later attack adjustment makes every target a miss, and return if the attack becomes a hit again.
+- Save-card borders include the initial card; Bardic prompts use constrained icons and chat scrolls after Inspiration application.
+- Published attack cards provide a second hit-to-damage prompt check; manual damage retains its originating attack for rider eligibility.
 
-- Create Player in the Actors sidebar opens a resumable level-one PC setup wizard: character/player ownership, default PC token with matching name, Standard Array or 27-point buy, native source-filtered class/background/species selection and advancement, starting equipment packages or fixed gold alternatives, and review. Equipment comes from book data, including quantities and container contents. Portraits and token artwork remain manual. Base scores lock after native advancement to avoid overwriting background increases; completed equipment is not granted twice.
+### Fixes and validation
 
+- Restore Sundering Blow's +5 after the native attack dialog rebuilds its formula. Sundered is consumed only when the completed attack includes the bonus.
+- Preserve Staggered's ongoing effect after spending its next-save disadvantage, and reset that allowance when the effect is reapplied.
+- All 54 local regression test files pass.
+- Hard-refresh GM and player clients after updating.
 
 ## v0.7.2 — Battle Master Update
 

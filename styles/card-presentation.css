@@ -113,3 +113,10 @@
 
 /* Native card styles may override the hidden attribute. */
 .rsa-missed-attack-damage {display:none !important;}
+
+.rsa-focus-actions button {display:inline-flex;align-items:center;gap:4px;max-width:100%;white-space:normal;}
+.rsa-focus-actions button > img {width:18px;height:18px;max-width:18px;max-height:18px;flex:0 0 18px;object-fit:contain;border:0;margin:0;}
+
+.dialog-buttons:has(.rsa-reckless-roll-buttons,.rsa-brutal-roll-buttons) {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:4px;}
+.dialog-buttons :is(.rsa-reckless-roll-buttons,.rsa-brutal-roll-buttons) {display:flex;flex-direction:column;gap:4px;min-width:0;}
+.dialog-buttons :is(.rsa-reckless-roll-buttons,.rsa-brutal-roll-buttons) button {width:100%;flex:none;min-width:0;font-size:inherit;padding-inline:4px;}

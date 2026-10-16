@@ -166,7 +166,7 @@ export function addRecklessButton(app) {
     const root=app.element,adv=root?.querySelector('.dialog-buttons button[data-action="advantage"]');
     if(!adv||root.querySelector("[data-rsa-reckless]"))return;
     const wrapper=document.createElement("div");wrapper.className="rsa-reckless-roll-buttons";
-    adv.before(wrapper);wrapper.append(adv);adv.textContent="Adv";adv.title=game.i18n.localize("DND5E.Advantage");
+    adv.before(wrapper);wrapper.append(adv);adv.textContent=game.i18n.localize("DND5E.Advantage");adv.title=game.i18n.localize("DND5E.Advantage");
     const button=document.createElement("button");button.type="button";button.dataset.rsaReckless="";button.textContent="Reckless";
     const eligible=strengthAttack(app.config,app.rolls?.[0]??app.config.rolls?.[0]);
     button.disabled=!eligible||recklessEffects(actor).length>0||!canActivateReckless(actor);
@@ -184,7 +184,7 @@ export function addRecklessButton(app) {
             syncRecklessConditionChoice(config,mode);
             app.element.querySelector(`.dialog-buttons button[data-action="${selected}"]`)?.click();
         } catch(err){button.disabled=!canActivateReckless(actor);console.error("Ugmuls 5.5e Automation | Reckless Attack failed:",err);ui.notifications.error("Could not activate Reckless Attack.");}
-    });wrapper.append(button);
+    });wrapper.prepend(button);
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"recklessAttackAutomation",{
     name:"Reckless Attack Assistance",hint:"Offer Reckless beside Advantage only on the first attack of your turn, using Strength, for characters with the feature. Apply the feature's effect until next turn start and recommend advantage for attacks against Reckless creatures.",scope:"world",config:true,type:Boolean,default:true

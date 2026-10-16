@@ -1,6 +1,6 @@
 const MODULE_ID="ugmuls-5-5e-automation";
 export const CLASS_AUTOMATIONS=[
-    {name:"Barbarian",keys:["recklessAttackAutomation","frenzyAutomation"]},
+    {name:"Barbarian",keys:["recklessAttackAutomation","frenzyAutomation","divineFuryAutomation","fanaticalFocusAutomation","zealousPresenceAutomation","brutalStrikeAutomation"]},
     {name:"Bard",keys:["bardicInspirationAutomation","cuttingWordsAutomation","peerlessSkillAutomation","combatInspirationAutomation"]},
     {name:"Cleric",keys:[]},
     {name:"Druid",keys:[]},
