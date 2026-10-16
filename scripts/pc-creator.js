@@ -2,6 +2,13 @@ import {spellProfile,pickClassSpells,preloadClassSpells,choosePreparedClassSpell
 const ID="ugmuls-5-5e-automation",FLAG="pcCreation",apps=new Map();
 export const ABILITIES=["str","dex","con","int","wis","cha"],ARRAY=[15,14,13,12,10,8];
 export const POINT_COST={8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
+const emptyScores=()=>Object.fromEntries(ABILITIES.map(key=>[key,""]));
+export const pointsRemaining=scores=>27-ABILITIES.reduce((sum,key)=>sum+(POINT_COST[scores[key]]??0),0);
+export function scoreOptions(scores,method,key){
+    if(method==="array")return ARRAY.filter(value=>!ABILITIES.some(other=>other!==key&&Number(scores[other])===value));
+    const budget=pointsRemaining(scores)+(POINT_COST[scores[key]]??0);
+    return Object.keys(POINT_COST).map(Number).filter(value=>POINT_COST[value]<=budget);
+}
 const hasOrigins=actor=>Object.keys(kinds).some(type=>actor?.itemTypes?.[type]?.length);
 const steps=["Character","Ability scores","Class","Background","Species","Equipment","Spells","Review"];
 const kinds={class:{label:"Class",tab:"classes"},background:{label:"Background",tab:"backgrounds"},race:{label:"Species",tab:"races"}};
@@ -48,7 +55,7 @@ export async function reviewCharacterProgress(actor){
     const currentScores=Object.fromEntries(ABILITIES.map(key=>[key,Number(actor._source?.system?.abilities?.[key]?.value??actor.system?.abilities?.[key]?.value)]));
     let scoresReady=hasOrigins(actor);
     if(!scoresReady){for(const method of [progress.method,progress.method==="array"?"point":"array"]){try{validateScores(currentScores,method);progress.method=method;scoresReady=true;break;}catch{}}}
-    if(!hasOrigins(actor))progress.scores=currentScores;else progress.scores??=currentScores;
+    if(!hasOrigins(actor))progress.scores=scoresReady?currentScores:(saved?.scores??emptyScores());else progress.scores??=currentScores;
     const origins=["class","background","race"];
     for(const type of origins){const item=actor.itemTypes?.[type]?.[0];if(item)progress.sources[type]={...progress.sources[type],name:item.name,itemId:item.id,uuid:item._stats?.compendiumSource??progress.sources[type]?.uuid};else delete progress.sources[type];}
     const inventory=Array.from(actor.items??[]).filter(item=>!["class","subclass","background","race","feat","spell"].includes(item.type));
@@ -74,7 +81,7 @@ export async function continuePlayerCreator(actor){
 
 export class PlayerCreationWizard extends foundry.applications.api.ApplicationV2 {
     static DEFAULT_OPTIONS={id:"rsa-pc-creator-{id}",window:{title:"Create Player — Guided Setup",resizable:true},position:{width:730,height:700},classes:["rsa-pc-creator"]};
-    constructor(actor=null){super();this.actor=actor;this.progress=foundry.utils.deepClone(actor?.getFlag(ID,FLAG)??{step:0,method:"array",scores:Object.fromEntries(ABILITIES.map((key,i)=>[key,ARRAY[i]])),sources:{},equipment:{}});this.busy=false;this.documents=new Map();}
+    constructor(actor=null){super();this.actor=actor;this.progress=foundry.utils.deepClone(actor?.getFlag(ID,FLAG)??{step:0,method:"array",scores:emptyScores(),sources:{},equipment:{}});this.busy=false;this.documents=new Map();}
     async save(){if(this.actor)await this.actor.setFlag(ID,FLAG,this.progress);}
     async doc(uuid){if(!this.documents.has(uuid))this.documents.set(uuid,await fromUuid(uuid));return this.documents.get(uuid);}
     async _renderHTML(){
@@ -86,7 +93,7 @@ export class PlayerCreationWizard extends foundry.applications.api.ApplicationV2
         }else if(step===1&&hasOrigins(this.actor)){
             body="<p>Base scores are locked after applying class, background, or species advancement. Make later adjustments through the character sheet.</p><p>"+ABILITIES.map(key=>key.toUpperCase()+" "+this.actor.system.abilities[key].value).join(" · ")+"</p>";
         }else if(step===1){
-            body='<label>Method<select name="method"><option value="array" '+(this.progress.method==="array"?"selected":"")+'>Standard Array</option><option value="point" '+(this.progress.method==="point"?"selected":"")+'>Point Buy (27 points)</option></select></label><p>Base scores only. Background increases are handled later by Foundry.</p><div class="rsa-pc-scores">'+ABILITIES.map(key=>'<label>'+key.toUpperCase()+'<select name="score-'+key+'">'+(this.progress.method==="array"?ARRAY:Object.keys(POINT_COST)).map(value=>'<option value="'+value+'" '+(Number(this.progress.scores[key])===Number(value)?"selected":"")+'>'+value+'</option>').join("")+'</select></label>').join("")+'</div><p data-points></p>';
+            body='<label>Method<select name="method"><option value="array" '+(this.progress.method==="array"?"selected":"")+'>Standard Array</option><option value="point" '+(this.progress.method==="point"?"selected":"")+'>Point Buy (27 points)</option></select></label><p>Base scores only. Background increases are handled later by Foundry.</p><p data-points aria-live="polite"></p><div class="rsa-pc-scores">'+ABILITIES.map(key=>'<label>'+key.toUpperCase()+'<select name="score-'+key+'">'+this.scoreOptionsHTML(key)+'</select></label>').join("")+'</div><button type="button" data-reset-scores>Reset Points</button>';
         }else if(step>=2&&step<=4){const type=["class","background","race"][step-2],existing=this.actor.itemTypes?.[type]?.[0];body='<p>Choose your '+kinds[type].label.toLowerCase()+' from Foundry’s Compendium Browser. It uses the GM’s enabled Compendium Sources.</p><p>Complete the native advancement prompts for features, proficiencies, ability increases, and other choices.</p>'+(existing?'<p><strong>'+escape(existing.name)+'</strong> is on the character. Continue to the next step; changes can be made through the sheet.</p>':'<button type="button" data-pick="'+type+'">Choose '+kinds[type].label+'</button>');
         }else if(step===5){body='<p>Choose class and background equipment separately. Items, container contents, quantities, and included coins come from the selected book entries.</p>';for(const type of ["class","background"])body+=await this.equipmentHTML(type);
         }else if(step===6){body=this.spellsHTML();
@@ -139,7 +146,8 @@ export class PlayerCreationWizard extends foundry.applications.api.ApplicationV2
         root.querySelector('[data-back]')?.addEventListener('click',()=>this.run(async()=>{this.readScores();this.progress.step=Math.max(0,this.progress.step-1);}));
         root.querySelector('[data-next]').addEventListener('click',()=>this.run(()=>this.next()));
         for(const button of root.querySelectorAll('[data-resume]'))button.addEventListener('click',()=>{openPlayerCreator(game.actors.get(button.dataset.resume));this.close();});
-        root.querySelector('[name="method"]')?.addEventListener('change',event=>{this.progress.method=event.target.value;this.progress.scores=Object.fromEntries(ABILITIES.map((key,i)=>[key,this.progress.method==='array'?ARRAY[i]:8]));this.render({force:true});});
+        root.querySelector('[name="method"]')?.addEventListener('change',event=>{this.progress.method=event.target.value;this.progress.scores=emptyScores();this.render({force:true});});
+        root.querySelector('[data-reset-scores]')?.addEventListener('click',()=>this.run(async()=>{this.progress.scores=emptyScores();}));
         for(const select of root.querySelectorAll('[name^="score-"]'))select.addEventListener('change',()=>{this.readScores();this.points();});this.points();
         for(const button of root.querySelectorAll('[data-pick]'))button.addEventListener('click',()=>this.run(()=>this.pickOrigin(button.dataset.pick)));
         for(const select of root.querySelectorAll('[data-equipment-mode]'))select.addEventListener('change',()=>{this.progress.equipment[select.dataset.equipmentMode].mode=select.value;this.render({force:true});});
@@ -158,8 +166,9 @@ export class PlayerCreationWizard extends foundry.applications.api.ApplicationV2
         }));
         if(this.busy)for(const control of root.querySelectorAll('button,input,select'))control.disabled=true;
     }
-    readScores(){for(const key of ABILITIES){const select=this.element.querySelector('[name="score-'+key+'"]');if(select)this.progress.scores[key]=Number(select.value);}}
-    points(){const node=this.element.querySelector('[data-points]');if(!node)return;node.textContent=this.progress.method==='point'?(27-ABILITIES.reduce((sum,key)=>sum+POINT_COST[this.progress.scores[key]],0))+' points remaining':'Use every score once: 15, 14, 13, 12, 10, 8.';}
+    readScores(){for(const key of ABILITIES){const select=this.element.querySelector('[name="score-'+key+'"]');if(select)this.progress.scores[key]=select.value===""?"":Number(select.value);}}
+    scoreOptionsHTML(key){return '<option value="" '+(this.progress.scores[key]===""||this.progress.scores[key]==null?'selected':'')+'>Choose score</option>'+scoreOptions(this.progress.scores,this.progress.method,key).map(value=>'<option value="'+value+'" '+(Number(this.progress.scores[key])===value?'selected':'')+'>'+value+'</option>').join("");}
+    points(){const node=this.element.querySelector('[data-points]');if(!node)return;node.textContent=this.progress.method==='point'?pointsRemaining(this.progress.scores)+' / 27 points remaining (unassigned abilities start at 8).':'Choose each score once: 15, 14, 13, 12, 10, 8.';for(const key of ABILITIES){const select=this.element.querySelector('[name="score-'+key+'"]');if(select)select.innerHTML=this.scoreOptionsHTML(key);}}
     async run(callback){if(this.busy)return;this.busy=true;for(const control of this.element.querySelectorAll('button,input,select'))control.disabled=true;try{await callback();await this.save();}catch(error){console.error('Ugmuls 5.5e Automation | PC creator:',error);ui.notifications.error(error.message);}finally{this.busy=false;if(!this.progress.complete)await this.render({force:true});}}
     async pickOrigin(type){
         const uuid=await dnd5e.applications.CompendiumBrowser.selectOne(browserOptions(type));if(!uuid)return;const source=await fromUuid(uuid);if(!source||source.type!==type)throw Error('That book entry is unavailable.');
