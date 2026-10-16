@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Spell New/Add buttons on standard and Tidy character sheets offer Browse Compendium or Load Unprepared Spells for full-list preparation classes. Loading respects enabled Compendium Sources, existing spell identifiers, configured slot capacity, and each class’s progression. Only missing leveled spells are added, initially unprepared; existing preparation and always-prepared spells are preserved. The option is configurable under Chat & Sheets.
+
+- Owned PCs in the Actors directory now have a Continue Character Creator Wizard right-click action. It checks current character data against saved progress, reopens at the first incomplete step, and supports Back navigation for review. Existing equipment without a wizard receipt must be reviewed before any new starting items or gold are added.
+
+- Guided PC creation now includes class cantrips, class spells / Wizard spellbook, and preparation. Native class scales and preparation limits guide counts; native pickers respect Compendium Sources and class lists. Full-list preparation classes can load currently castable spell levels unprepared, then choose their prepared spells. Always-prepared and background/species/feat spells keep their existing configuration.
+
+- Create Player in the Actors sidebar opens a resumable level-one PC setup wizard: character/player ownership, default PC token with matching name, Standard Array or 27-point buy, native source-filtered class/background/species selection and advancement, starting equipment packages or fixed gold alternatives, and review. Equipment comes from book data, including quantities and container contents. Portraits and token artwork remain manual. Base scores lock after native advancement to avoid overwriting background increases; completed equipment is not granted twice.
+
+
 ## v0.7.2 — Battle Master Update
 
 ## Battle Master

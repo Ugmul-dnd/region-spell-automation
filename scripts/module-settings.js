@@ -26,7 +26,7 @@ export const SETTINGS_GROUPS=[
     {id:"targeting",name:"Targeting",icon:"fa-bullseye",keys:["confirmAreaTargets","retargetActivityCards"]},
     {id:"rolls",name:"Rolls & Damage / Healing",icon:"fa-dice",keys:["promptForSaveOnSpellCasts","promptDamageOnSave","promptDamageOnHit","adjustSavingThrowAdvantage","adjustAttackRollAdvantage","adjustDamageCritical"]},
     {id:"npcdamage",name:"GM NPC & Damage / Healing",icon:"fa-skull",keys:["autoRollNpcSaves","autoApplyCardDamage","autoApplySavedEffects","autoApplyHitEffects"]},
-    {id:"chat",name:"Chat & Sheets",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen","sheetAddCompendiumBrowser"]}
+    {id:"chat",name:"Chat & Sheets",icon:"fa-comments",keys:["simplifyAttackCards","scrollChatOnOpen","sheetAddCompendiumBrowser","sheetLoadUnpreparedSpells"]}
 ];
 const settingPages=()=>SETTINGS_GROUPS.flatMap(group=>group.children??[group]);
 export class ModuleSettingsApp extends foundry.applications.api.ApplicationV2 {

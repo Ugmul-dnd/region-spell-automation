@@ -79,6 +79,9 @@
     "scripts/spell-manager.js",
     "scripts/module-settings.js",
     "scripts/sheet-compendium-browser.js",
+    "scripts/pc-spells.js",
+    "scripts/pc-creator.js",
+    "scripts/create-player.js",
     "scripts/stunning-strike.js",
     "scripts/battlemaster.js",
     "scripts/grapple.js",
@@ -87,6 +90,7 @@
   "styles": [
     "styles/save-roll-controls.css",
     "styles/card-presentation.css",
-    "styles/module-settings.css"
+    "styles/module-settings.css",
+    "styles/pc-creator.css"
   ]
 }
