@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.7.4 — Performance & Parry
+
+- Coalesce reaction and feature card refreshes through a shared queue. Actor changes skip features they do not have, own-roll and defender actions target related cards, and overlapping requests refresh each card once per batch. Rendering yields between batches of eight cards.
+- Index damage/healing cards by source usage for repeated roll-lock checks. Message creation, updates, and deletion invalidate the index; HP/Undo flags remain live.
+- Keep combat resource writes, effect expiry, and roll evaluation outside the deferred presentation queue.
+
 - Add Battle Master Parry on incoming single-target melee damage cards. Spend a Reaction and current Superiority Die, reduce existing damage by the die plus the higher Strength/Dexterity modifier, and preserve original dice. Includes resource rollback and player-to-GM handling.
 
 ## v0.7.3 — Character Creation, Bards & Barbarians

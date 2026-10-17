@@ -141,7 +141,7 @@ export function renderCombatInspiration(message,html){
         if(controls.childNodes.length)entry.root.append(controls);
     }
 }
-function refresh(){for(const card of Array.from(game.messages??[]).slice(-100))if(["attack","damage"].includes(card.type))ui.chat?.updateMessage?.(card);}
+function refresh(document){globalThis.Ugmuls55eAutomationChatRefresh?.request("valor",document);}
 Hooks.once("init",()=>game.settings.register(ID,"combatInspirationAutomation",{name:"Combat Inspiration Assistance",hint:"Valor-granted Inspired dice can add to initial single-target attack damage configuration or use the recipient's reaction to raise AC against one incoming hit. Original rolls are preserved.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
     globalThis.Ugmuls55eAutomationValor={addValorOffenseChoice,finalizeValorOffense,commitValorOffense};

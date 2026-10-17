@@ -168,7 +168,7 @@ Hooks.once("ready",()=>{
         for (const damage of damages) ui.chat?.updateMessage(damage);
         if (card) ui.chat?.updateMessage(card);
     });
-    const refreshReactions=()=>{for(const message of Array.from(game.messages??[]).slice(-100))if(message.type==="attack")ui.chat?.updateMessage?.(message);};
+    const refreshReactions=document=>globalThis.Ugmuls55eAutomationChatRefresh?.request("shield",document);
     for(const event of ["createActiveEffect","updateActiveEffect","deleteActiveEffect","updateCombat","deleteCombat","updateActor","updateItem"])Hooks.on(event,refreshReactions);
     Hooks.on("ugmuls55eAutomation.buffEffectsApplied",(cast)=>{
         const id=cast.getFlag(MODULE_ID,"shieldReactionAttack");

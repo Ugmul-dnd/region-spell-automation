@@ -116,7 +116,7 @@ export function scrollAppliedInspiration(card){
     scrolledGrants.add(card.id);
     requestAnimationFrame(()=>requestAnimationFrame(()=>Promise.resolve(ui.chat?.scrollBottom?.({waitImages:true})).catch(error=>console.warn("Bardic Inspiration chat scroll failed",error))));
 }
-function refresh(){for(const card of Array.from(game.messages??[]).slice(-100))if(["attack","save","check"].includes(card.type))ui.chat?.updateMessage?.(card);}
+function refresh(document){globalThis.Ugmuls55eAutomationChatRefresh?.request("bardic",document);}
 Hooks.once("init",()=>game.settings.register(ID,"bardicInspirationAutomation",{name:"Bardic Inspiration Assistance",hint:"Offer the source Bard's Inspiration die on failed attacks, saves and checks. Preserve the original d20 and consume Inspired when the die is rolled.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
     Hooks.on("preCreateActiveEffect",effect=>{if(!enabled()&&game.settings.get(ID,"combatInspirationAutomation")!==true)return;const data=inspirationData(effect);if(data)effect.updateSource({["flags."+ID+".bardicInspiration"]:data});});

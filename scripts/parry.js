@@ -42,7 +42,7 @@ export async function applyParry(card,actorUuid,user=game.user){
     }catch(error){if(charged&&!committed){await entry.resource.update({"system.uses.spent":spent});if(marker?.getFlag?.(ID,"reactionUsage")===card.id)await marker.update({disabled:true});}throw error;}
 }
 function report(error){console.error("Parry",error);ui.notifications.error(error.message);}
-function refresh(){for(const card of Array.from(game.messages??[]).slice(-100))if(card.type==="damage")ui.chat?.updateMessage?.(card);}
+function refresh(document){globalThis.Ugmuls55eAutomationChatRefresh?.request("parry",document);}
 export function renderParry(message,html){
     const root=html?.querySelector?html:html?.[0];if(!root)return;
     const entries=[{card:message,root}];for(const node of root.querySelectorAll('.card-summary[data-message-id]')){const card=game.messages.get(node.dataset.messageId);if(card&&!node.hidden)entries.push({card,root:node});}

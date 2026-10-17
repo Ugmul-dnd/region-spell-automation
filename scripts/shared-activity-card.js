@@ -1,3 +1,12 @@
+let hpIndex=null;
+export function invalidateLinkedHpIndex(){hpIndex=null;}
+function indexedHpCards(origin){
+ const collection=game.messages,size=collection?.size??collection?.length??0;
+ if(!hpIndex||hpIndex.collection!==collection||hpIndex.size!==size){
+  const byOrigin=new Map();for(const card of collection??[]){if(!isDamageOrHealingCard(card))continue;const id=cardOrigin(card)?.id;if(!id)continue;if(!byOrigin.has(id))byOrigin.set(id,[]);byOrigin.get(id).push(card);}
+  hpIndex={collection,size,byOrigin};
+ }return hpIndex.byOrigin.get(origin.id)??[];
+}
 // Shared cards retain D&D5e's native save and damage workflow.
 function cardOrigin(card) {
     const origin=card?.system?.origin;
@@ -10,7 +19,7 @@ export function linkedHpCards(roll) {
     const stunningId=(origin.getFlag?.("ugmuls-5-5e-automation","stunningStrike")??origin.getFlag?.("ugmuls-5-5e-automation","grappleStrike")??origin.getFlag?.("ugmuls-5-5e-automation","maneuverStrike"))?.damageId;
     const stunningDamage=stunningId?game.messages.get(stunningId):null;
     if(stunningDamage)return [stunningDamage];
-    const cards=Array.from(game.messages??[]).filter(card=>isDamageOrHealingCard(card)&&cardOrigin(card)?.id===origin.id);
+    const cards=indexedHpCards(origin);
     if(roll.type!=="attack")return cards;
     const attacks=Array.from(origin.getAssociatedRolls?.("attack")??[]);
     return cards.filter(card=>{
@@ -31,6 +40,7 @@ export function isRollAdjustmentLocked(roll) {
         (card.getFlag?.("ugmuls-5-5e-automation","hpApplicationRecorded")===true||card.getFlag?.("ugmuls-5-5e-automation","damageUndoHistory")?.length>0));
 }
 Hooks.once("ready",()=>{
+    for(const event of ["createChatMessage","updateChatMessage","deleteChatMessage"])Hooks.on(event,invalidateLinkedHpIndex);
     Hooks.on("updateChatMessage",(card,changes)=>{
         const moduleId="ugmuls-5-5e-automation";
         if(!changes.flags?.[moduleId]&&!Object.keys(changes).some(key=>key.startsWith(`flags.${moduleId}.`)))return;
@@ -38,8 +48,8 @@ Hooks.once("ready",()=>{
         if(!isDamageOrHealingCard(card)&&!rider)return;
         const origin=rider?card:cardOrigin(card);
         const related=[...(origin?.getAssociatedRolls?.("attack")??[]),...(origin?.getAssociatedRolls?.("save")??[])];
-        for(const roll of related)ui.chat?.updateMessage?.(roll);
-        if(origin)ui.chat?.updateMessage?.(origin);
+        for(const roll of related)globalThis.Ugmuls55eAutomationChatRefresh?.card(roll);
+        if(origin)globalThis.Ugmuls55eAutomationChatRefresh?.card(origin);
     });
 });
 export function isDamageOrHealingCard(message) {return ["damage","healing"].includes(message?.type);}
