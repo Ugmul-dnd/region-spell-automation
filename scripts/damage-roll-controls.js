@@ -141,7 +141,7 @@ export async function updateDamageCritical(message,critical,user=game.user) {
     await message.update({rolls});
     if (dice.length && game.dice3d?.showForRoll) {
         const visual=Roll.fromTerms(dice.flatMap((die,index)=>index?[new foundry.dice.terms.OperatorTerm({operator:"+"}),die]:[die]));
-        await game.dice3d.showForRoll(visual,game.users.get(message.author?.id) ?? user,true,message.whisper?.length?message.whisper:null,message.blind??false,message.id,message.speaker);
+        {const animation=game.dice3d.showForRoll(visual,game.users.get(message.author?.id) ?? user,true,message.whisper?.length?message.whisper:null,message.blind??false,message.id,message.speaker);await (globalThis.Ugmuls55eAutomationWaitForAnimation?.(animation)??animation);}
     }
     const origin=message.system?.origin;
     if (origin) {await origin.system?.onDescendentRefresh?.(message);await ui.chat?.updateMessage(origin);}

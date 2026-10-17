@@ -81,7 +81,7 @@ export async function applyEmpowered(message,keys,expected,user=game.user) {
         if(game.dice3d?.showForRoll) {
             const terms=result.visual.flatMap((die,index)=>index?[new foundry.dice.terms.OperatorTerm({operator:"+"}),die]:[die]);
             const visual=Roll.fromTerms(terms);
-            try {await game.dice3d.showForRoll(visual,game.users.get(message.author?.id)??user,true,message.whisper?.length?message.whisper:null,message.blind??false,message.id,message.speaker);}
+            try {{const animation=game.dice3d.showForRoll(visual,game.users.get(message.author?.id)??user,true,message.whisper?.length?message.whisper:null,message.blind??false,message.id,message.speaker);await (globalThis.Ugmuls55eAutomationWaitForAnimation?.(animation)??animation);}}
             catch(error){console.warn("Ugmuls 5.5e Automation | Empowered dice animation failed:",error);}
         }
         if(isRollAdjustmentLocked(message)||signature(message)!==expected)throw Error("The damage card changed during the reroll. The Sorcery Point was refunded.");

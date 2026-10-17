@@ -35,7 +35,7 @@ export async function applyPeerless(card,index=0,user=game.user,providedDC=null)
     let charged=false,committed=false;
     try{
         if(success){await resource.update({"system.uses.spent":spent+1});charged=true;}
-        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Peerless Skill animation failed",error);}}
+        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.Ugmuls55eAutomationWaitForAnimation)await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);else if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Peerless Skill animation failed",error);}}
         if(snapshot(card)!==before||isRollAdjustmentLocked(card)||Number(resource.system.uses.spent??0)!==spent+(charged?1:0))throw Error("The roll changed during Peerless Skill. Any spent use was restored.");
         const rolls=[...card.rolls];rolls[index]=adjusted;
         const record={...(card.getFlag(ID,"peerlessSkill")??{}),[index]:{formula,total:bonus.total,spent:success}};

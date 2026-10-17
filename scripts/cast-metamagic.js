@@ -79,6 +79,10 @@ export async function commitCastMetamagic(activity,message,selection,targets,reg
         if(selection.transmuted)update[`flags.${ID}.transmutedSpell`]=Object.fromEntries(elements.map(type=>[type,selection.transmuted]));
         await message.update(update);
     }catch(error){if(charged)await resource.update({"system.uses.spent":Number(resource.system.uses.spent)-summary.cost});if(usedFree){if(oldFree===undefined)await actor.unsetFlag(ID,"freeMetamagicTurn");else await actor.setFlag(ID,"freeMetamagicTurn",oldFree);}throw error;}
+    globalThis.Ugmuls55eAutomationPendingCast?.onCancel(message,async()=>{
+        if(charged)await resource.update({"system.uses.spent":Math.max(0,Number(resource.system.uses.spent)-summary.cost)});
+        if(usedFree&&actor.getFlag?.(ID,"freeMetamagicTurn")===ownTurn(actor)){if(oldFree===undefined)await actor.unsetFlag(ID,"freeMetamagicTurn");else await actor.setFlag(ID,"freeMetamagicTurn",oldFree);}
+    });
     // Region follow-ups retain Heightened and Transmuted from the original casting.
     for(const region of regions){
         if(region.isOwner)await region.setFlag(ID,"metamagicOrigin",message.id);

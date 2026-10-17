@@ -14,6 +14,9 @@ Some features may work with content from **D&D Beyond Importer**, but imported c
 
 ## Main features
 
+- **Pending casts and safe cancellation:** show spell/feature preparation immediately, keep attack cards visible through dice animation, and refund pre-roll canceled casts. Target checks respect native upcasting and partial multi-target groups.
+- **Concentration assistance:** prompt connected owners or the GM for damage-triggered concentration saves, with independent prompt and automatic-break settings. Failed checks end recorded concentration after dice animations finish.
+
 - **Spell and feature regions:** configure entry, movement, and turn triggers; target filters; region conditions and effects; self-attached emanations; and concentration cleanup.
 - **Targeting and saving throws:** confirm area targets, retarget attack cards, prompt token owners for saves, and let a GM take over a pending save. Optional automatic saves for GM-run NPCs leave player-owned NPCs manual.
 - **Damage, healing, and effects:** optional roll prompts and automatic application, with GM Undo Damage, Undo Healing, and Undo Effect controls. Applied damage locks retroactive roll adjustments until it is undone.

@@ -66,7 +66,7 @@ export async function applyInspiration(card,user=game.user,index=0,confirmedFail
     const adjusted=await inspiredRoll(card.rolls[index],bonus),oldSpent=effect.getFlag?.(ID,"bardicSpent");let consumed=false,committed=false;
     try{
         await effect.update({disabled:true,["flags."+ID+".bardicSpent"]:{message:card.uuid??card.id,index}});consumed=true;
-        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Bardic Inspiration animation failed",error);}}
+        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.Ugmuls55eAutomationWaitForAnimation)await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);else if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Bardic Inspiration animation failed",error);}}
         if(signature(card)!==before||isRollAdjustmentLocked(card)||!effect.disabled||effect.getFlag?.(ID,"bardicSpent")?.message!==(card.uuid??card.id))throw Error("The roll changed while Inspiration was applied. The die was restored.");
         const rolls=[...card.rolls];rolls[index]=adjusted;
         const used={...(card.getFlag(ID,"bardicUsed")??{}),[index]:{...data,effect:effect.uuid,total:bonus.total}},skip=card.getFlag("dice-so-nice","skip");

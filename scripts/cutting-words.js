@@ -66,7 +66,7 @@ export async function applyCuttingWords(card,bardUuid,index=0,user=game.user){
         await recordReactionUse(activity,{}, {message:card});marker=reactionUsed(entry.actor);
         const tracked=game.settings.get(ID,"reactionTracker")===true&&game.combat?.started&&Array.from(game.combat.combatants??[]).some(combatant=>combatant.actor?.uuid===bardUuid);
         if(tracked&&marker?.getFlag?.(ID,"reactionUsage")!==card.id)throw Error("Could not reserve the Bard’s reaction.");
-        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Cutting Words animation failed",error);}}
+        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.Ugmuls55eAutomationWaitForAnimation)await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);else if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Cutting Words animation failed",error);}}
         if(seekingSnapshot(card)!==before||isRollAdjustmentLocked(card)||!cuttingRange(entry.token,enemyToken(card)))throw Error("The roll changed during Cutting Words. Resources were restored.");
         const rolls=[...card.rolls];rolls[index]=adjusted;
         const used={...(card.getFlag(ID,"cuttingWords")??{}),[index]:{bard:bardUuid,name:entry.actor.name,die:entry.formula,total:bonus.total}};

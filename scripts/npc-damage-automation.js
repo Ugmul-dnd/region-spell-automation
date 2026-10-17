@@ -127,6 +127,10 @@ export async function applyAutomaticDamage(message) {
     } finally {holder?.remove();running.delete(message.id);appliedNow.delete(message.id);}
 }
 export async function waitForDamageAnimation(message,extraAnimation) {
+    if(globalThis.Ugmuls55eAutomationWaitForAnimation){
+        const animation=(async()=>{await Promise.all([extraAnimation,globalThis.Ugmuls55eAutomationRollVisualWait?.(message)]);await globalThis.Ugmuls55eAutomationDamage?.waitForAttackAnimation?.(message);})();
+        await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);return;
+    }
     // Background clients can pause DSN rendering. Damage resolution must not
     // depend on a GM watching the animation on their own screen.
     if(document.hidden)return;

@@ -138,7 +138,7 @@ export async function precisionRoll(original,bonus){
     const operator=new foundry.dice.terms.OperatorTerm({operator:"+"});adjusted.terms.push(operator,...bonus.terms);adjusted.resetFormula();adjusted._total=adjusted._evaluateTotal();return adjusted;
 }
 async function animateBonus(card,roll,user){
-    if(game.dice3d?.showForRoll){const animation=game.dice3d.showForRoll(roll,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker);if(document.hidden)Promise.resolve(animation).catch(report);else await animation;}
+    if(game.dice3d?.showForRoll){const animation=game.dice3d.showForRoll(roll,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker);if(globalThis.Ugmuls55eAutomationWaitForAnimation)await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);else if(document.hidden)Promise.resolve(animation).catch(report);else await animation;}
     if(authority())await globalThis.Ugmuls55eAutomationNpcDamage?.waitForWorkflowAnimations?.(card);
 }
 export async function applyPrecision(card,user=game.user,mode="paid"){

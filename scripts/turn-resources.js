@@ -71,8 +71,8 @@ export function allowTurnResourceUse(activity,usage,message,updates) {
 export async function recordTurnResources(activity,usage,message) {
     const actor=actorFor(activity);if(!inCombat(actor)||!actor?.isOwner||!manual(activity,message))return;
     const tasks=[];
-    if(activity.activation?.type==="bonus")tasks.push(markResource(actor,"bonus"));
-    if(activity.item?.type==="spell"&&slotDeltas(message))tasks.push(markResource(actor,"spell"));
+    if(activity.activation?.type==="bonus")tasks.push(markResource(actor,"bonus",{usage:message?.data?.flags?.[ID]?.castSession??null}));
+    if(activity.item?.type==="spell"&&slotDeltas(message))tasks.push(markResource(actor,"spell",{usage:message?.data?.flags?.[ID]?.castSession??null}));
     await Promise.all(tasks);
 }
 export async function resetTurnResources(combat,changes={},ending=false) {
@@ -109,7 +109,7 @@ Hooks.once("ready",()=>{
         bonusActionUsed:actor=>resourceUsed(actor,"bonus"),hasCastWithSlot:actor=>resourceUsed(actor,"spell"),
         markBonusAction:(actor,options)=>markResource(actor,"bonus",options),markSpellCast:(actor,options)=>markResource(actor,"spell",options)};
     Hooks.on("dnd5e.activityConsumption",allowTurnResourceUse);
-    Hooks.on("dnd5e.postActivityConsumption",(activity,usage,message)=>recordTurnResources(activity,usage,message).catch(error=>console.error("Ugmuls 5.5e Automation | Turn resource tracking failed:",error)));
+    Hooks.on("dnd5e.postActivityConsumption",(activity,usage,message)=>{const task=recordTurnResources(activity,usage,message);globalThis.Ugmuls55eAutomationPendingCast?.track(message,task);task.catch(error=>console.error("Ugmuls 5.5e Automation | Turn resource tracking failed:",error));});
     Hooks.on("updateCombat",(combat,changes)=>resetTurnResources(combat,changes).catch(error=>console.error("Ugmuls 5.5e Automation | Turn resource reset failed:",error)));
     Hooks.on("deleteCombat",combat=>resetTurnResources(combat,{},true).catch(error=>console.error("Ugmuls 5.5e Automation | Combat resource cleanup failed:",error)));
 });

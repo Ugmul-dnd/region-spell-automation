@@ -32,7 +32,7 @@ export async function applyParry(card,actorUuid,user=game.user){
         await recordReactionUse(entry.reaction,{}, {message:card});marker=reactionUsed(entry.actor);
         const tracked=game.settings.get(ID,"reactionTracker")===true&&game.combat?.started&&Array.from(game.combat.combatants??[]).some(c=>c.actor?.uuid===actorUuid);
         if(tracked&&marker?.getFlag?.(ID,"reactionUsage")!==card.id)throw Error("Could not reserve the fighter’s Reaction.");
-        if(game.dice3d?.showForRoll)await game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker);
+        if(game.dice3d?.showForRoll){const animation=game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker);await (globalThis.Ugmuls55eAutomationWaitForAnimation?.(animation)??animation);}
         if(seekingSnapshot(card)!==before||isRollAdjustmentLocked(card))throw Error("The damage changed during Parry. Resources were restored.");
         let remaining=Math.max(0,bonus.total);const rolls=[];
         for(const original of card.rolls){const reduction=Math.min(Math.max(0,original.total),remaining);remaining-=reduction;rolls.push(reduction?await subtractCuttingWords(original,{total:reduction},{damage:true,flavor:"Parry"}):original);}
