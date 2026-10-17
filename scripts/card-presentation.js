@@ -1,11 +1,16 @@
 const MODULE_ID="ugmuls-5-5e-automation";
 
+export function rollCardVisible(message){
+    // A document can exist while DsN still suppresses its chat presentation.
+    if(message?._dice3danimating&&game.settings.get("dice-so-nice","immediatelyDisplayChatMessages")!==true)return false;
+    const nodes=globalThis.document?.querySelectorAll?.('[data-message-id="'+message?.id+'"]')??[];
+    return Array.from(nodes).some(node=>node.isConnected!==false&&!node.hidden&&!node.closest?.('.dsn-hide,[hidden]')&&
+        (!node.getClientRects||node.getClientRects().length>0));
+}
 export function attackCardProgress(message) {
-    if (message?.type !== "usage" || message.getAssociatedActivity?.()?.type !== "attack") return null;
-    return {
-        attack: (message.getAssociatedRolls?.("attack") ?? []).length>0,
-        damage: (message.getAssociatedRolls?.("damage") ?? []).length>0
-    };
+    if(message?.type!=="usage"||message.getAssociatedActivity?.()?.type!=="attack")return null;
+    const attacks=Array.from(message.getAssociatedRolls?.("attack")??[]),damages=Array.from(message.getAssociatedRolls?.("damage")??[]);
+    return {attack:attacks.some(rollCardVisible),damage:damages.some(rollCardVisible),attackRecorded:attacks.length>0,damageRecorded:damages.length>0};
 }
 
 export function styleActivityCard(message,html) {
@@ -22,21 +27,28 @@ export function styleActivityCard(message,html) {
         if (["attack","save","damage","healing"].includes(roll?.type)) summary.classList.add(`rsa-roll-${roll.type}`);
     }
     if (game.settings.get(MODULE_ID,"simplifyAttackCards") !== true) return;
+    // Restore only our own previous hiding before inspecting inline result visibility.
+    if(root.dataset.rsaProcessedAttack){root.hidden=false;root.style.display="";delete root.dataset.rsaProcessedAttack;root.classList.remove("rsa-processed-attack");}
+    const previousFace=root.querySelector(".chat-card");
+    if(previousFace?.dataset.rsaProcessedFace){previousFace.hidden=false;previousFace.style.display="";delete previousFace.dataset.rsaProcessedFace;}
     const progress=attackCardProgress(message);
     if (!progress) {
         if (message.type === "attack") addAttackDamageButton(message,root);
         return;
     }
     const baseFace=root.querySelector(".chat-card");
+    for(const entry of baseFace?.querySelectorAll("[data-rsa-processed-action]")??[]){entry.hidden=false;entry.style.display="";delete entry.dataset.rsaProcessedAction;}
     for (const action of ["rollAttack","rollDamage"]) {
-        if (!(action === "rollAttack" ? progress.attack : progress.damage)) continue;
+        if (!(action === "rollAttack" ? progress.attackRecorded : progress.damageRecorded)) continue;
         // Only the base activity's controls; inline result controls stay intact.
         for (const button of baseFace?.querySelectorAll(`[data-action="${action}"], [data-forward-action="${action}"]`) ?? []) {
             const entry=button.closest("li") ?? button;
-            entry.hidden=true;entry.style.display="none";
+            entry.hidden=true;entry.style.display="none";entry.dataset.rsaProcessedAction="true";
         }
     }
     baseFace?.querySelectorAll("[data-rsa-retarget]").forEach(button=>button.remove());
+    baseFace?.querySelectorAll(".rsa-attack-awaiting-result").forEach(node=>node.remove());
+    if(progress.attackRecorded&&!progress.attack&&baseFace){const label=document.createElement("p");label.className="rsa-attack-awaiting-result";label.textContent="Pending — waiting for the attack result";baseFace.append(label);}
     if (progress.attack) {
         // Preserve every document and its links; this is chat presentation only.
         // If Foundry is showing inline roll summaries, keep the outer message
@@ -44,7 +56,7 @@ export function styleActivityCard(message,html) {
         const summaries=root.querySelectorAll(".card-summary[data-message-id]");
         if (summaries.length) {
             const face=root.querySelector(".chat-card");
-            if (face) {face.hidden=true;face.style.display="none";}
+            if (face) {face.hidden=true;face.style.display="none";face.dataset.rsaProcessedFace="true";}
         } else {
             root.hidden=true;root.dataset.rsaProcessedAttack="true";
             root.classList.add("rsa-processed-attack");
@@ -260,24 +272,32 @@ export function followChatCardChanges(host) {
         clearTimeout(timer);timer=setTimeout(stop,800); // Include the tray's CSS expansion.
     };
 }
-function refreshOrigin(message) {
-    if (!["attack","save","damage","healing"].includes(message?.type)) return;
-    const origin=message.system?.origin;
-    const card=typeof origin === "string" ? game.messages.get(origin) : origin;
-    if (card?.type === "usage") setTimeout(()=>{
-        ui.chat?.updateMessage(card);
-        if (message.type === "damage") for (const attack of card.getAssociatedRolls?.("attack") ?? []) ui.chat?.updateMessage(attack);
-    },0);
+const resultHandoffs=new Set(),handoffStates=new Map();
+function refreshOrigin(message){
+    if(!["attack","save","damage","healing"].includes(message?.type))return;
+    const origin=message.system?.origin,card=typeof origin==="string"?game.messages.get(origin):origin;
+    if(card?.type!=="usage"||resultHandoffs.has(message.id))return;
+    resultHandoffs.add(message.id);
+    // Native render hooks run before insertion. Wait a frame before hiding the source card.
+    (globalThis.requestAnimationFrame??(callback=>setTimeout(callback,0)))(()=>{
+        resultHandoffs.delete(message.id);
+        // Grouped saves have no standalone DOM node; animation completion must still refresh their origin.
+        const signature=JSON.stringify([game.messages.get(message.id)!==undefined,rollCardVisible(message),message._dice3danimating===true,message._stats?.modifiedTime,(message.rolls??[]).map(roll=>roll.total)]);
+        if(handoffStates.get(message.id)===signature)return;handoffStates.set(message.id,signature);
+        globalThis.Ugmuls55eAutomationChatRefresh?.card(card);
+        if(message.type==="damage")for(const attack of card.getAssociatedRolls?.("attack")??[])globalThis.Ugmuls55eAutomationChatRefresh?.card(attack);
+    });
 }
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"simplifyAttackCards",{
     name:"Simplify Processed Attack Cards",
-    hint:"Hide the base card once an attack roll exists. Damage and Retarget stay on the attack roll; Damage hides once linked damage exists. Roll messages and damage history are retained.",
+    hint:"Hide the base card once its attack result is visible, retaining it while dice animations delay the result. Damage and Retarget stay on the attack roll; Damage hides once linked damage exists. Roll messages and damage history are retained.",
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
 }));
 Hooks.once("ready",()=>{
     globalThis.Ugmuls55eAutomationFollowRollMenu=followRollMenuExpansion;
     globalThis.Ugmuls55eAutomationFollowChatChanges=followChatCardChanges;
     Hooks.on("dnd5e.renderChatMessage",styleActivityCard);
+    Hooks.on("renderChatMessageHTML",refreshOrigin);
     Hooks.on("updateChatMessage",(card,changes)=>{
         if(card.type==="attack"&&changes.flags?.[MODULE_ID]?.seekingSpellUsed)
             for(const damage of linkedAttackDamage(card))ui.chat?.updateMessage?.(damage);

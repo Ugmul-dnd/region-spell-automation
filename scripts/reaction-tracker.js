@@ -53,6 +53,6 @@ Hooks.once("init",()=>game.settings.register(ID,"reactionTracker",{name:"Reactio
     hint:"For all participants in active combat: reaction activities, plus manual action spell, weapon and feature uses outside your combat turn, mark Reaction - used and block further reactions. Disable/delete to override; expires at your turn start. Saves and automated Region triggers remain available.",scope:"world",config:true,type:Boolean,default:true}));
 Hooks.once("ready",()=>{
     Hooks.on("dnd5e.preUseActivity",allowReactionUse);
-    Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>recordReactionUse(activity,usage,results).catch(err=>console.error("Ugmuls 5.5e Automation | Reaction tracking failed:",err)));
+    Hooks.on("dnd5e.postUseActivity",(activity,usage,results)=>{const task=recordReactionUse(activity,usage,results);globalThis.Ugmuls55eAutomationPendingCast?.track(results?.message,task);task.catch(err=>console.error("Ugmuls 5.5e Automation | Reaction tracking failed:",err));});
     Hooks.on("dnd5e.preRollAttackV2",allowReactionAttack);
 });

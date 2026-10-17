@@ -37,19 +37,23 @@ export async function applyBuffEffects(message) {
     if (type === "self") {
         if (caster) actors.set(caster.uuid,caster);
     } else {
-        const casterToken=message.speaker?.scene && message.speaker?.token
-            ? await fromUuid(`Scene.${message.speaker.scene}.Token.${message.speaker.token}`)
-            : activity.getUsageToken?.();
-        const casterDoc=casterToken?.document ?? casterToken;
-        for (const target of message.system.targets ?? []) {
-            const token=target.token ? await fromUuid(target.token) : null;
-            const actor=token?.actor ?? (target.actor ? await fromUuid(target.actor) : null);
+        const recipients=await Promise.all((message.system.targets??[]).map(async target=>{
+            const token=target.token?await fromUuid(target.token):null;
+            return {token,actor:token?.actor??(target.actor?await fromUuid(target.actor):null)};
+        }));
+        let casterToken=message.speaker?.scene&&message.speaker?.token
+            ? await fromUuid(`Scene.${message.speaker.scene}.Token.${message.speaker.token}`):null;
+        if(!casterToken||casterToken.actor?.uuid!==caster?.uuid)casterToken=activity.getUsageToken?.();
+        const casterDoc=casterToken?.document??casterToken??recipients.find(entry=>entry.actor?.uuid===caster?.uuid)?.token;
+        const friendly=globalThis.CONST?.TOKEN_DISPOSITIONS?.FRIENDLY??1;
+        const casterDisposition=casterDoc?.disposition??(caster?.type==="character"?friendly:null);
+        for (const {token,actor} of recipients) {
             if (!actor) continue;
             // Do not infer a no-save offensive effect as a buff. Self, explicit
-            // allies, and friendly-disposition recipients are eligible.
+            // allies, explicitly selected willing creatures, and friendly-disposition recipients are eligible.
             if(inspire&&actor.uuid===caster?.uuid)continue;
-            if (mark || inspire || actor.uuid === caster?.uuid || type === "ally" ||
-                (type === "creature" && casterDoc && token && token.disposition === casterDoc.disposition)) actors.set(actor.uuid,actor);
+            if (mark || inspire || actor.uuid === caster?.uuid || type === "ally" || type === "willing" ||
+                (type === "creature" && casterDisposition!=null && token && token.disposition === casterDisposition)) actors.set(actor.uuid,actor);
         }
     }
     if (!actors.size) return;
@@ -106,7 +110,7 @@ async function requestBuffs(message) {
 
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"autoApplyBuffEffects",{
     name:"Effect Automation: Automatically Apply Buffs",
-    hint:"Apply configured effects from non-rolling Utility spells/features to Self, Allies, or friendly targeted creatures. Hunter's Mark also applies to its single marked target. Save and attack effects use their separate GM NPC & Damage options.",
+    hint:"Apply configured effects from non-rolling Utility spells/features to Self, Allies, selected Willing Creatures, or friendly targeted creatures. Hunter's Mark also applies to its single marked target. Save and attack effects use their separate GM NPC & Damage options.",
     scope:"world",config:true,type:Boolean,default:true
 }));
 Hooks.once("ready",()=>{

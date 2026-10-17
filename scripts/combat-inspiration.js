@@ -102,7 +102,7 @@ export async function applyCombatInspiration(card,{mode,index=0,targetUuid=null}
             const tracked=game.settings.get(ID,"reactionTracker")===true&&game.combat?.started&&Array.from(game.combat.combatants??[]).some(combatant=>combatant.actor?.uuid===actor.uuid);
             if(tracked&&marker?.getFlag?.(ID,"reactionUsage")!==card.id)throw Error("Could not reserve the recipient's reaction.");
         }
-        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Combat Inspiration animation failed",error);}}
+        if(game.dice3d?.showForRoll){try{const animation=Promise.resolve(game.dice3d.showForRoll(bonus,user,true,card.whisper?.length?card.whisper:null,card.blind??false,card.id,card.speaker));if(globalThis.Ugmuls55eAutomationWaitForAnimation)await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);else if(globalThis.document?.hidden)animation.catch(console.warn);else await animation;}catch(error){console.warn("Combat Inspiration animation failed",error);}}
         if(signature(card)!==before||isRollAdjustmentLocked(card)||!effect.disabled)throw Error("The roll changed during Combat Inspiration. Resources were restored.");
         let update;
         if(mode==="offense"){

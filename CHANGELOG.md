@@ -1,6 +1,30 @@
 # Changelog
 
-## Unreleased
+## v0.7.5 — Pending Cards, Concentration & Targeting
+
+- Initially empty shared spell Regions wait for their first recorded target before prompting damage. The original cast card routes that prompt to the connected caster owner, with GM fallback; later targets reuse the roll.
+- The regular Damage action reuses an unresolved Pending damage card instead of leaving a separate placeholder behind. Stale dialogs are invalidated, and targets added while a damage dialog is open are retained when the roll is published.
+
+- Recognize native Willing Creature targets in automatic Utility buff effects. Upcast Fly and similar buffs apply to each recorded willing recipient, rather than only passing the caster through the self check. Uses native scaled effect preparation and existing Undo tracking.
+
+- Automatic buffs fall back to the usage token or recorded caster target when the chat speaker token is missing or belongs to another actor. Character casters without a scene token can still buff explicitly friendly recipients, including additional upcast Fly targets. Native effect application and hostile-target filtering remain in place.
+
+- Refresh grouped saving-throw cards when Dice So Nice finishes, even when the save has no standalone chat element. This clears stale Pending rows for multi-target casts without rerolling or scanning the chat log.
+
+- Require a selected target for direct attacks and targeted spells/features, including healing and marks. Validate single-target limits after native upcast scaling and before resource consumption; multi-target spells accept partial groups. Self and area/template activities retain their normal targeting flow.
+
+- Concentration checks keep their pending status until Dice So Nice animations finish on active clients, then show the outcome and end concentration on failure. Background clients retain the animation bypass; GM takeover remains available during the wait.
+
+- Add concentration challenge popups using native damage-triggered prompt cards and native concentration saves. Route to an active owning player, otherwise the GM; GM-run NPCs follow the existing automatic NPC-save setting. Pending checks support retry and GM takeover, including owner disconnects.
+- Add separate Prompt Concentration Checks and End Concentration on Failed Checks settings under Rolls & Damage / Healing. Failures end only the concentration effects recorded for the check, preserving newer spells and using native Region cleanup.
+
+- **Dice So Nice integration — background GM and player windows:** switching tabs, minimizing, or losing window focus during an animation no longer leaves this module’s evaluated roll workflow waiting for that client to reactivate. Animation waits release even when focus changes mid-animation; active clients continue waiting normally. This fix ships with Ugmuls 5.5e Automation and runs on connected clients after updating and refreshing. It does not modify Dice So Nice itself or change the dice results.
+
+- Keep initial attack usage cards visible until the linked result is displayed, including Dice So Nice animation delays. Show a waiting status and prevent duplicate attack clicks during the handoff. Refresh only linked cards through the shared queue, and restore the source if its result is removed.
+
+- Publish a native Pending usage card before a player configures a spell/feature cast, then reuse it through targeting, Metamagic, template placement and the first roll. Preserve whisper/blind roll modes and native source grouping.
+- Canceling a pre-roll usage, target, template or roll dialog removes its pending usage card and refunds native consumption and cast-time Metamagic. Cast-owned bonus/spell/reaction markers are cleared without changing unrelated uses.
+- Preserve previous concentration until the new cast commits; remove newly created cast effects and templates on cancellation. Actual roll results commit the cast and prevent later refunds.
 
 ## v0.7.4 — Performance & Parry
 

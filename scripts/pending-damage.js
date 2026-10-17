@@ -34,6 +34,8 @@ export async function damageOperation(action,card,payload,user){
         await globalThis.Ugmuls55eAutomationNpcDamage?.waitForWorkflowAnimations?.(card);
     const update={};
     for(const key of ["rolls","system","flavor","speaker","whisper","blind"])if(data[key]!==undefined)update[key]=data[key];
+    // Region triggers may append targets while the roll dialog is open. Keep the live shared list.
+    if(update.system&&card.system?.targets)update.system={...update.system,targets:foundry.utils.deepClone(card.system.targets)};
     update.flags=foundry.utils.mergeObject(card.flags??{},data.flags??{},{inplace:false});
     update.flags[ID]??={};update.flags[ID].pendingDamageAnimation=damageAnimationSignature(data.rolls);update.flags[ID].pendingDamage=null;delete update.flags[ID].pendingDamageCard;delete update.flags[ID].pendingDamageSession;
     // DsN detects an empty -> populated rolls array as a fresh throw on every
@@ -74,6 +76,19 @@ export function startPendingDamage(config,dialog,message){
         const origin=resolveOrigin(data.system?.origin);
         const attackId=data.flags?.[ID]?.damageAttackId??Array.from(origin?.getAssociatedRolls?.("attack")??[]).filter(attack=>attack.timestamp<=Date.now()).sort((a,b)=>b.timestamp-a.timestamp)[0]?.id;
         const attack=game.messages.get(attackId),isAttack=config.subject.type==="attack";
+        // The native Damage button must resolve an existing placeholder, just like clicking Pending.
+        const reusable=Array.from(origin?.getAssociatedRolls?.(data.type==="healing"?"healing":"damage")??[]).find(card=>{
+            const state=pending(card);
+            return card.type===data.type&&state?.activityUuid===config.subject.uuid&&
+                (card.getFlag(ID,"damageAttackId")??null)===(isAttack?attackId??null:null);
+        });
+        if(reusable){
+            context.cardId=reusable.id;
+            const state=await operate("claim",reusable);context.session=state.session;
+            await cancelDamageDialog(reusable.id);game.socket.emit(channel,{action:"cancelPendingDamage",cardId:reusable.id});
+            return;
+        }
+
         data.flags??={};data.flags[ID]??={};
         if(isAttack&&attackId)data.flags[ID].damageAttackId=attackId;
         data.flags[ID].pendingDamage={session,userId:game.user.id,activityUuid:config.subject.uuid,
@@ -121,7 +136,7 @@ export function installPendingDamagePublication(RollClass=CONFIG.Dice.DamageRoll
             // One evaluated pool keeps weapon and rider dice in the same throw.
             const roll=rolls.length===1?rolls[0]:Roll.fromTerms([foundry.dice.terms.PoolTerm.fromRolls(rolls)]);
             const animation=game.dice3d.showForRoll(roll,game.user,true,message.data.whisper?.length?message.data.whisper:null,message.data.blind??false,card.id,message.data.speaker);
-            if(globalThis.document?.hidden)Promise.resolve(animation).catch(report);else await animation;
+            if(globalThis.Ugmuls55eAutomationWaitForAnimation)await globalThis.Ugmuls55eAutomationWaitForAnimation(animation);else if(globalThis.document?.hidden)Promise.resolve(animation).catch(report);else await animation;
         }
         if(!pendingDamageCurrent(context)){rolls.splice(0);return;}
         try{await operate("finish",card,{session:context.session,data:message.data});}

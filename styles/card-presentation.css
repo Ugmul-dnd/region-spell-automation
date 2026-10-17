@@ -120,3 +120,7 @@
 .dialog-buttons:has(.rsa-reckless-roll-buttons,.rsa-brutal-roll-buttons) {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:4px;}
 .dialog-buttons :is(.rsa-reckless-roll-buttons,.rsa-brutal-roll-buttons) {display:flex;flex-direction:column;gap:4px;min-width:0;}
 .dialog-buttons :is(.rsa-reckless-roll-buttons,.rsa-brutal-roll-buttons) button {width:100%;flex:none;min-width:0;font-size:inherit;padding-inline:4px;}
+
+.rsa-pending-cast{padding:8px 10px;margin:8px 0;border:1px dashed currentColor;border-radius:3px;text-align:center;font-size:12px;opacity:.8}
+
+.rsa-attack-awaiting-result{padding:8px;margin:8px 0;border:1px dashed currentColor;text-align:center;font-size:12px;opacity:.8}

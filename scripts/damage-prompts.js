@@ -200,22 +200,17 @@ export function turnOnlyAura(activity) {
         triggers.every(t => t.events?.length && t.events.every(e => ["tokenTurnStart", "tokenTurnEnd"].includes(e)));
 }
 
-export async function waitForAttackAnimation(message) {
-    if (!game.dice3d) return;
-    // DSN's helper skips waiting when chat is displayed immediately. Its
-    // animation flag and completion hook still cover that configuration.
-    if (message._dice3danimating) {
-        await new Promise(resolve => {
-            const hook = Hooks.on("diceSoNiceRollComplete", id => {
-                if (id !== message.id) return;
-                Hooks.off("diceSoNiceRollComplete", hook);
-                resolve();
-            });
-            if (!message._dice3danimating) { Hooks.off("diceSoNiceRollComplete", hook); resolve(); }
-        });
-    } else if (game.dice3d.waitFor3DAnimationByMessageID) {
-        await game.dice3d.waitFor3DAnimationByMessageID(message.id);
-    }
+export async function waitForAttackAnimation(message){
+    if(!game.dice3d)return;
+    let hook;
+    try{
+        let animation;
+        if(message._dice3danimating){animation=new Promise(resolve=>{
+            hook=Hooks.on("diceSoNiceRollComplete",id=>{if(id===message.id)resolve();});
+            if(!message._dice3danimating)resolve();
+        });}else animation=game.dice3d.waitFor3DAnimationByMessageID?.(message.id);
+        await (globalThis.Ugmuls55eAutomationWaitForAnimation?.(animation)??animation);
+    }finally{if(hook!==undefined)Hooks.off("diceSoNiceRollComplete",hook);}
 }
 
 // Resolve the published attack rather than guessing from a matching roll total.
@@ -245,11 +240,13 @@ export function promptPublishedAttack(attack){
 export async function promptDamage(activity, message, kind = "save", attack = null) {
     const setting = kind === "attack" ? "promptDamageOnHit" : "promptDamageOnSave";
     if (game.settings.get(MODULE_ID, setting) !== true || !activity?.damage?.parts?.length || !message?.id) return;
-    const region=message.getFlag?.(MODULE_ID,"regionTriggered")===true;
+    const region=message.getFlag?.(MODULE_ID,"regionTriggered")===true||message.getFlag?.(MODULE_ID,"sharedCardPerTurn")===true;
     const recipient=region?selectSaveUser(activity.actor??activity.item?.actor,game.users,game.users.activeGM):message.author;
     if (recipient?.id !== game.user.id || !activity.item?.isOwner) return;
     if (message.getFlag?.(MODULE_ID,"targetsConfirmationPending") || message.getFlag?.(MODULE_ID,"targetsConfirmationCanceled")) return;
     if (kind === "save" && (activity.type !== "save" || (!message.getFlag?.(MODULE_ID,"regionTriggered") && turnOnlyAura(activity)))) return;
+    // Empty areas wait for their first recorded trigger, without consuming the prompt guard.
+    if(kind === "save" && !message.system?.targets?.length)return;
     const key = `${kind}:${attack?.id ?? message.id}`;
     if (opened.has(key) || queued.has(key)) return;
     queued.add(key);
@@ -262,7 +259,7 @@ export async function promptDamage(activity, message, kind = "save", attack = nu
         // A user or another module may already have rolled damage while the
         // attack animation played. Avoid opening a redundant dialog.
         const existingDamage = message.getAssociatedRolls?.("damage") ?? [];
-        if (existingDamage.some(damage => !damage.getFlag?.(MODULE_ID,"masteryGrazeUndone")&&
+        if (existingDamage.some(damage => damage.rolls?.length && !damage.getFlag?.(MODULE_ID,"masteryGrazeUndone")&&
             (!attack || (damage.timestamp ?? Infinity) >= (attack.timestamp ?? 0)))) return;
         opened.add(key);
         const {ability, ammunitionItem: ammunition, mode: attackMode} = attack?.system ?? {};
@@ -313,7 +310,7 @@ Hooks.once("ready", () => {
     // Region activity execution retains its original authority. Only the
     // damage dialog is routed to a connected owner of the casting actor.
     const promptRegionDamage=message=>{
-        if(message.getFlag?.(MODULE_ID,"regionTriggered")!==true)return;
+        if(message.type!=="usage"||(!message.getFlag?.(MODULE_ID,"regionTriggered")&&!message.getFlag?.(MODULE_ID,"sharedCardPerTurn")))return;
         setTimeout(()=>promptDamage(message.getAssociatedActivity?.(),message).catch(report),0);
     };
     Hooks.on("createChatMessage",promptRegionDamage);

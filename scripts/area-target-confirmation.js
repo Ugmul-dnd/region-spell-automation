@@ -57,7 +57,7 @@ export class TargetConfirmation extends foundry.applications.api.ApplicationV2 {
             </div>
             ${globalThis.Ugmuls55eAutomationMetamagic?.metamagicMarkup(this.message.getAssociatedActivity?.(),this.metamagicSelection,targets.map(token=>describeTarget(token.document??token)))??""}
             <button type="button" data-rsa-confirm-targets>${editable?"Confirm Targets":"Confirm Metamagic"} (${targets.length})</button>
-            <button type="button" data-rsa-cancel-targets style="margin-top:8px;">Close — Resolve Manually</button>
+            <button type="button" data-rsa-cancel-targets style="margin-top:8px;">Cancel Cast</button>
         </div>`;
     }
     _replaceHTML(result, content) { this.clearTokenHighlight(); content.innerHTML = result; }
@@ -223,12 +223,14 @@ export async function confirmCastTargets(activity, usage, results) {
     let confirmed;
     try { const chooser=new TargetConfirmation(message);chooser.castRegions=results.templates??[];confirmed = await chooser.choose(); }
     catch (err) {
+        if(await globalThis.Ugmuls55eAutomationPendingCast?.cancel(message)){pendingCards.delete(message.id);throw err;}
         await message.update({ [`flags.${MODULE_ID}.targetsConfirmationPending`]: false,
             [`flags.${MODULE_ID}.targetsConfirmationCanceled`]: true });
         pendingCards.delete(message.id);
         throw err;
     }
     if (confirmed === null) {
+        if(await globalThis.Ugmuls55eAutomationPendingCast?.cancel(message)){pendingCards.delete(message.id);return;}
         await message.update({ [`flags.${MODULE_ID}.targetsConfirmationPending`]: false,
             [`flags.${MODULE_ID}.targetsConfirmationCanceled`]: true });
         pendingCards.delete(message.id);
