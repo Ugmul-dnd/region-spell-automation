@@ -93,7 +93,8 @@
     "scripts/peerless-skill.js",
     "scripts/combat-inspiration.js",
     "scripts/grapple.js",
-    "scripts/pending-damage.js"
+    "scripts/pending-damage.js",
+    "scripts/parry.js"
   ],
   "styles": [
     "styles/save-roll-controls.css",

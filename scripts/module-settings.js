@@ -4,7 +4,7 @@ export const CLASS_AUTOMATIONS=[
     {name:"Bard",keys:["bardicInspirationAutomation","cuttingWordsAutomation","peerlessSkillAutomation","combatInspirationAutomation"]},
     {name:"Cleric",keys:[]},
     {name:"Druid",keys:[]},
-    {name:"Fighter",keys:["precisionAttackAutomation","tripAttackAutomation","distractingAttackAutomation","menacingAttackAutomation","goadingAttackAutomation","maneuveringAttackAutomation","pushingAttackAutomation","relentlessAutomation"]},
+    {name:"Fighter",keys:["precisionAttackAutomation","tripAttackAutomation","distractingAttackAutomation","menacingAttackAutomation","goadingAttackAutomation","maneuveringAttackAutomation","pushingAttackAutomation","parryAutomation","relentlessAutomation"]},
     {name:"Monk",keys:["stunningStrikeAutomation"]},
     {name:"Paladin",keys:["divineSmiteAutomation"]},
     {name:"Ranger",keys:["huntersPreyAutomation"]},

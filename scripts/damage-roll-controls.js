@@ -80,7 +80,7 @@ export async function changeDamageCritical(roll,critical) {
             const term=source[index];
             if (term instanceof foundry.dice.terms.OperatorTerm) {terms.push(term);continue;}
             if (term instanceof foundry.dice.terms.NumericTerm) {
-                if (policy.multiplyNumeric&&!term.options?.rsaCuttingWords) term.number=critical?term.number*multiplier:term.number/multiplier;
+                if (policy.multiplyNumeric&&!term.options?.rsaCuttingWords&&!term.options?.rsaParry) term.number=critical?term.number*multiplier:term.number/multiplier;
                 terms.push(term);continue;
             }
             if (!(term instanceof foundry.dice.terms.Die) || term.modifiers?.some(mod=>!roll.options.rsaGreatWeaponFighting||!/^min\d+$/.test(mod))) throw Error("Complex or modified dice are not supported by this toggle.");
@@ -107,7 +107,7 @@ export async function changeDamageCritical(roll,critical) {
     } else    for (const [index,term] of adjusted.terms.entries()) {
         if (term instanceof foundry.dice.terms.OperatorTerm) continue;
         if (term instanceof foundry.dice.terms.NumericTerm) {
-            if (policy.multiplyNumeric) term.number=critical?term.number*multiplier:term.number/multiplier;
+            if (policy.multiplyNumeric&&!term.options?.rsaCuttingWords&&!term.options?.rsaParry) term.number=critical?term.number*multiplier:term.number/multiplier;
             continue;
         }
         if (!(term instanceof foundry.dice.terms.Die) || term.modifiers?.some(mod=>!roll.options.rsaGreatWeaponFighting||!/^min\d+$/.test(mod))) throw Error("Complex or modified dice are not supported by this toggle.");

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Battle Master Parry on incoming single-target melee damage cards. Spend a Reaction and current Superiority Die, reduce existing damage by the die plus the higher Strength/Dexterity modifier, and preserve original dice. Includes resource rollback and player-to-GM handling.
+
 ## v0.7.3 — Character Creation, Bards & Barbarians
 
 This release adds guided player-character creation and expands Bard and Barbarian automation through the existing attack, save, damage, and effect card workflows.

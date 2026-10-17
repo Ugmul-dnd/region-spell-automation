@@ -40,12 +40,12 @@ export function cuttingCandidates(card,user=game.user,index=0){
     }
     return entries;
 }
-export async function subtractCuttingWords(original,bonus,{damage=false}={}){
+export async function subtractCuttingWords(original,bonus,{damage=false,flavor="Cutting Words"}={}){
     const adjusted=original.constructor.fromData(foundry.utils.deepClone(original.toJSON()));
     const {OperatorTerm,NumericTerm}=foundry.dice.terms;
     // Use a flat evaluated reduction so it never becomes critical damage dice.
     const reduction=damage?Math.min(Math.max(0,original.total),bonus.total):bonus.total;
-    const term=new NumericTerm({number:reduction,options:{flavor:"Cutting Words",rsaCuttingWords:true}});await term.evaluate();
+    const term=new NumericTerm({number:reduction,options:{flavor,rsaCuttingWords:flavor==="Cutting Words",rsaParry:flavor==="Parry"}});await term.evaluate();
     adjusted.terms.push(new OperatorTerm({operator:"-"}),term);
     delete adjusted.options.rsaDamageModes;
     adjusted.resetFormula();adjusted._total=adjusted._evaluateTotal();return adjusted;
