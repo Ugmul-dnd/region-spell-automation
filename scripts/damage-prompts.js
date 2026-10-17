@@ -39,9 +39,10 @@ export function configurePromptDialog(kind, dialog = {}) {
             get rolls() {
                 const rolls=super.rolls;
                 if(!this._rsaPreview)return rolls;
-                const grapple=globalThis.Ugmuls55eAutomationGrapple?.finalizeGrapple(this,rolls,{preview:true})??rolls;
+                const cleave=globalThis.Ugmuls55eAutomationCleave?.finalizeCleaveDamage(this,rolls)??rolls;
+                const grapple=globalThis.Ugmuls55eAutomationGrapple?.finalizeGrapple(this,cleave,{preview:true})??cleave;
                 if(globalThis.Ugmuls55eAutomationGrapple?.replacesGrappleDamage(this))return grapple;
-                const savage=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,rolls,{preview:true})??rolls;
+                const savage=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,grapple,{preview:true})??grapple;
                 const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,savage)??savage;
                 const sneak=globalThis.Ugmuls55eAutomationSneak?.finalizeSneak(this,riders,{preview:true})??riders;
                 const prey=globalThis.Ugmuls55eAutomationPrey?.finalizePrey(this,sneak,{preview:true})??sneak;
@@ -68,7 +69,8 @@ export function configurePromptDialog(kind, dialog = {}) {
                 if(kind==="damage"&&globalThis.Ugmuls55eAutomationPendingDamage?.canSubmitDamage(this)===false)return [];
                 const rolls=super._finalizeRolls(action);
                 if(kind === "damage") {
-                    const grapple=globalThis.Ugmuls55eAutomationGrapple?.finalizeGrapple(this,rolls)??rolls;
+                    const cleave=globalThis.Ugmuls55eAutomationCleave?.finalizeCleaveDamage(this,rolls)??rolls;
+                    const grapple=globalThis.Ugmuls55eAutomationGrapple?.finalizeGrapple(this,cleave)??cleave;
                     if(globalThis.Ugmuls55eAutomationGrapple?.replacesGrappleDamage(this))return grapple;
                     const weaponRolls=globalThis.Ugmuls55eAutomationSavage?.finalizeSavage(this,grapple)??grapple;
                     const riders=globalThis.Ugmuls55eAutomationRiders?.finalizeRiders(this,weaponRolls)??weaponRolls;

@@ -178,6 +178,7 @@ export async function applyOutcomeEffects(card) {
     if(!authority()||runningEffects.has(card.id)||isManual(card))return;
     const usage=card.type==="usage"?card:originOf(card);
     if(!usage||usage.getFlag?.(MODULE_ID,"targetsConfirmationPending")||usage.getFlag?.(MODULE_ID,"targetsConfirmationCanceled"))return;
+    if(usage.getFlag?.(MODULE_ID,"smiteSave"))return globalThis.Ugmuls55eAutomationSmite?.resolveSmiteSave(usage);
     if(usage.getFlag?.(MODULE_ID,"grappleStrike"))return globalThis.Ugmuls55eAutomationGrapple?.applyGrappleOutcome(usage);
     if(usage.getFlag?.(MODULE_ID,"stunningStrike"))return globalThis.Ugmuls55eAutomationStunning?.applyStunningOutcome(usage);
     if(usage.getFlag?.(MODULE_ID,"maneuverStrike"))return globalThis.Ugmuls55eAutomationBattleMaster?.applyTripOutcome(usage);

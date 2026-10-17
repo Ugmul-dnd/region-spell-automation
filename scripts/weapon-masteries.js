@@ -311,7 +311,7 @@ export function addMasteryButtons(message,html) {
 }
 function report(err){console.error("Ugmuls 5.5e Automation | Mastery automation failed:",err);ui.notifications.error("Could not apply mastery. Check the console.");}
 Hooks.once("init",()=>game.settings.register(MODULE_ID,"weaponMasteryAutomation",{
-    name:"Effect Automation: Weapon Masteries",hint:"Automatic Graze damage cards on misses, Sap/Vex effects, Slow after damage, and Topple actions for unlocked weapon masteries. Push, Nick and Cleave are excluded. Requires an active GM.",
+    name:"Effect Automation: Weapon Masteries",hint:"Automatic Graze damage cards on misses, Sap/Vex effects, Slow after damage, and Topple actions and Cleave extra attacks for unlocked weapon masteries. Push and Nick are excluded. Requires an active GM.",
     scope:"world",config:true,type:Boolean,default:true,onChange:()=>ui.chat?.render({force:true})
 }));
 Hooks.on("ac5e.usageRulesReady",({usageRules}={})=>registerConditionBridge(usageRules));

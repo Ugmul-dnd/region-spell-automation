@@ -13,8 +13,9 @@ export function offTurn(activity) {
     const combatant=(doc?combatants.find(entry=>entry.token?.uuid===doc.uuid):null)??combatants.find(entry=>entry.actor?.uuid===actor.uuid);
     return !!combatant&&combatant.id!==combat.combatant.id;
 }
+function cleaveMessage(message){const data=message?.data??message,reference=data?.system?.origin,origin=typeof reference==="string"?game.messages?.get?.(reference):reference;return !!(data?.flags?.[ID]?.cleaveSource||origin?.getFlag?.(ID,"cleaveSource"));}
 function manualActivity(activity,message) {
-    return ["spell","weapon","feat"].includes(activity?.item?.type)&&!message?.data?.flags?.[ID]?.regionTriggered&&!message?.data?.flags?.[ID]?.riderTriggered;
+    return !cleaveMessage(message)&&["spell","weapon","feat"].includes(activity?.item?.type)&&!message?.data?.flags?.[ID]?.regionTriggered&&!message?.data?.flags?.[ID]?.riderTriggered;
 }
 export function reactionActivity(activity) {
     const actor=activity?.actor??activity?.item?.actor;
@@ -30,7 +31,7 @@ export function allowReactionUse(activity,usage,dialog,message) {
 }
 export async function recordReactionUse(activity,usage,results) {
     const message=results?.message,actor=activity?.actor??activity?.item?.actor;
-    if(!enabled()||!message||message.getFlag?.(ID,"regionTriggered")||message.getFlag?.(ID,"riderTriggered")||!manualActivity(activity,{})||!reactionActivity(activity)||!actor?.isOwner||reactionUsed(actor)||creating.has(actor.uuid))return;
+    if(!enabled()||!message||message.getFlag?.(ID,"cleaveSource")||message.getFlag?.(ID,"regionTriggered")||message.getFlag?.(ID,"riderTriggered")||!manualActivity(activity,{})||!reactionActivity(activity)||!actor?.isOwner||reactionUsed(actor)||creating.has(actor.uuid))return;
     creating.add(actor.uuid);
     try {
         const data={name:"Reaction - used",img:"icons/svg/clockwork.svg",disabled:false,transfer:false,
@@ -42,7 +43,7 @@ export async function recordReactionUse(activity,usage,results) {
 }
 
 export function allowReactionAttack(config,dialog,message) {
-    const activity=config?.subject;
+    const activity=config?.subject;if(cleaveMessage(message))return;
     if(!enabled()||activity?.type!=="attack"||!offTurn(activity))return;
     const used=reactionUsed(activity.actor??activity.item?.actor);if(!used)return;
     const origin=message?.data?.system?.origin;

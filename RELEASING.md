@@ -26,3 +26,7 @@ including capitalization. GitHub's automatic source archives are not the module 
 
 For future releases, update `module.json` version and its pinned download URL,
 update tested compatibility and notes, run tests, and rebuild the matching assets.
+
+## Working changes after the prepared release
+
+Cleave is an unreleased working change documented in CHANGELOG.md. The prepared v0.7.5 assets in dist have not been rebuilt with Cleave. Assign the next release version and update the build script and release notes before packaging these working changes.

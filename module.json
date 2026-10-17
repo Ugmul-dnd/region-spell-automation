@@ -39,6 +39,7 @@
     "scripts/target-use-guard.js",
     "scripts/animation-wait.js",
     "scripts/chat-refresh.js",
+    "scripts/cleave.js",
     "scripts/starter-spells.js",
     "scripts/shared-activity-card.js",
     "scripts/save-prompts.js",

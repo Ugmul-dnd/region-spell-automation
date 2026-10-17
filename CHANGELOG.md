@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- Fix initial saves for Smite spells whose save and damage are separate activities, including Wrathful Smite. Keep recurring Searing/Blinding saves out of the initial hit.
+- Show the selected Smite spell as a tag on its weapon damage card, including Divine Smite.
+
+- Expand damage Configuration to a single Smite spell/resource choice drawn from prepared 2024 Smite spells. All selected Smites add their initial damage to the weapon card. Save-based Smites create a separate save-only card; effects apply on failure, or directly for no-save Smites. Slot and bonus-action costs are spent once.
+- Carry a weapon critical into the selected Smite’s initial damage without copying weapon-only critical bonus dice or making ongoing Smite damage critical. Unprepared spells, undersized/exhausted slots, and unavailable bonus actions are excluded or rechecked before casting.
+
+- Apply Cleave’s positive ability-modifier subtraction to the final constructed weapon roll, including the displayed preview and submitted result. This survives AC5E’s saved-formula restoration during dialog rebuilds and preserves weapon magic bonuses, Rage damage, and critical dice.
+
+- Fix Cleave damage opened from native card actions: apply the ability-modifier adjustment after the source link is established. Remove the positive ability contribution from the base formula while preserving weapon magic bonuses, Rage damage, and ability context for feature checks.
+- Recheck Cleave’s different-target requirement before the attack dialog, before dice evaluation, and at publication. Native card actions inherit their Cleave source/session so they cannot bypass the check.
+
+- Add Cleave to successful melee attack chat cards when the weapon’s Cleave mastery is unlocked. Select one different creature and roll a separate linked attack and damage workflow. Target distance and reach remain table decisions.
+- Share one Cleave use across weapons for each active combat turn. Canceling the prompt preserves the use; a rolled attack spends it even on a miss. Cleave cannot trigger itself or consume an additional Reaction.
+- Cleave damage excludes a positive ability modifier and retains a negative one; fresh damage choices use the second target and existing feature/resource rules. Corrections to the first attack never automatically undo the completed Cleave.
+
+
 ## v0.7.5 — Pending Cards, Concentration & Targeting
 
 - Initially empty shared spell Regions wait for their first recorded target before prompting damage. The original cast card routes that prompt to the connected caster owner, with GM fallback; later targets reuse the roll.

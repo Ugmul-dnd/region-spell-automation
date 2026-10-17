@@ -71,6 +71,8 @@ export function metamagicDamageTags(message) {
     while(card?.system?.origin){const origin=card.system.origin;card=typeof origin==="string"?game.messages.get(origin):origin;if(!card||seen.has(card.id))break;seen.add(card.id);chain.push(card);}
     const flag=key=>chain.map(card=>card.getFlag?.(MODULE_ID,key)).find(Boolean);
     const meta=flag("metamagic")??{},tags=[];
+    const smite=message.getFlag?.(MODULE_ID,"selectedSmite");
+    if(smite)tags.push({key:"smite",label:smite.name??"Smite",hint:`${smite.name??"Smite"} added to this weapon damage roll${smite.level?` at spell level ${smite.level}`:""}.`});
     const targets=chain.find(card=>card.type==="usage")?.system?.targets??[];
     const targetName=id=>targets.find(target=>target.token===id)?.name??"selected target";
     const conversion=flag("transmutedSpell"),element=meta.transmuted??Object.values(conversion??{})[0];
