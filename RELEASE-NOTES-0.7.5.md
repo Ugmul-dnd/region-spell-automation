@@ -36,6 +36,10 @@ This integration fix ships with **Ugmuls 5.5e Automation** and runs on connected
 - The regular Damage action reuses an unresolved Pending damage card instead of leaving a separate placeholder behind. Older dialogs cannot submit after takeover.
 - Targets added while the damage dialog is open remain recorded when the result is published.
 
+## Required modules
+
+**Automated Conditions 5e and Dice So Nice! are now required.** Install and enable both before enabling Ugmuls 5.5e Automation. The module manifest declares these dependencies and provides their installation URLs. A test world without Dice So Nice exposed a damage-card update failure; that configuration is not supported in this release.
+
 ## Updating and verification
 
 - Tested with Foundry VTT 14 and D&D5e 6.0.6; the manifest retains D&D5e 6.0.5 as its minimum.

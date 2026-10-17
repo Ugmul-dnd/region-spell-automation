@@ -2,6 +2,8 @@
 
 ## v0.7.5 — Pending Cards, Concentration & Targeting
 
+- Declare Automated Conditions 5e and Dice So Nice! as required module dependencies, with installation manifests. Both must be installed and enabled; no-Dice-So-Nice damage-card updates are not a supported configuration.
+
 - Initially empty shared spell Regions wait for their first recorded target before prompting damage. The original cast card routes that prompt to the connected caster owner, with GM fallback; later targets reuse the roll.
 - The regular Damage action reuses an unresolved Pending damage card instead of leaving a separate placeholder behind. Stale dialogs are invalidated, and targets added while a damage dialog is open are retained when the roll is published.
 

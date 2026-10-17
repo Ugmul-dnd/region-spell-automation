@@ -3,7 +3,7 @@
 Prepared release: **v0.7.5**. Changes are in `CHANGELOG.md` and `RELEASE-NOTES-0.7.5.md`.
 
 The notes and assets are prepared for v0.7.5. Merge and publish when ready.
-Compatibility: Foundry VTT 14 and D&D5e 6.0.6. All 63 local regression test files pass.
+Compatibility: Foundry VTT 14 and D&D5e 6.0.6. Required modules: Automated Conditions 5e and Dice So Nice! (installed and enabled). All 63 local regression test files pass.
 
 Tests and build tooling are local-only and ignored by Git. Restore your local
 tooling before running the commands below if those folders are absent.

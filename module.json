@@ -33,6 +33,18 @@
           "verified": "6.0.6"
         }
       }
+    ],
+    "requires": [
+      {
+        "id": "automated-conditions-5e",
+        "type": "module",
+        "manifest": "https://github.com/thatlonelybugbear/automated-conditions-5e/releases/latest/download/module.json"
+      },
+      {
+        "id": "dice-so-nice",
+        "type": "module",
+        "manifest": "https://gitlab.com/riccisi/foundryvtt-dice-so-nice/-/raw/master/module/module.json"
+      }
     ]
   },
   "esmodules": [

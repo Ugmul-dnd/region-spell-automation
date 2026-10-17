@@ -47,13 +47,17 @@ Use the module's tabbed options interface to enable the features that suit your 
 
 An **active GM must be connected** for GM-managed region effects, NPC automation, and other operations affecting actors a player does not own.
 
-### Optional module integrations
+### Required modules
 
 - **Dice So Nice!** — roll prompts and automatic application coordinate with dice animations.
 - **Automated Conditions 5e** — integrates recommended advantage/disadvantage for supported features and preserves cancellation.
+Both modules must be installed and enabled alongside Ugmuls 5.5e Automation. Foundry’s dependency checks list them as required.
+
+### Optional module integrations
+
 - **Tidy 5e Sheets** — supported Add Item controls open the compendium browser, alongside the standard D&D5e character sheet.
 
-No additional module dependencies are declared. See [Module Compatibility and Test Setup](COMPATIBLE-MODULES.md) for the recorded testing environment. Modules listed there as enabled are not all individually certified compatible.
+See [Module Compatibility and Test Setup](COMPATIBLE-MODULES.md) for the recorded testing environment. Modules listed there as enabled are not all individually certified compatible.
 
 ## Installation and updates
 
@@ -63,7 +67,7 @@ Install through Foundry's module browser, or paste this manifest URL into **Inst
 https://github.com/Ugmul-dnd/ugmuls-5-5e-automation/releases/latest/download/module.json
 ```
 
-Enable **Ugmuls 5.5e Automation** in your D&D5e world's **Manage Modules**, then configure its options in Module Settings.
+Install and enable **Automated Conditions 5e** and **Dice So Nice!**, then enable **Ugmuls 5.5e Automation** in your D&D5e world's **Manage Modules**, then configure its options in Module Settings.
 
 After updating, **restart Foundry and hard-refresh connected browsers** to load the current scripts.
 

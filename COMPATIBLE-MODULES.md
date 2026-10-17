@@ -18,7 +18,7 @@ The enabled list comes from the world's saved module configuration. Versions com
 | Automated Conditions 5e | 14.606.2 | The earlier Vex/Sap roll-default conflict was resolved and confirmed in testing. Region Spell Automation registers these sources through its public usage-rule API so condition-based advantage/disadvantage and cancellation remain intact. Magic Resistance uses the same integration; its automated checks pass. |
 | Dice So Nice! | 6.4.4 | Damage prompting and application wait for visible roll animations, including player damage and saving throw dice. This behavior was confirmed in testing with the GM window in the background. |
 
-These integrations are optional. Region Spell Automation does not declare additional required modules. Without Automated Conditions, it uses its native roll-default fallback. Without Dice So Nice, it does not wait for 3D dice animation.
+**Current requirement (v0.7.5): Automated Conditions 5e and Dice So Nice! must both be installed and enabled.** They are declared as required modules in the manifest. Earlier versions treated them as optional; that historical behavior no longer describes the supported installation. A test without Dice So Nice exposed a damage-card update failure. Declaring the dependency prevents that unsupported setup; it does not repair the underlying no-Dice-So-Nice code path.
 
 ## Modules requiring separate notes
 
