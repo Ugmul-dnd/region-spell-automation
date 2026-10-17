@@ -164,7 +164,9 @@ export function requiresTargetConfirmation(activity) {
         (activity.target?.affects?.choice===true||globalThis.Ugmuls55eAutomationMetamagic?.needsMetamagic(activity)===true);
 }
 
+function isCastFollowup(message){const flags=message?.data?.flags?.[MODULE_ID]??{};return flags.regionTriggered||flags.riderTriggered||flags.recurringTrigger||message?.getFlag?.(MODULE_ID,"regionTriggered")||message?.getFlag?.(MODULE_ID,"riderTriggered")||message?.getFlag?.(MODULE_ID,"recurringTrigger");}
 export function prepareAreaConfirmation(activity, usage, dialog, message) {
+    if(isCastFollowup(message))return;
     if (["spell", "feat"].includes(activity.item?.type)) {
         console.info("Ugmuls 5.5e Automation | Area targeting pre-use", JSON.stringify({
             revision: DIAGNOSTIC_REVISION, user: game.user.id, activity: activity.name,
@@ -184,6 +186,7 @@ export function prepareAreaConfirmation(activity, usage, dialog, message) {
 
 export async function confirmCastTargets(activity, usage, results) {
     const message = results?.message;
+    if(isCastFollowup(message))return;
     console.info("Ugmuls 5.5e Automation | Area targeting post-use", JSON.stringify({
         revision: DIAGNOSTIC_REVISION, user: game.user.id, activity: activity.name,
         card: message?.id ?? null, author: message?.author?.id ?? null,

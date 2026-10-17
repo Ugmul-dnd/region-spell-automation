@@ -129,6 +129,21 @@ export async function storeReappliedEffectUndo(message,records,user=game.user) {
     await message.setFlag(MODULE_ID,"outcomeEffectsApplied",true);
     await message.setFlag(MODULE_ID,"effectApplyReopened",null);
 }
+export async function manualSaveEffectAllowed(message,effect,actor){
+    const activity=message.getAssociatedActivity?.({scaled:true});
+    if(activity?.type!=="save")return {allowed:true};
+    const profile=activity.effects?.find(profile=>profile.uuid===effect.uuid||profile._id===effect.id);
+    // Restrict save effects to recorded recipients and completed save outcomes.
+    // Multiple linked tokens share an Actor: one qualifying outcome is sufficient.
+    const outcomes=[];
+    for(const target of message.system?.targets??[]){
+        const token=target.token?await fromUuid(target.token):null;
+        if(token?.actor?.uuid===actor.uuid||target.actor===actor.uuid)outcomes.push(message.system.outcomes?.get(target.token));
+    }
+    if(outcomes.some(outcome=>outcome==="failure"||outcome==="success"&&profile?.onSave===true))return {allowed:true};
+    if(outcomes.some(outcome=>!["success","failure"].includes(outcome)))return {allowed:false,reason:"Saving throw is still pending. Complete the save before applying this effect."};
+    return {allowed:false,reason:outcomes.length?"Saving throw succeeded; this effect only applies on a failed save.":"This creature is not a recorded target of this save. Use Retarget before applying its effect."};
+}
 export async function applyManualEffectsWithUndo(tray,apply) {
     const message=tray.chatMessage;
     // Track the first manual application too: a retroactive save correction
@@ -137,6 +152,8 @@ export async function applyManualEffectsWithUndo(tray,apply) {
     const prepare=tray._prepareEffectData;
     const operations=[];
     tray._prepareEffectData=async function(effect,actor) {
+        const eligibility=await manualSaveEffectAllowed(message,effect,actor);
+        if(!eligibility.allowed)throw Error(eligibility.reason);
         const operation=await prepare.call(this,effect,actor);
         const before=operation.action==="update"?actor.effects.get(operation.data._id)?.toObject():null;
         operations.push({effect,actor,operation,before});

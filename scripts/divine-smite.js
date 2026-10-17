@@ -225,7 +225,8 @@ async function applySmiteEffects(card,context,activity,targets){
         const actor=(await fromUuid(target.token))?.actor;if(!actor)continue;
         for(const effect of effects){
             const key=target.token+"|"+effect.uuid;if(ledger.has(key))continue;
-            await globalThis.Ugmuls55eAutomationEffectUndo.apply(card,context,effect,actor,tray);
+            const applied=await globalThis.Ugmuls55eAutomationEffectUndo.apply(card,context,effect,actor,tray);
+            if(applied)await globalThis.Ugmuls55eAutomationRecurring?.registerRecurringEffect(applied,{spell:context.getAssociatedItem(),level:context.system.level,sourceCard:card});
             ledger.add(key);await card.setFlag(ID,"smiteAppliedEffects",[...ledger]);
         }
     }

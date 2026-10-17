@@ -60,6 +60,8 @@
     "scripts/turn-resources.js",
     "scripts/sneak-attack.js",
     "scripts/hunters-prey.js",
+    "scripts/trigger-library.js",
+    "scripts/recurring-effects.js",
     "scripts/divine-smite.js",
     "scripts/eldritch-smite.js",
     "scripts/frenzy.js",

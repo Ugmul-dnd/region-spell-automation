@@ -6,6 +6,7 @@ const sentTargets = new Map();
 export async function promptCastSaves(activity, results) {
     if (game.settings.get(MODULE_ID, "promptForSaveOnSpellCasts") !== true) return;
     const message = results?.message;
+    if(["condition","skipped"].includes(message?.getFlag?.(MODULE_ID,"recurringTrigger")?.phase))return;
     if (message?.getFlag?.(MODULE_ID, "targetsConfirmationPending") || message?.getFlag?.(MODULE_ID, "targetsConfirmationCanceled")) return;
     if (activity?.type !== "save" || !["spell", "feat"].includes(activity.item?.type) || !message?.id) return;
     if (message.author?.id !== game.user.id || message.getFlag?.(MODULE_ID, "regionTriggered")) return;

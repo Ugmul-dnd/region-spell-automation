@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+- Disable Automated Animations recognition on temporary recurring save/eligibility helpers so Fear repeat saves do not replay casting or area animations. Original spell, effect, recurring-damage, and dice animation settings remain intact.
+
+- Add a Targeting area lifetime override to creature-trigger entries. Fear defaults to removing its targeting cone at the caster’s turn end without changing concentration, spell duration, or creature effects. Ongoing manager-configured Regions remain protected.
+
+- Hide and block retroactive save mode adjustments while effects from that workflow are applied, including save-only spells such as Fear. Undo Effect restores the controls once recorded applications are cleared.
+
+- Prevent recurring effect and rider save cards from reopening cast-time targeting/Metamagic confirmation. Repeat cards reuse persistent original-cast Metamagic without spending resources again; Careful Spell’s initial-save protection is not repeated.
+
+- Make manual Apply Effect respect each recorded target’s save outcome, including Fear. Failed saves receive failure-only effects; successful or pending saves are skipped. Explicit effects configured to apply on a successful save remain supported, with Undo preserved.
+
+- Add Fear to the built-in creature-trigger library using the installed book’s native Fear effect and Wisdom save. Repeat saves occur at the affected creature’s turn end only after GM confirmation that it cannot see the caster; success removes only that effect after animations.
+- Support save-only entries with no damage activity. Fear’s concentration, duration, and Frightened condition remain native; dropping items, Dash, and safest-route movement remain manual.
+
+- Add custom creature-trigger entries through Add New Effect, using a separate spell drag/drop or UUID picker. Keep custom entries in world storage alongside built-in recipes.
+- Enlarge View/Edit with vertical scrolling and replace its drop zone with a Choose Source button.
+
+- Add a GM-only Trigger Automation Library shortcut to the Compendium sidebar alongside the Spell and Region Manager.
+
+- Add spell drag/drop to the creature-trigger editor, with dropdowns for native effects, damage activities, and save activities. Saving throws can be omitted.
+- Default to native cast-level damage; show a custom formula only when Custom damage is selected. Add section information popups and a live workflow preview.
+
+- Display the Trigger Automation Library as a spell/effect table with status and customization indicators. View/Edit opens a separate entry window; saving or restoring defaults refreshes the list.
+
+- Preserve the recurring damage card’s source link when rolling Searing Smite damage, allowing its Constitution save to follow the completed damage roll.
+
+- Add a creature-effect Trigger Automation Library with a built-in Searing Smite entry and persistent world overrides. Existing Region configuration and native effect changes/durations remain intact.
+- Seared now schedules native, cast-level-scaled damage at the affected creature’s turn start, routes the roll to a connected caster owner with GM fallback, then prompts the Constitution save. Success removes the recorded Seared effect after dice animations; failure retains it. Turn progression remains unblocked.
+- Guard against duplicate turn updates and stale cards resolving a refreshed effect. Explicit external turn-automation changes are skipped.
+
 - Fix initial saves for Smite spells whose save and damage are separate activities, including Wrathful Smite. Keep recurring Searing/Blinding saves out of the initial hit.
 - Show the selected Smite spell as a tag on its weapon damage card, including Divine Smite.
 
